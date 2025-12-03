@@ -1,0 +1,296 @@
+"use client";
+
+import { useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { Eye, EyeOff } from "lucide-react";
+
+export default function LoginPage() {
+  const router = useRouter();
+  const [showPassword, setShowPassword] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(false);
+
+  const handleLogin = () => {
+    // 실제로는 API 호출
+    localStorage.setItem("isLoggedIn", "true");
+    localStorage.setItem("userName", "사용자");
+    router.push("/");
+  };
+
+  const handleSocialLogin = (provider: string) => {
+    // 실제로는 소셜 로그인 API 호출
+    localStorage.setItem("isLoggedIn", "true");
+    localStorage.setItem("userName", `${provider} 사용자`);
+    router.push("/");
+  };
+
+  return (
+    <div className="min-h-screen flex">
+      {/* 좌측 - 브랜딩 영역 (데스크탑만) */}
+      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-yellow-400 via-yellow-500 to-yellow-600 relative overflow-hidden">
+        {/* 배경 패턴 */}
+        <div className="absolute inset-0 opacity-30">
+          <div className="absolute inset-0" style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='0.02'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
+          }}></div>
+        </div>
+
+        {/* 장식 요소 */}
+        <div className="absolute top-20 left-20 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
+        <div className="absolute bottom-40 right-20 w-48 h-48 bg-white/10 rounded-full blur-3xl"></div>
+        <div className="absolute top-1/2 left-1/3 w-24 h-24 bg-white/10 rounded-full blur-xl"></div>
+
+        {/* 컨텐츠 */}
+        <div className="relative z-10 flex flex-col justify-between p-12 w-full">
+          {/* 로고 */}
+          <Link href="/" className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center">
+              <svg className="w-6 h-6 text-yellow-500" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
+              </svg>
+            </div>
+            <span className="text-xl font-bold text-white">우리동네금은방</span>
+          </Link>
+
+          {/* 메인 카피 */}
+          <div className="max-w-md">
+            <h1 className="text-[40px] font-bold text-white leading-tight mb-6">
+              투명한 금 거래,<br />
+              쉽고 빠르게
+            </h1>
+            <p className="text-[17px] text-white/80 leading-relaxed">
+              전국 금은방의 실시간 시세부터 상품까지<br />
+              한 곳에서 비교하고 거래하세요
+            </p>
+
+            {/* 특징 리스트 */}
+            <div className="mt-10 space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
+                  <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                  </svg>
+                </div>
+                <span className="text-[15px] text-white/90">실시간 금시세 확인</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
+                  <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"></path>
+                  </svg>
+                </div>
+                <span className="text-[15px] text-white/90">내 주변 금은방 찾기</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
+                  <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z"></path>
+                  </svg>
+                </div>
+                <span className="text-[15px] text-white/90">신뢰할 수 있는 매장 정보</span>
+              </div>
+            </div>
+          </div>
+
+          {/* 하단 */}
+          <p className="text-[13px] text-white/50">
+            © 2024 우리동네금은방. All rights reserved.
+          </p>
+        </div>
+      </div>
+
+      {/* 우측 - 로그인 폼 */}
+      <div className="flex-1 flex flex-col">
+        {/* 모바일 헤더 */}
+        <header className="lg:hidden w-full bg-white border-b border-gray-100">
+          <div className="px-5 h-[60px] flex items-center justify-between">
+            <Link href="/" className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-lg flex items-center justify-center">
+                <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
+                </svg>
+              </div>
+              <span className="text-lg font-bold text-gray-900">우리동네금은방</span>
+            </Link>
+            <Link href="/" className="text-[14px] text-gray-500 hover:text-gray-900 smooth-transition">
+              홈으로
+            </Link>
+          </div>
+        </header>
+
+        {/* 로그인 폼 컨테이너 */}
+        <div className="flex-1 flex items-center justify-center px-5 py-12 bg-gray-50">
+          <div className="w-full max-w-[400px]">
+            {/* 타이틀 */}
+            <div className="text-center mb-10">
+              {/* 데스크탑 로고 */}
+              <Link href="/" className="hidden lg:inline-flex items-center gap-2 mb-8">
+                <div className="w-10 h-10 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-xl flex items-center justify-center">
+                  <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
+                  </svg>
+                </div>
+              </Link>
+              <h1 className="text-[26px] font-bold text-gray-900 mb-2">로그인</h1>
+              <p className="text-[15px] text-gray-500">우리동네금은방에 오신 것을 환영합니다</p>
+            </div>
+
+            {/* 소셜 로그인 */}
+            <div className="space-y-3 mb-8">
+              {/* 카카오 로그인 */}
+              <Button
+                type="button"
+                onClick={() => handleSocialLogin("카카오")}
+                className="w-full flex items-center justify-center gap-3 py-6 bg-[#FEE500] hover:bg-[#FEE500]/90 text-gray-900 rounded-xl text-[15px] font-semibold smooth-transition h-auto"
+              >
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 3C6.477 3 2 6.477 2 10.5c0 2.47 1.607 4.647 4.023 5.903-.176.657-.64 2.385-.733 2.758-.114.461.17.454.357.33.147-.097 2.343-1.595 3.293-2.243.349.05.706.076 1.06.076 5.523 0 10-3.477 10-7.824C20 6.477 17.523 3 12 3z"/>
+                </svg>
+                카카오로 시작하기
+              </Button>
+
+              {/* 네이버 로그인 */}
+              <Button
+                type="button"
+                onClick={() => handleSocialLogin("네이버")}
+                className="w-full flex items-center justify-center gap-3 py-6 bg-[#03C75A] hover:bg-[#03C75A]/90 text-white rounded-xl text-[15px] font-semibold smooth-transition h-auto"
+              >
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M16.273 12.845L7.376 3H3v18h4.726V12.155L16.624 21H21V3h-4.727z"/>
+                </svg>
+                네이버로 시작하기
+              </Button>
+
+              {/* 구글 로그인 */}
+              <Button
+                type="button"
+                onClick={() => handleSocialLogin("Google")}
+                variant="outline"
+                className="w-full flex items-center justify-center gap-3 py-6 bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 rounded-xl text-[15px] font-semibold smooth-transition h-auto"
+              >
+                <svg className="w-5 h-5" viewBox="0 0 24 24">
+                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                </svg>
+                Google로 시작하기
+              </Button>
+
+              {/* 애플 로그인 */}
+              <Button
+                type="button"
+                onClick={() => handleSocialLogin("Apple")}
+                className="w-full flex items-center justify-center gap-3 py-6 bg-gray-900 hover:bg-gray-800 text-white rounded-xl text-[15px] font-semibold smooth-transition h-auto"
+              >
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
+                </svg>
+                Apple로 시작하기
+              </Button>
+            </div>
+
+            {/* 구분선 */}
+            <div className="relative flex items-center gap-4 mb-8">
+              <div className="flex-1 h-px bg-gray-200"></div>
+              <span className="text-[13px] text-gray-400">또는 이메일로 로그인</span>
+              <div className="flex-1 h-px bg-gray-200"></div>
+            </div>
+
+            {/* 이메일 로그인 폼 */}
+            <form className="space-y-4 mb-6" onSubmit={(e) => { e.preventDefault(); handleLogin(); }}>
+              {/* 이메일 */}
+              <div>
+                <Label className="block text-[13px] font-medium text-gray-700 mb-2">이메일</Label>
+                <Input
+                  type="email"
+                  placeholder="example@email.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full px-4 py-6 bg-gray-100 border-transparent focus:border-gray-900 focus:bg-white rounded-xl text-[15px] placeholder-gray-400 smooth-transition"
+                />
+              </div>
+
+              {/* 비밀번호 */}
+              <div>
+                <Label className="block text-[13px] font-medium text-gray-700 mb-2">비밀번호</Label>
+                <div className="relative">
+                  <Input
+                    type={showPassword ? "text" : "password"}
+                    placeholder="비밀번호를 입력하세요"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full px-4 py-6 bg-gray-100 border-transparent focus:border-gray-900 focus:bg-white rounded-xl text-[15px] placeholder-gray-400 smooth-transition pr-12"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 smooth-transition"
+                  >
+                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
+              </div>
+
+              {/* 로그인 유지 & 비밀번호 찾기 */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="remember"
+                    checked={rememberMe}
+                    onCheckedChange={(checked) => setRememberMe(checked as boolean)}
+                    className="rounded"
+                  />
+                  <Label htmlFor="remember" className="text-[13px] text-gray-600 cursor-pointer">
+                    로그인 유지
+                  </Label>
+                </div>
+                <Link href="#" className="text-[13px] text-gray-500 hover:text-gray-900 smooth-transition">
+                  비밀번호 찾기
+                </Link>
+              </div>
+
+              {/* 로그인 버튼 */}
+              <Button
+                type="submit"
+                className="w-full py-6 bg-gray-900 hover:bg-gray-800 text-white text-[15px] font-semibold rounded-xl smooth-transition mt-6 h-auto"
+              >
+                로그인
+              </Button>
+            </form>
+
+            {/* 회원가입 링크 */}
+            <p className="text-center text-[14px] text-gray-500">
+              아직 회원이 아니신가요?
+              <Link href="/signup" className="font-semibold text-gray-900 hover:underline ml-1">
+                회원가입
+              </Link>
+            </p>
+
+            {/* 하단 안내 */}
+            <div className="mt-10 pt-8 border-t border-gray-100">
+              <p className="text-[12px] text-gray-400 text-center leading-relaxed">
+                로그인 시{" "}
+                <Link href="#" className="underline hover:text-gray-600">
+                  이용약관
+                </Link>{" "}
+                및{" "}
+                <Link href="#" className="underline hover:text-gray-600">
+                  개인정보처리방침
+                </Link>
+                에 동의하게 됩니다.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
