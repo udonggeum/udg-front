@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>포스트 상세 - 우리동네금은방</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#FFD700',
+                        'primary-dark': '#E5C100',
+                        'gray-50': '#FAFAFA',
+                        'gray-100': '#F5F5F5',
+                        'gray-200': '#EEEEEE',
+                        'gray-300': '#E0E0E0',
+                        'gray-400': '#BDBDBD',
+                        'gray-500': '#9E9E9E',
+                        'gray-600': '#757575',
+                        'gray-700': '#616161',
+                        'gray-800': '#424242',
+                        'gray-900': '#191F28',
+                    },
+                    fontFamily: {
+                        pretendard: ['Pretendard', '-apple-system', 'BlinkMacSystemFont', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+
+        * {
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        .smooth-transition {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .hover-lift:hover {
+            transform: translateY(-2px);
+        }
+
+        .card-shadow {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+
+        .card-shadow:hover {
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #E0E0E0;
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #BDBDBD;
+        }
+
+        .post-content {
+            line-height: 1.8;
+        }
+
+        .post-content p {
+            margin-bottom: 1.5rem;
+        }
+
+        .post-content img {
+            border-radius: 1rem;
+            margin: 2rem 0;
+        }
+
+        .like-button.liked {
+            background-color: #FEE;
+            color: #E11D48;
+            border-color: #E11D48;
+        }
+
+        .like-button.liked svg {
+            fill: #E11D48;
+        }
+    </style>
+</head>
+
+<body class="bg-white text-gray-900 font-pretendard">
+
+    <!-- 헤더 -->
+    <header class="w-full bg-white sticky top-0 z-50 border-b border-gray-100">
+        <div class="max-w-[1200px] mx-auto px-5 h-[60px] flex justify-between items-center">
+            <!-- 로고 -->
+            <a href="main.html" class="flex items-center gap-2">
+                <div class="w-8 h-8 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-lg flex items-center justify-center">
+                    <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
+                    </svg>
+                </div>
+                <span class="text-lg font-bold text-gray-900">우리동네금은방</span>
+            </a>
+
+            <!-- 네비게이션 -->
+            <nav class="hidden md:flex items-center gap-8">
+                <a href="price.html" class="nav-link text-[15px] font-medium text-gray-600 hover:text-gray-900 smooth-transition" data-page="price">금시세</a>
+                <a href="stores.html" class="nav-link text-[15px] font-medium text-gray-600 hover:text-gray-900 smooth-transition" data-page="stores">매장찾기</a>
+                <a href="community.html" class="nav-link text-[15px] font-medium text-gray-600 hover:text-gray-900 smooth-transition" data-page="community">커뮤니티</a>
+            </nav>
+
+            <!-- 우측 영역 -->
+            <div class="flex items-center gap-3">
+                <!-- 비로그인 상태 -->
+                <div id="guest-buttons" class="flex items-center gap-3">
+                    <a href="login.html" class="hidden md:block px-4 py-2 text-[14px] font-semibold text-gray-700 hover:bg-gray-100 rounded-lg smooth-transition">로그인</a>
+                    <a href="signup.html" class="px-4 py-2.5 text-[14px] font-semibold text-white bg-gray-900 hover:bg-gray-800 rounded-lg smooth-transition">시작하기</a>
+                </div>
+                <!-- 로그인 상태 -->
+                <div id="user-menu" class="hidden">
+                    <a href="mypage.html" class="w-9 h-9 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-full flex items-center justify-center text-white text-[14px] font-bold" id="user-avatar"></a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- 메인 콘텐츠 -->
+    <main class="bg-gray-50">
+        <!-- 포스트 콘텐츠 -->
+        <article class="max-w-[800px] mx-auto px-5 py-12">
+            <!-- 뒤로가기 -->
+            <div class="mb-8">
+                <a href="community.html" class="inline-flex items-center gap-2 text-[14px] text-gray-500 hover:text-gray-900 smooth-transition">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"></path>
+                    </svg>
+                    목록으로
+                </a>
+            </div>
+
+            <!-- 포스트 헤더 -->
+            <div class="bg-white rounded-2xl p-8 mb-6 card-shadow">
+                <!-- 매장 정보 -->
+                <div class="flex items-center gap-3 mb-6">
+                    <div class="w-12 h-12 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-full flex items-center justify-center">
+                        <span class="text-[16px] font-bold text-white" id="store-initial"></span>
+                    </div>
+                    <div>
+                        <div class="text-[16px] font-bold text-gray-900" id="store-name"></div>
+                        <div class="text-[13px] text-gray-500" id="post-date"></div>
+                    </div>
+                </div>
+
+                <!-- 제목 -->
+                <h1 class="text-[32px] md:text-[36px] font-bold text-gray-900 leading-tight mb-4" id="post-title"></h1>
+
+                <!-- 통계 -->
+                <div class="flex items-center gap-4 text-[14px] text-gray-500">
+                    <span class="flex items-center gap-1">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        </svg>
+                        <span id="post-views"></span>
+                    </span>
+                    <span class="flex items-center gap-1">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"></path>
+                        </svg>
+                        <span id="post-likes"></span>
+                    </span>
+                    <span class="flex items-center gap-1">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z"></path>
+                        </svg>
+                        <span id="post-comments"></span>
+                    </span>
+                </div>
+            </div>
+
+            <!-- 포스트 본문 -->
+            <div class="bg-white rounded-2xl p-8 mb-6 card-shadow">
+                <!-- 썸네일 이미지 -->
+                <div class="mb-8 -mx-8 -mt-8">
+                    <img id="post-thumbnail" src="" alt="" class="w-full rounded-t-2xl">
+                </div>
+
+                <!-- 본문 -->
+                <div class="post-content text-[16px] text-gray-700" id="post-content"></div>
+            </div>
+
+            <!-- 액션 버튼 -->
+            <div class="bg-white rounded-2xl p-6 mb-6 card-shadow">
+                <div class="flex items-center justify-center gap-4">
+                    <button id="like-button" class="like-button flex items-center gap-2 px-8 py-3.5 bg-white border-2 border-gray-200 text-gray-700 text-[15px] font-semibold rounded-xl smooth-transition hover:border-gray-300">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"></path>
+                        </svg>
+                        <span>좋아요</span>
+                        <span id="like-count" class="font-bold"></span>
+                    </button>
+                    <button class="flex items-center gap-2 px-8 py-3.5 bg-gray-900 hover:bg-gray-800 text-white text-[15px] font-semibold rounded-xl smooth-transition">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185z"></path>
+                        </svg>
+                        공유하기
+                    </button>
+                </div>
+            </div>
+
+            <!-- 댓글 섹션 -->
+            <div class="bg-white rounded-2xl p-8 card-shadow">
+                <h3 class="text-[20px] font-bold text-gray-900 mb-6">
+                    댓글 <span id="comment-count" class="text-primary"></span>
+                </h3>
+
+                <!-- 댓글 입력 -->
+                <div class="mb-8">
+                    <textarea id="comment-input" rows="3" placeholder="댓글을 입력하세요..." class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl text-[15px] text-gray-900 placeholder-gray-400 focus:border-gray-900 focus:outline-none smooth-transition resize-none"></textarea>
+                    <div class="flex justify-end mt-3">
+                        <button id="comment-submit" class="px-6 py-2.5 bg-gray-900 hover:bg-gray-800 text-white text-[14px] font-semibold rounded-lg smooth-transition">
+                            댓글 작성
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 댓글 목록 -->
+                <div id="comments-list" class="space-y-6">
+                    <!-- 댓글들이 동적으로 추가됩니다 -->
+                </div>
+
+                <!-- 댓글 없음 -->
+                <div id="no-comments" class="hidden text-center py-12">
+                    <div class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z"></path>
+                        </svg>
+                    </div>
+                    <p class="text-[14px] text-gray-500">첫 번째 댓글을 작성해보세요!</p>
+                </div>
+            </div>
+
+            <!-- 관련 포스트 -->
+            <div class="mt-12">
+                <h3 class="text-[22px] font-bold text-gray-900 mb-6">같은 매장의 다른 글</h3>
+                <div id="related-posts" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- 관련 포스트가 동적으로 추가됩니다 -->
+                </div>
+            </div>
+        </article>
+    </main>
+
+    <!-- 푸터 -->
+    <footer class="bg-gray-100 py-12 px-5">
+        <div class="max-w-[1200px] mx-auto">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-8 mb-10">
+                <div>
+                    <h4 class="text-[14px] font-semibold text-gray-900 mb-4">서비스</h4>
+                    <ul class="space-y-3">
+                        <li><a href="price.html" class="text-[13px] text-gray-500 hover:text-gray-900 smooth-transition">금시세</a></li>
+                        <li><a href="stores.html" class="text-[13px] text-gray-500 hover:text-gray-900 smooth-transition">매장찾기</a></li>
+                        <li><a href="community.html" class="text-[13px] text-gray-500 hover:text-gray-900 smooth-transition">커뮤니티</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-[14px] font-semibold text-gray-900 mb-4">고객지원</h4>
+                    <ul class="space-y-3">
+                        <li><a href="#" class="text-[13px] text-gray-500 hover:text-gray-900 smooth-transition">공지사항</a></li>
+                        <li><a href="#" class="text-[13px] text-gray-500 hover:text-gray-900 smooth-transition">자주 묻는 질문</a></li>
+                        <li><a href="#" class="text-[13px] text-gray-500 hover:text-gray-900 smooth-transition">1:1 문의</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-[14px] font-semibold text-gray-900 mb-4">파트너</h4>
+                    <ul class="space-y-3">
+                        <li><a href="#" class="text-[13px] text-gray-500 hover:text-gray-900 smooth-transition">매장 등록</a></li>
+                        <li><a href="#" class="text-[13px] text-gray-500 hover:text-gray-900 smooth-transition">광고 문의</a></li>
+                        <li><a href="#" class="text-[13px] text-gray-500 hover:text-gray-900 smooth-transition">제휴 문의</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-[14px] font-semibold text-gray-900 mb-4">회사</h4>
+                    <ul class="space-y-3">
+                        <li><a href="#" class="text-[13px] text-gray-500 hover:text-gray-900 smooth-transition">회사 소개</a></li>
+                        <li><a href="#" class="text-[13px] text-gray-500 hover:text-gray-900 smooth-transition">채용</a></li>
+                        <li><a href="#" class="text-[13px] text-gray-500 hover:text-gray-900 smooth-transition">블로그</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="border-t border-gray-200 pt-8">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div class="flex items-center gap-2">
+                        <div class="w-6 h-6 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded flex items-center justify-center">
+                            <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
+                            </svg>
+                        </div>
+                        <span class="text-[14px] font-semibold text-gray-700">우리동네금은방</span>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <a href="#" class="text-[12px] text-gray-500 hover:text-gray-900 smooth-transition">이용약관</a>
+                        <a href="#" class="text-[12px] font-semibold text-gray-700 hover:text-gray-900 smooth-transition">개인정보처리방침</a>
+                        <a href="#" class="text-[12px] text-gray-500 hover:text-gray-900 smooth-transition">위치기반서비스 이용약관</a>
+                    </div>
+                </div>
+                <p class="text-[12px] text-gray-400 mt-4">© 2024 우리동네금은방. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // 샘플 포스트 데이터
+        const samplePosts = {
+            1: {
+                id: 1,
+                title: "2024년 설날 맞이 특별 이벤트 안내",
+                content: `
+                    <p>안녕하세요, 강남금은방입니다!</p>
+                    <p>다가오는 설날을 맞이하여 고객 여러분께 특별한 혜택을 준비했습니다. 24K 순금 목걸이를 특별한 가격에 만나보실 수 있는 기회입니다.</p>
+
+                    <h2 class="text-[22px] font-bold text-gray-900 mt-8 mb-4">이벤트 상세 내용</h2>
+                    <p><strong>기간:</strong> 2024년 1월 20일 ~ 2월 10일<br>
+                    <strong>혜택:</strong> 24K 순금 목걸이 최대 15% 할인<br>
+                    <strong>대상:</strong> 선착순 50분</p>
+
+                    <img src="https://images.unsplash.com/photo-1611652022419-a9419f74343d?w=800&auto=format&fit=crop" alt="금목걸이" class="w-full">
+
+                    <p>이번 이벤트는 선착순으로 진행되며, 재고 소진 시 조기 종료될 수 있습니다. 평소 관심 있으셨던 순금 제품을 합리적인 가격에 구매하실 수 있는 절호의 기회이니 많은 관심 부탁드립니다.</p>
+
+                    <h2 class="text-[22px] font-bold text-gray-900 mt-8 mb-4">매장 방문 안내</h2>
+                    <p>매장 방문 시 상담을 통해 더 자세한 정보를 확인하실 수 있으며, 제품 실물을 직접 확인하실 수 있습니다. 궁금하신 점이 있으시면 언제든지 연락 주시기 바랍니다.</p>
+
+                    <p>감사합니다!</p>
+                `,
+                thumbnail: "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=800&auto=format&fit=crop",
+                storeName: "강남금은방",
+                author: "강남금은방",
+                date: "2024-01-15",
+                likes: 42,
+                comments: 8,
+                views: 328
+            },
+            2: {
+                id: 2,
+                title: "금 투자 시작하기 - 초보자 가이드",
+                content: `
+                    <p>금 투자를 시작하려는 분들을 위한 가이드입니다.</p>
+                    <p>최근 경제 불확실성이 높아지면서 안전자산으로서 금에 대한 관심이 높아지고 있습니다. 하지만 막상 투자를 시작하려고 하면 어디서부터 시작해야 할지 막막하실 수 있습니다.</p>
+
+                    <h2 class="text-[22px] font-bold text-gray-900 mt-8 mb-4">금 순도별 특징</h2>
+                    <p><strong>24K 순금:</strong> 순도 99.9%의 순금으로, 투자 목적으로 가장 많이 선택됩니다. 변색이 없고 가치 보존이 우수하지만, 무르기 때문에 장신구로는 적합하지 않을 수 있습니다.</p>
+
+                    <img src="https://images.unsplash.com/photo-1610375461246-83df859d849d?w=800&auto=format&fit=crop" alt="금괴" class="w-full">
+
+                    <p><strong>18K 금:</strong> 순도 75%로 다른 금속과 합금되어 있어 내구성이 뛰어나 장신구로 많이 사용됩니다. 24K에 비해 가격이 저렴하지만 투자 가치는 낮습니다.</p>
+
+                    <p><strong>14K 금:</strong> 순도 58.5%로 일상적으로 착용하는 장신구에 적합합니다. 가격 대비 내구성이 좋아 실용적인 선택입니다.</p>
+
+                    <h2 class="text-[22px] font-bold text-gray-900 mt-8 mb-4">투자 전략</h2>
+                    <p>금 투자는 장기적인 관점에서 접근하는 것이 좋습니다. 단기 시세 변동에 일희일비하기보다는, 꾸준히 분산 투자하는 전략을 권장합니다.</p>
+                `,
+                thumbnail: "https://images.unsplash.com/photo-1610375461246-83df859d849d?w=800&auto=format&fit=crop",
+                storeName: "종로주얼리",
+                author: "종로주얼리",
+                date: "2024-01-14",
+                likes: 156,
+                comments: 23,
+                views: 1247
+            }
+        };
+
+        const sampleComments = {
+            1: [
+                { id: 1, author: "김지민", date: "2024-01-15", content: "와 이벤트 좋네요! 주말에 방문해서 직접 보고 싶어요.", avatar: "김" },
+                { id: 2, author: "이준호", date: "2024-01-15", content: "15% 할인이면 정말 큰 혜택이네요. 부모님 선물로 좋을 것 같습니다!", avatar: "이" },
+                { id: 3, author: "박서연", date: "2024-01-15", content: "매장 영업시간이 어떻게 되나요?", avatar: "박" }
+            ],
+            2: [
+                { id: 1, author: "최민수", date: "2024-01-14", content: "초보자도 이해하기 쉽게 설명해주셔서 감사합니다!", avatar: "최" },
+                { id: 2, author: "정수아", date: "2024-01-14", content: "24K와 18K의 차이를 잘 몰랐는데 이제 이해됐어요.", avatar: "정" }
+            ]
+        };
+
+        // URL에서 포스트 ID 가져오기
+        const urlParams = new URLSearchParams(window.location.search);
+        const postId = parseInt(urlParams.get('id')) || 1;
+        const currentPost = samplePosts[postId] || samplePosts[1];
+        const postComments = sampleComments[postId] || [];
+
+        // 포스트 데이터 렌더링
+        function renderPost() {
+            document.getElementById('store-initial').textContent = currentPost.storeName.charAt(0);
+            document.getElementById('store-name').textContent = currentPost.storeName;
+            document.getElementById('post-date').textContent = currentPost.date;
+            document.getElementById('post-title').textContent = currentPost.title;
+            document.getElementById('post-views').textContent = currentPost.views;
+            document.getElementById('post-likes').textContent = currentPost.likes;
+            document.getElementById('post-comments').textContent = currentPost.comments;
+            document.getElementById('post-thumbnail').src = currentPost.thumbnail;
+            document.getElementById('post-thumbnail').alt = currentPost.title;
+            document.getElementById('post-content').innerHTML = currentPost.content;
+            document.getElementById('like-count').textContent = currentPost.likes;
+            document.getElementById('comment-count').textContent = postComments.length;
+        }
+
+        // 댓글 렌더링
+        function renderComments() {
+            const commentsList = document.getElementById('comments-list');
+            const noComments = document.getElementById('no-comments');
+
+            if (postComments.length === 0) {
+                noComments.classList.remove('hidden');
+                return;
+            }
+
+            noComments.classList.add('hidden');
+            commentsList.innerHTML = postComments.map(comment => `
+                <div class="flex gap-4">
+                    <div class="w-10 h-10 bg-gradient-to-br from-gray-400 to-gray-500 rounded-full flex items-center justify-center flex-shrink-0">
+                        <span class="text-[14px] font-bold text-white">${comment.avatar}</span>
+                    </div>
+                    <div class="flex-1">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="text-[14px] font-semibold text-gray-900">${comment.author}</span>
+                            <span class="text-[12px] text-gray-400">${comment.date}</span>
+                        </div>
+                        <p class="text-[15px] text-gray-700">${comment.content}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 좋아요 버튼
+        document.getElementById('like-button').addEventListener('click', function() {
+            this.classList.toggle('liked');
+            const isLiked = this.classList.contains('liked');
+            const likeCount = document.getElementById('like-count');
+            const currentLikes = parseInt(likeCount.textContent);
+            likeCount.textContent = isLiked ? currentLikes + 1 : currentLikes - 1;
+        });
+
+        // 댓글 작성
+        document.getElementById('comment-submit').addEventListener('click', function() {
+            const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+            if (!isLoggedIn) {
+                if (confirm('로그인이 필요한 서비스입니다.\n로그인 페이지로 이동하시겠습니까?')) {
+                    window.location.href = 'login.html';
+                }
+                return;
+            }
+
+            const commentInput = document.getElementById('comment-input');
+            const content = commentInput.value.trim();
+
+            if (!content) {
+                alert('댓글 내용을 입력해주세요.');
+                return;
+            }
+
+            const userName = localStorage.getItem('userName') || '사용자';
+            const newComment = {
+                id: postComments.length + 1,
+                author: userName,
+                date: new Date().toISOString().split('T')[0],
+                content: content,
+                avatar: userName.charAt(0)
+            };
+
+            postComments.push(newComment);
+            commentInput.value = '';
+            renderComments();
+            document.getElementById('comment-count').textContent = postComments.length;
+        });
+
+        // 인증 UI 업데이트
+        function updateAuthUI() {
+            const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+            const userName = localStorage.getItem('userName') || '사용자';
+            const guestButtons = document.getElementById('guest-buttons');
+            const userMenu = document.getElementById('user-menu');
+            const userAvatar = document.getElementById('user-avatar');
+
+            if (isLoggedIn && guestButtons && userMenu && userAvatar) {
+                guestButtons.classList.add('hidden');
+                userMenu.classList.remove('hidden');
+                userAvatar.textContent = userName.charAt(0);
+            }
+        }
+
+        // 초기화
+        document.addEventListener('DOMContentLoaded', function() {
+            updateAuthUI();
+            renderPost();
+            renderComments();
+        });
+    </script>
+</body>
+
+</html>

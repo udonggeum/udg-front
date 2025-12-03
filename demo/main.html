@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>우리동네금은방</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#FFD700',
+                        'primary-dark': '#E5C100',
+                        'gray-50': '#FAFAFA',
+                        'gray-100': '#F5F5F5',
+                        'gray-200': '#EEEEEE',
+                        'gray-300': '#E0E0E0',
+                        'gray-400': '#BDBDBD',
+                        'gray-500': '#9E9E9E',
+                        'gray-600': '#757575',
+                        'gray-700': '#616161',
+                        'gray-800': '#424242',
+                        'gray-900': '#191F28',
+                    },
+                    fontFamily: {
+                        pretendard: ['Pretendard', '-apple-system', 'BlinkMacSystemFont', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+
+        * {
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* 토스 스타일 부드러운 트랜지션 */
+        .smooth-transition {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* 당근/크림 스타일 호버 효과 */
+        .hover-lift:hover {
+            transform: translateY(-2px);
+        }
+
+        /* 무신사/크림 스타일 카드 */
+        .card-shadow {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+
+        .card-shadow:hover {
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+        }
+
+        /* 프라이스 업다운 애니메이션 */
+        @keyframes pulse-soft {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .pulse-soft {
+            animation: pulse-soft 2s ease-in-out infinite;
+        }
+
+        /* 스크롤바 스타일링 (오늘의집 스타일) */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #E0E0E0;
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #BDBDBD;
+        }
+
+        /* 검색바 포커스 효과 */
+        .search-input:focus {
+            outline: none;
+        }
+
+        .search-container:focus-within {
+            border-color: #191F28;
+        }
+    </style>
+</head>
+
+<body class="bg-white text-gray-900 font-pretendard">
+
+    <!-- 헤더 -->
+    <header class="w-full bg-white sticky top-0 z-50 border-b border-gray-100">
+        <div class="max-w-[1200px] mx-auto px-5 h-[60px] flex justify-between items-center">
+            <!-- 로고 -->
+            <a href="main.html" class="flex items-center gap-2">
+                <div class="w-8 h-8 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-lg flex items-center justify-center">
+                    <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
+                    </svg>
+                </div>
+                <span class="text-lg font-bold text-gray-900">우리동네금은방</span>
+            </a>
+
+            <!-- 네비게이션 -->
+            <nav class="hidden md:flex items-center gap-8">
+                <a href="price.html" class="nav-link text-[15px] font-medium text-gray-600 hover:text-gray-900 smooth-transition" data-page="price">금시세</a>
+                <a href="stores.html" class="nav-link text-[15px] font-medium text-gray-600 hover:text-gray-900 smooth-transition" data-page="stores">매장찾기</a>
+                <a href="community.html" class="nav-link text-[15px] font-medium text-gray-600 hover:text-gray-900 smooth-transition" data-page="community">커뮤니티</a>
+            </nav>
+
+            <!-- 우측 영역 -->
+            <div class="flex items-center gap-3">
+                <!-- 비로그인 상태 -->
+                <div id="guest-buttons" class="flex items-center gap-3">
+                    <a href="login.html" class="hidden md:block px-4 py-2 text-[14px] font-semibold text-gray-700 hover:bg-gray-100 rounded-lg smooth-transition">로그인</a>
+                    <a href="signup.html" class="px-4 py-2.5 text-[14px] font-semibold text-white bg-gray-900 hover:bg-gray-800 rounded-lg smooth-transition">시작하기</a>
+                </div>
+                <!-- 로그인 상태 -->
+                <div id="user-menu" class="hidden">
+                    <a href="mypage.html" class="w-9 h-9 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-full flex items-center justify-center text-white text-[14px] font-bold" id="user-avatar"></a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- 메인 히어로 섹션 (토스 스타일 - 대담한 타이포그래피) -->
+    <main>
+        <section class="pt-16 pb-20 px-5 bg-gradient-to-b from-gray-50 to-white">
+            <div class="max-w-[1200px] mx-auto">
+
+                <!-- 실시간 시세 배너 (크림 스타일) -->
+                <div class="inline-flex items-center gap-3 px-4 py-2.5 bg-white rounded-full border border-gray-200 mb-8">
+                    <span class="flex items-center gap-1.5">
+                        <span class="w-2 h-2 bg-green-500 rounded-full pulse-soft"></span>
+                        <span class="text-[13px] font-medium text-gray-500">실시간</span>
+                    </span>
+                    <span class="text-[13px] text-gray-300">|</span>
+                    <span class="text-[14px] font-semibold text-gray-900">24K 금 시세</span>
+                    <span class="text-[15px] font-bold text-gray-900">452,000원</span>
+                    <span class="flex items-center text-[13px] font-semibold text-red-500">
+                        <svg class="w-3 h-3 mr-0.5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                        </svg>
+                        1,000
+                    </span>
+                </div>
+
+                <!-- 히어로 텍스트 -->
+                <div class="mb-12">
+                    <h1 class="text-[40px] md:text-[52px] font-bold leading-[1.2] tracking-[-0.02em] text-gray-900 mb-5">
+                        투명한 금 거래,<br>
+                        <span class="text-transparent bg-clip-text bg-gradient-to-r from-yellow-500 to-yellow-600">쉽고 빠르게</span>
+                    </h1>
+                    <p class="text-[17px] md:text-[19px] text-gray-500 leading-relaxed font-normal">
+                        내 주변 금은방의 실시간 시세와 매장 정보를<br class="hidden md:block">
+                        한 곳에서 비교하고 확인하세요
+                    </p>
+                </div>
+
+                <!-- 검색바 (당근/오늘의집 스타일) -->
+                <div class="search-container max-w-[580px] bg-white border-2 border-gray-200 rounded-2xl p-1.5 flex items-center smooth-transition hover:border-gray-300">
+                    <div class="flex-1 flex items-center gap-3 px-4">
+                        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                        <input type="text" placeholder="지역, 매장명을 검색해보세요"
+                            class="search-input flex-1 py-3 text-[15px] text-gray-900 placeholder-gray-400 bg-transparent">
+                    </div>
+                    <button class="px-6 py-3 bg-gray-900 hover:bg-gray-800 text-white text-[15px] font-semibold rounded-xl smooth-transition">
+                        검색
+                    </button>
+                </div>
+
+                <!-- 인기 검색어 (당근 스타일) -->
+                <div class="flex items-center gap-2 mt-4 flex-wrap">
+                    <span class="text-[13px] text-gray-400">인기</span>
+                    <button class="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-full text-[13px] text-gray-600 smooth-transition">강남</button>
+                    <button class="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-full text-[13px] text-gray-600 smooth-transition">종로</button>
+                    <button class="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-full text-[13px] text-gray-600 smooth-transition">24K 반지</button>
+                    <button class="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-full text-[13px] text-gray-600 smooth-transition">금목걸이</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 빠른 메뉴 (당근/토스 스타일 - 아이콘 그리드) -->
+        <section class="py-12 px-5">
+            <div class="max-w-[1200px] mx-auto">
+                <div class="grid grid-cols-4 md:grid-cols-8 gap-4">
+
+                    <a href="price.html" class="group flex flex-col items-center gap-3 p-4 rounded-2xl hover:bg-gray-50 smooth-transition">
+                        <div class="w-14 h-14 bg-yellow-50 rounded-2xl flex items-center justify-center group-hover:scale-105 smooth-transition">
+                            <svg class="w-7 h-7 text-yellow-600" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                        <span class="text-[13px] font-medium text-gray-700 text-center">금시세</span>
+                    </a>
+
+                    <a href="stores.html" class="group flex flex-col items-center gap-3 p-4 rounded-2xl hover:bg-gray-50 smooth-transition">
+                        <div class="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center group-hover:scale-105 smooth-transition">
+                            <svg class="w-7 h-7 text-blue-600" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"></path>
+                            </svg>
+                        </div>
+                        <span class="text-[13px] font-medium text-gray-700 text-center">내주변</span>
+                    </a>
+
+                    <a href="stores.html" class="group flex flex-col items-center gap-3 p-4 rounded-2xl hover:bg-gray-50 smooth-transition">
+                        <div class="w-14 h-14 bg-purple-50 rounded-2xl flex items-center justify-center group-hover:scale-105 smooth-transition">
+                            <svg class="w-7 h-7 text-purple-600" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 21v-7.5a.75.75 0 01.75-.75h3a.75.75 0 01.75.75V21m-4.5 0H2.36m11.14 0H18m0 0h3.64m-1.39 0V9.349m-16.5 11.65V9.35m0 0a3.001 3.001 0 003.75-.615A2.993 2.993 0 009.75 9.75c.896 0 1.7-.393 2.25-1.016a2.993 2.993 0 002.25 1.016c.896 0 1.7-.393 2.25-1.016a3.001 3.001 0 003.75.614m-16.5 0a3.004 3.004 0 01-.621-4.72L4.318 3.44A1.5 1.5 0 015.378 3h13.243a1.5 1.5 0 011.06.44l1.19 1.189a3 3 0 01-.621 4.72m-13.5 8.65h3.75a.75.75 0 00.75-.75V13.5a.75.75 0 00-.75-.75H6.75a.75.75 0 00-.75.75v3.75c0 .415.336.75.75.75z"></path>
+                            </svg>
+                        </div>
+                        <span class="text-[13px] font-medium text-gray-700 text-center">매장찾기</span>
+                    </a>
+
+                    <a href="mypage.html" class="group flex flex-col items-center gap-3 p-4 rounded-2xl hover:bg-gray-50 smooth-transition">
+                        <div class="w-14 h-14 bg-pink-50 rounded-2xl flex items-center justify-center group-hover:scale-105 smooth-transition">
+                            <svg class="w-7 h-7 text-pink-600" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"></path>
+                            </svg>
+                        </div>
+                        <span class="text-[13px] font-medium text-gray-700 text-center">찜목록</span>
+                    </a>
+
+                    <a href="#" class="group flex flex-col items-center gap-3 p-4 rounded-2xl hover:bg-gray-50 smooth-transition">
+                        <div class="w-14 h-14 bg-orange-50 rounded-2xl flex items-center justify-center group-hover:scale-105 smooth-transition">
+                            <svg class="w-7 h-7 text-orange-600" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z"></path>
+                            </svg>
+                        </div>
+                        <span class="text-[13px] font-medium text-gray-700 text-center">이벤트</span>
+                    </a>
+
+                    <a href="mypage.html" class="group flex flex-col items-center gap-3 p-4 rounded-2xl hover:bg-gray-50 smooth-transition">
+                        <div class="w-14 h-14 bg-cyan-50 rounded-2xl flex items-center justify-center group-hover:scale-105 smooth-transition">
+                            <svg class="w-7 h-7 text-cyan-600" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z"></path>
+                            </svg>
+                        </div>
+                        <span class="text-[13px] font-medium text-gray-700 text-center">주문내역</span>
+                    </a>
+
+                    <a href="#" class="group flex flex-col items-center gap-3 p-4 rounded-2xl hover:bg-gray-50 smooth-transition">
+                        <div class="w-14 h-14 bg-gray-100 rounded-2xl flex items-center justify-center group-hover:scale-105 smooth-transition">
+                            <svg class="w-7 h-7 text-gray-600" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"></path>
+                            </svg>
+                        </div>
+                        <span class="text-[13px] font-medium text-gray-700 text-center">전체메뉴</span>
+                    </a>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- 실시간 시세 섹션 (크림/무신사 스타일) -->
+        <section class="py-12 px-5 bg-gray-50">
+            <div class="max-w-[1200px] mx-auto">
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <h2 class="text-[22px] font-bold text-gray-900 mb-1">실시간 금 시세</h2>
+                        <p class="text-[14px] text-gray-500">1분마다 업데이트됩니다</p>
+                    </div>
+                    <a href="price.html" class="text-[14px] font-medium text-gray-500 hover:text-gray-900 smooth-transition flex items-center gap-1">
+                        전체보기
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"></path>
+                        </svg>
+                    </a>
+                </div>
+
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <!-- 24K 금 -->
+                    <div class="bg-white p-5 rounded-2xl card-shadow smooth-transition hover-lift cursor-pointer">
+                        <div class="flex items-center gap-2 mb-3">
+                            <div class="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center">
+                                <span class="text-[12px] font-bold text-yellow-700">24K</span>
+                            </div>
+                            <span class="text-[15px] font-semibold text-gray-900">순금</span>
+                        </div>
+                        <div class="text-[20px] font-bold text-gray-900 mb-1">452,000원</div>
+                        <div class="flex items-center gap-1 text-[13px] text-red-500 font-medium">
+                            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                            </svg>
+                            1,000 (-0.22%)
+                        </div>
+                    </div>
+
+                    <!-- 18K 금 -->
+                    <div class="bg-white p-5 rounded-2xl card-shadow smooth-transition hover-lift cursor-pointer">
+                        <div class="flex items-center gap-2 mb-3">
+                            <div class="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center">
+                                <span class="text-[12px] font-bold text-yellow-700">18K</span>
+                            </div>
+                            <span class="text-[15px] font-semibold text-gray-900">18K금</span>
+                        </div>
+                        <div class="text-[20px] font-bold text-gray-900 mb-1">339,000원</div>
+                        <div class="flex items-center gap-1 text-[13px] text-green-500 font-medium">
+                            <svg class="w-3 h-3 rotate-180" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                            </svg>
+                            500 (+0.15%)
+                        </div>
+                    </div>
+
+                    <!-- 14K 금 -->
+                    <div class="bg-white p-5 rounded-2xl card-shadow smooth-transition hover-lift cursor-pointer">
+                        <div class="flex items-center gap-2 mb-3">
+                            <div class="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center">
+                                <span class="text-[12px] font-bold text-yellow-700">14K</span>
+                            </div>
+                            <span class="text-[15px] font-semibold text-gray-900">14K금</span>
+                        </div>
+                        <div class="text-[20px] font-bold text-gray-900 mb-1">264,000원</div>
+                        <div class="flex items-center gap-1 text-[13px] text-gray-400 font-medium">
+                            <span>-</span>
+                            0 (0.00%)
+                        </div>
+                    </div>
+
+                    <!-- 백금 -->
+                    <div class="bg-white p-5 rounded-2xl card-shadow smooth-transition hover-lift cursor-pointer">
+                        <div class="flex items-center gap-2 mb-3">
+                            <div class="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
+                                <span class="text-[12px] font-bold text-gray-700">Pt</span>
+                            </div>
+                            <span class="text-[15px] font-semibold text-gray-900">백금</span>
+                        </div>
+                        <div class="text-[20px] font-bold text-gray-900 mb-1">158,000원</div>
+                        <div class="flex items-center gap-1 text-[13px] text-green-500 font-medium">
+                            <svg class="w-3 h-3 rotate-180" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                            </svg>
+                            2,000 (+1.28%)
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- 내 주변 매장 섹션 (당근 스타일) -->
+        <section class="py-12 px-5 bg-gray-50">
+            <div class="max-w-[1200px] mx-auto">
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <h2 class="text-[22px] font-bold text-gray-900 mb-1">내 주변 금은방</h2>
+                        <p class="text-[14px] text-gray-500">서울 강남구 기준</p>
+                    </div>
+                    <button class="flex items-center gap-1.5 px-4 py-2 bg-white border border-gray-200 rounded-lg text-[13px] font-medium text-gray-700 hover:bg-gray-50 smooth-transition">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"></path>
+                        </svg>
+                        위치 변경
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <!-- 매장 카드 1 -->
+                    <a href="store-detail.html" class="bg-white p-5 rounded-2xl card-shadow smooth-transition hover-lift flex gap-4">
+                        <div class="w-20 h-20 bg-yellow-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                            <svg class="w-10 h-10 text-yellow-600" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 21v-7.5a.75.75 0 01.75-.75h3a.75.75 0 01.75.75V21m-4.5 0H2.36m11.14 0H18m0 0h3.64m-1.39 0V9.349m-16.5 11.65V9.35m0 0a3.001 3.001 0 003.75-.615A2.993 2.993 0 009.75 9.75c.896 0 1.7-.393 2.25-1.016a2.993 2.993 0 002.25 1.016c.896 0 1.7-.393 2.25-1.016a3.001 3.001 0 003.75.614m-16.5 0a3.004 3.004 0 01-.621-4.72L4.318 3.44A1.5 1.5 0 015.378 3h13.243a1.5 1.5 0 011.06.44l1.19 1.189a3 3 0 01-.621 4.72m-13.5 8.65h3.75a.75.75 0 00.75-.75V13.5a.75.75 0 00-.75-.75H6.75a.75.75 0 00-.75.75v3.75c0 .415.336.75.75.75z"></path>
+                            </svg>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="text-[16px] font-semibold text-gray-900">강남금은방</span>
+                                <span class="px-1.5 py-0.5 bg-green-100 text-green-700 text-[11px] font-medium rounded">영업중</span>
+                            </div>
+                            <div class="text-[13px] text-gray-500 mb-2">강남구 테헤란로 123</div>
+                            <div class="flex items-center gap-2 text-[13px]">
+                                <span class="text-yellow-500 font-medium">★ 4.8</span>
+                                <span class="text-gray-300">|</span>
+                                <span class="text-gray-500">리뷰 128</span>
+                                <span class="text-gray-300">|</span>
+                                <span class="text-gray-500">350m</span>
+                            </div>
+                        </div>
+                    </a>
+
+                    <!-- 매장 카드 2 -->
+                    <a href="store-detail.html" class="bg-white p-5 rounded-2xl card-shadow smooth-transition hover-lift flex gap-4">
+                        <div class="w-20 h-20 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                            <svg class="w-10 h-10 text-blue-600" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 21v-7.5a.75.75 0 01.75-.75h3a.75.75 0 01.75.75V21m-4.5 0H2.36m11.14 0H18m0 0h3.64m-1.39 0V9.349m-16.5 11.65V9.35m0 0a3.001 3.001 0 003.75-.615A2.993 2.993 0 009.75 9.75c.896 0 1.7-.393 2.25-1.016a2.993 2.993 0 002.25 1.016c.896 0 1.7-.393 2.25-1.016a3.001 3.001 0 003.75.614m-16.5 0a3.004 3.004 0 01-.621-4.72L4.318 3.44A1.5 1.5 0 015.378 3h13.243a1.5 1.5 0 011.06.44l1.19 1.189a3 3 0 01-.621 4.72m-13.5 8.65h3.75a.75.75 0 00.75-.75V13.5a.75.75 0 00-.75-.75H6.75a.75.75 0 00-.75.75v3.75c0 .415.336.75.75.75z"></path>
+                            </svg>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="text-[16px] font-semibold text-gray-900">종로주얼리</span>
+                                <span class="px-1.5 py-0.5 bg-green-100 text-green-700 text-[11px] font-medium rounded">영업중</span>
+                            </div>
+                            <div class="text-[13px] text-gray-500 mb-2">강남구 역삼동 456</div>
+                            <div class="flex items-center gap-2 text-[13px]">
+                                <span class="text-yellow-500 font-medium">★ 4.9</span>
+                                <span class="text-gray-300">|</span>
+                                <span class="text-gray-500">리뷰 89</span>
+                                <span class="text-gray-300">|</span>
+                                <span class="text-gray-500">520m</span>
+                            </div>
+                        </div>
+                    </a>
+
+                    <!-- 매장 카드 3 -->
+                    <a href="store-detail.html" class="bg-white p-5 rounded-2xl card-shadow smooth-transition hover-lift flex gap-4">
+                        <div class="w-20 h-20 bg-purple-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                            <svg class="w-10 h-10 text-purple-600" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 21v-7.5a.75.75 0 01.75-.75h3a.75.75 0 01.75.75V21m-4.5 0H2.36m11.14 0H18m0 0h3.64m-1.39 0V9.349m-16.5 11.65V9.35m0 0a3.001 3.001 0 003.75-.615A2.993 2.993 0 009.75 9.75c.896 0 1.7-.393 2.25-1.016a2.993 2.993 0 002.25 1.016c.896 0 1.7-.393 2.25-1.016a3.001 3.001 0 003.75.614m-16.5 0a3.004 3.004 0 01-.621-4.72L4.318 3.44A1.5 1.5 0 015.378 3h13.243a1.5 1.5 0 011.06.44l1.19 1.189a3 3 0 01-.621 4.72m-13.5 8.65h3.75a.75.75 0 00.75-.75V13.5a.75.75 0 00-.75-.75H6.75a.75.75 0 00-.75.75v3.75c0 .415.336.75.75.75z"></path>
+                            </svg>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="text-[16px] font-semibold text-gray-900">다이아몬드하우스</span>
+                                <span class="px-1.5 py-0.5 bg-gray-100 text-gray-600 text-[11px] font-medium rounded">준비중</span>
+                            </div>
+                            <div class="text-[13px] text-gray-500 mb-2">강남구 선릉로 789</div>
+                            <div class="flex items-center gap-2 text-[13px]">
+                                <span class="text-yellow-500 font-medium">★ 4.7</span>
+                                <span class="text-gray-300">|</span>
+                                <span class="text-gray-500">리뷰 256</span>
+                                <span class="text-gray-300">|</span>
+                                <span class="text-gray-500">1.2km</span>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- CTA 배너 (토스 스타일) -->
+        <section class="py-16 px-5">
+            <div class="max-w-[1200px] mx-auto">
+                <div class="bg-gray-900 rounded-3xl p-8 md:p-12 flex flex-col md:flex-row items-center justify-between gap-6">
+                    <div>
+                        <h3 class="text-[24px] md:text-[28px] font-bold text-white mb-2">금은방 사장님이신가요?</h3>
+                        <p class="text-[15px] text-gray-400">무료로 매장을 등록하고 더 많은 고객을 만나보세요</p>
+                    </div>
+                    <button class="px-8 py-4 bg-white hover:bg-gray-100 text-gray-900 text-[15px] font-semibold rounded-xl smooth-transition flex-shrink-0">
+                        매장 등록하기
+                    </button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- 푸터 (토스/당근 스타일) -->
+    <footer class="bg-gray-100 py-12 px-5">
+        <div class="max-w-[1200px] mx-auto">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-8 mb-10">
+                <div>
+                    <h4 class="text-[14px] font-semibold text-gray-900 mb-4">서비스</h4>
+                    <ul class="space-y-3">
+                        <li><a href="price.html" class="text-[13px] text-gray-500 hover:text-gray-900 smooth-transition">금시세</a></li>
+                        <li><a href="stores.html" class="text-[13px] text-gray-500 hover:text-gray-900 smooth-transition">매장찾기</a></li>
+                        <li><a href="#" class="text-[13px] text-gray-500 hover:text-gray-900 smooth-transition">이벤트</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-[14px] font-semibold text-gray-900 mb-4">고객지원</h4>
+                    <ul class="space-y-3">
+                        <li><a href="#" class="text-[13px] text-gray-500 hover:text-gray-900 smooth-transition">공지사항</a></li>
+                        <li><a href="#" class="text-[13px] text-gray-500 hover:text-gray-900 smooth-transition">자주 묻는 질문</a></li>
+                        <li><a href="#" class="text-[13px] text-gray-500 hover:text-gray-900 smooth-transition">1:1 문의</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-[14px] font-semibold text-gray-900 mb-4">파트너</h4>
+                    <ul class="space-y-3">
+                        <li><a href="#" class="text-[13px] text-gray-500 hover:text-gray-900 smooth-transition">매장 등록</a></li>
+                        <li><a href="#" class="text-[13px] text-gray-500 hover:text-gray-900 smooth-transition">광고 문의</a></li>
+                        <li><a href="#" class="text-[13px] text-gray-500 hover:text-gray-900 smooth-transition">제휴 문의</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-[14px] font-semibold text-gray-900 mb-4">회사</h4>
+                    <ul class="space-y-3">
+                        <li><a href="#" class="text-[13px] text-gray-500 hover:text-gray-900 smooth-transition">회사 소개</a></li>
+                        <li><a href="#" class="text-[13px] text-gray-500 hover:text-gray-900 smooth-transition">채용</a></li>
+                        <li><a href="#" class="text-[13px] text-gray-500 hover:text-gray-900 smooth-transition">블로그</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="border-t border-gray-200 pt-8">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div class="flex items-center gap-2">
+                        <div class="w-6 h-6 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded flex items-center justify-center">
+                            <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
+                            </svg>
+                        </div>
+                        <span class="text-[14px] font-semibold text-gray-700">우리동네금은방</span>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <a href="#" class="text-[12px] text-gray-500 hover:text-gray-900 smooth-transition">이용약관</a>
+                        <a href="#" class="text-[12px] font-semibold text-gray-700 hover:text-gray-900 smooth-transition">개인정보처리방침</a>
+                        <a href="#" class="text-[12px] text-gray-500 hover:text-gray-900 smooth-transition">위치기반서비스 이용약관</a>
+                    </div>
+                </div>
+                <p class="text-[12px] text-gray-400 mt-4">© 2024 우리동네금은방. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- 네비게이션 스크립트 -->
+    <script>
+        function updateAuthUI() {
+            const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+            const userName = localStorage.getItem('userName') || '사용자';
+            const guestButtons = document.getElementById('guest-buttons');
+            const userMenu = document.getElementById('user-menu');
+            const userAvatar = document.getElementById('user-avatar');
+
+            if (isLoggedIn && guestButtons && userMenu && userAvatar) {
+                guestButtons.classList.add('hidden');
+                userMenu.classList.remove('hidden');
+                userAvatar.textContent = userName.charAt(0);
+            }
+        }
+
+        function updateCartBadge() {
+            const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+            const totalCount = cart.reduce((sum, item) => sum + (item.quantity || 1), 0);
+            const badge = document.getElementById('cart-badge');
+
+            if (badge) {
+                if (totalCount > 0) {
+                    badge.textContent = totalCount > 99 ? '99+' : totalCount;
+                    badge.classList.remove('hidden');
+                    badge.classList.add('flex');
+                } else {
+                    badge.classList.add('hidden');
+                    badge.classList.remove('flex');
+                }
+            }
+        }
+
+        function highlightCurrentPage() {
+            const currentPage = window.location.pathname.split('/').pop().replace('.html', '') || 'main';
+            const navLinks = document.querySelectorAll('.nav-link');
+            navLinks.forEach(link => {
+                if (link.dataset.page === currentPage) {
+                    link.classList.remove('text-gray-600');
+                    link.classList.add('text-gray-900');
+                }
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            updateAuthUI();
+            updateCartBadge();
+            highlightCurrentPage();
+        });
+    </script>
+</body>
+
+</html>

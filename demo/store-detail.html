@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>강남금은방 - 우리동네금은방</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#FFD700',
+                        'primary-dark': '#E5C100',
+                        'gray-50': '#FAFAFA',
+                        'gray-100': '#F5F5F5',
+                        'gray-200': '#EEEEEE',
+                        'gray-300': '#E0E0E0',
+                        'gray-400': '#BDBDBD',
+                        'gray-500': '#9E9E9E',
+                        'gray-600': '#757575',
+                        'gray-700': '#616161',
+                        'gray-800': '#424242',
+                        'gray-900': '#191F28',
+                    },
+                    fontFamily: {
+                        pretendard: ['Pretendard', '-apple-system', 'BlinkMacSystemFont', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+
+        * {
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        .smooth-transition {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .card-shadow {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+
+        .card-shadow:hover {
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #E0E0E0;
+            border-radius: 3px;
+        }
+
+        /* 블로그 포스트 카드 */
+        .blog-post-card {
+            border-bottom: 1px solid #F5F5F5;
+        }
+
+        .blog-post-card:last-child {
+            border-bottom: none;
+        }
+
+        /* 네비게이션 탭 */
+        .nav-tab {
+            position: relative;
+        }
+
+        .nav-tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background-color: #191F28;
+        }
+
+        /* 고정 매장 헤더 */
+        .store-header-fixed {
+            position: sticky;
+            top: 60px;
+            z-index: 40;
+            background: white;
+            border-bottom: 1px solid #F5F5F5;
+        }
+    </style>
+</head>
+
+<body class="bg-white text-gray-900 font-pretendard">
+
+    <!-- 헤더 -->
+    <header class="w-full bg-white sticky top-0 z-50 border-b border-gray-100">
+        <div class="max-w-[1200px] mx-auto px-5 h-[60px] flex justify-between items-center">
+            <!-- 로고 -->
+            <a href="main.html" class="flex items-center gap-2">
+                <div class="w-8 h-8 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-lg flex items-center justify-center">
+                    <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
+                    </svg>
+                </div>
+                <span class="text-lg font-bold text-gray-900">우리동네금은방</span>
+            </a>
+
+            <!-- 네비게이션 -->
+            <nav class="hidden md:flex items-center gap-8">
+                <a href="price.html" class="text-[15px] font-medium text-gray-600 hover:text-gray-900 smooth-transition">금시세</a>
+                <a href="stores.html" class="text-[15px] font-medium text-gray-600 hover:text-gray-900 smooth-transition">매장찾기</a>
+                <a href="#" class="text-[15px] font-medium text-gray-600 hover:text-gray-900 smooth-transition">커뮤니티</a>
+            </nav>
+
+            <!-- 우측 영역 -->
+            <div class="flex items-center gap-3">
+                <a href="login.html" class="hidden md:block px-4 py-2 text-[14px] font-semibold text-gray-700 hover:bg-gray-100 rounded-lg smooth-transition">로그인</a>
+                <a href="signup.html" class="px-4 py-2.5 text-[14px] font-semibold text-white bg-gray-900 hover:bg-gray-800 rounded-lg smooth-transition">시작하기</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="bg-gray-50">
+
+        <!-- 매장 커버 이미지 영역 -->
+        <div class="w-full h-[280px] bg-gradient-to-br from-yellow-50 via-yellow-100 to-yellow-200 relative overflow-hidden">
+            <div class="absolute inset-0 opacity-20">
+                <svg class="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+                    <defs>
+                        <pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse">
+                            <circle cx="5" cy="5" r="1" fill="#D4AF37"/>
+                        </pattern>
+                    </defs>
+                    <rect width="100" height="100" fill="url(#grid)"/>
+                </svg>
+            </div>
+        </div>
+
+        <!-- 매장 메인 정보 (커버 이미지와 겹치게) -->
+        <div class="max-w-[1080px] mx-auto px-5 -mt-20 relative z-10">
+            <div class="bg-white rounded-2xl p-8 card-shadow mb-6">
+                <div class="flex flex-col md:flex-row gap-6">
+                    <!-- 매장 아이콘/로고 -->
+                    <div class="w-32 h-32 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-2xl flex items-center justify-center flex-shrink-0">
+                        <svg class="w-16 h-16 text-white" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 21v-7.5a.75.75 0 01.75-.75h3a.75.75 0 01.75.75V21m-4.5 0H2.36m11.14 0H18m0 0h3.64m-1.39 0V9.349m-16.5 11.65V9.35m0 0a3.001 3.001 0 003.75-.615A2.993 2.993 0 009.75 9.75c.896 0 1.7-.393 2.25-1.016a2.993 2.993 0 002.25 1.016c.896 0 1.7-.393 2.25-1.016a3.001 3.001 0 003.75.614m-16.5 0a3.004 3.004 0 01-.621-4.72L4.318 3.44A1.5 1.5 0 015.378 3h13.243a1.5 1.5 0 011.06.44l1.19 1.189a3 3 0 01-.621 4.72m-13.5 8.65h3.75a.75.75 0 00.75-.75V13.5a.75.75 0 00-.75-.75H6.75a.75.75 0 00-.75.75v3.75c0 .415.336.75.75.75z"></path>
+                        </svg>
+                    </div>
+
+                    <!-- 매장 정보 -->
+                    <div class="flex-1">
+                        <div class="flex items-start justify-between mb-3">
+                            <div>
+                                <div class="flex items-center gap-3 mb-2">
+                                    <h1 class="text-[28px] font-bold text-gray-900">강남금은방</h1>
+                                    <span class="px-3 py-1 bg-green-100 text-green-700 text-[13px] font-semibold rounded-full">영업중</span>
+                                </div>
+                                <div class="flex items-center gap-3 text-[15px]">
+                                    <span class="flex items-center gap-1 text-yellow-500 font-semibold">
+                                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                                        </svg>
+                                        4.8
+                                    </span>
+                                    <span class="text-gray-300">|</span>
+                                    <a href="#reviews" class="text-gray-600 hover:text-gray-900 smooth-transition">리뷰 128개</a>
+                                    <span class="text-gray-300">|</span>
+                                    <span class="text-gray-600">방문자리뷰 89</span>
+                                </div>
+                            </div>
+                            <button class="flex items-center gap-2 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 rounded-lg smooth-transition">
+                                <svg class="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"></path>
+                                </svg>
+                                <span class="text-[14px] font-semibold text-gray-900">찜하기</span>
+                            </button>
+                        </div>
+
+                        <!-- 한줄 소개 -->
+                        <p class="text-[15px] text-gray-600 mb-4 leading-relaxed">
+                            강남역 3번 출구 도보 5분, 30년 전통의 믿을 수 있는 금은방입니다. 24K 순금부터 다이아몬드까지 다양한 제품을 합리적인 가격에 만나보세요.
+                        </p>
+
+                        <!-- 태그 -->
+                        <div class="flex flex-wrap gap-2 mb-4">
+                            <span class="px-3 py-1.5 bg-gray-100 text-gray-700 text-[13px] font-medium rounded-lg">24K 순금</span>
+                            <span class="px-3 py-1.5 bg-gray-100 text-gray-700 text-[13px] font-medium rounded-lg">18K</span>
+                            <span class="px-3 py-1.5 bg-gray-100 text-gray-700 text-[13px] font-medium rounded-lg">다이아몬드</span>
+                            <span class="px-3 py-1.5 bg-gray-100 text-gray-700 text-[13px] font-medium rounded-lg">수리가능</span>
+                            <span class="px-3 py-1.5 bg-gray-100 text-gray-700 text-[13px] font-medium rounded-lg">매입가능</span>
+                        </div>
+
+                        <!-- 빠른 액션 버튼 -->
+                        <div class="flex gap-3">
+                            <a href="tel:02-1234-5678" class="flex-1 flex items-center justify-center gap-2 py-3 bg-gray-900 hover:bg-gray-800 text-white text-[15px] font-semibold rounded-xl smooth-transition">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z"></path>
+                                </svg>
+                                전화하기
+                            </a>
+                            <a href="#map" class="flex-1 flex items-center justify-center gap-2 py-3 bg-white border-2 border-gray-200 hover:border-gray-900 text-gray-900 text-[15px] font-semibold rounded-xl smooth-transition">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"></path>
+                                </svg>
+                                길찾기
+                            </a>
+                            <button class="flex items-center justify-center gap-2 px-5 py-3 bg-white border-2 border-gray-200 hover:border-gray-900 text-gray-900 text-[15px] font-semibold rounded-xl smooth-transition">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185z"></path>
+                                </svg>
+                                공유
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 고정 네비게이션 탭 -->
+        <div class="store-header-fixed">
+            <div class="max-w-[1080px] mx-auto px-5">
+                <nav class="flex items-center gap-8 overflow-x-auto">
+                    <a href="#feed" class="nav-tab active py-4 text-[15px] font-semibold text-gray-900 whitespace-nowrap smooth-transition">
+                        피드
+                    </a>
+                    <a href="#info" class="nav-tab py-4 text-[15px] font-medium text-gray-500 hover:text-gray-900 whitespace-nowrap smooth-transition">
+                        매장정보
+                    </a>
+                    <a href="#products" class="nav-tab py-4 text-[15px] font-medium text-gray-500 hover:text-gray-900 whitespace-nowrap smooth-transition">
+                        상품
+                    </a>
+                    <a href="#reviews" class="nav-tab py-4 text-[15px] font-medium text-gray-500 hover:text-gray-900 whitespace-nowrap smooth-transition">
+                        리뷰
+                    </a>
+                    <a href="#gallery" class="nav-tab py-4 text-[15px] font-medium text-gray-500 hover:text-gray-900 whitespace-nowrap smooth-transition">
+                        갤러리
+                    </a>
+                </nav>
+            </div>
+        </div>
+
+        <!-- 메인 컨텐츠 영역 (블로그 스타일) -->
+        <div class="max-w-[1080px] mx-auto px-5 py-8">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+                <!-- 좌측: 블로그 피드 (메인 컨텐츠) -->
+                <div class="lg:col-span-2 space-y-6" id="feed">
+
+                    <!-- 블로그 포스트 1: 신상품 안내 (자동 생성) -->
+                    <article class="bg-white rounded-2xl overflow-hidden card-shadow">
+                        <div class="p-6 border-b border-gray-100">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-full flex items-center justify-center text-white font-bold text-[14px]">
+                                        강
+                                    </div>
+                                    <div>
+                                        <div class="text-[15px] font-semibold text-gray-900">강남금은방</div>
+                                        <div class="text-[13px] text-gray-500">2시간 전</div>
+                                    </div>
+                                </div>
+                                <span class="px-3 py-1 bg-blue-50 text-blue-700 text-[12px] font-semibold rounded-full">신상품</span>
+                            </div>
+                            <h2 class="text-[20px] font-bold text-gray-900 mb-3">24K 순금 반지 신상품 입고!</h2>
+                            <p class="text-[15px] text-gray-600 leading-relaxed mb-4">
+                                고객님들의 많은 요청으로 24K 순금 반지 신제품을 입고했습니다. 심플하면서도 고급스러운 디자인으로 결혼 예물이나 선물용으로 추천드립니다.
+                            </p>
+                        </div>
+                        <!-- 이미지 -->
+                        <div class="aspect-[16/9] bg-gradient-to-br from-yellow-100 to-yellow-200 flex items-center justify-center">
+                            <svg class="w-24 h-24 text-yellow-400" fill="currentColor" viewBox="0 0 24 24">
+                                <circle cx="12" cy="12" r="10"></circle>
+                            </svg>
+                        </div>
+                        <!-- 하단 정보 -->
+                        <div class="p-6">
+                            <div class="flex items-center justify-between text-[14px]">
+                                <div class="flex items-center gap-4">
+                                    <span class="font-bold text-gray-900">3.75g</span>
+                                    <span class="text-gray-400">|</span>
+                                    <span class="font-bold text-gray-900">1,695,000원</span>
+                                </div>
+                                <button class="px-4 py-2 bg-gray-900 hover:bg-gray-800 text-white font-semibold rounded-lg smooth-transition">
+                                    문의하기
+                                </button>
+                            </div>
+                            <div class="mt-4 pt-4 border-t border-gray-100 flex items-center gap-4 text-[14px] text-gray-500">
+                                <button class="flex items-center gap-1.5 hover:text-red-500 smooth-transition">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"></path>
+                                    </svg>
+                                    좋아요 23
+                                </button>
+                                <button class="flex items-center gap-1.5 hover:text-blue-500 smooth-transition">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z"></path>
+                                    </svg>
+                                    댓글 5
+                                </button>
+                            </div>
+                        </div>
+                    </article>
+
+                    <!-- 블로그 포스트 2: 이벤트 (자동 생성) -->
+                    <article class="bg-white rounded-2xl overflow-hidden card-shadow">
+                        <div class="p-6">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-full flex items-center justify-center text-white font-bold text-[14px]">
+                                        강
+                                    </div>
+                                    <div>
+                                        <div class="text-[15px] font-semibold text-gray-900">강남금은방</div>
+                                        <div class="text-[13px] text-gray-500">1일 전</div>
+                                    </div>
+                                </div>
+                                <span class="px-3 py-1 bg-red-50 text-red-700 text-[12px] font-semibold rounded-full">이벤트</span>
+                            </div>
+                            <h2 class="text-[20px] font-bold text-gray-900 mb-3">🎉 오픈 30주년 감사 이벤트</h2>
+                            <p class="text-[15px] text-gray-600 leading-relaxed mb-4">
+                                강남금은방 오픈 30주년을 맞이하여 고객님들께 감사의 마음을 전하고자 특별 이벤트를 진행합니다.
+                                금 제품 구매 시 공임비 50% 할인 혜택을 드립니다!
+                            </p>
+                            <div class="p-4 bg-gray-50 rounded-xl mb-4">
+                                <div class="flex items-center gap-2 text-[14px] text-gray-600 mb-2">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5"></path>
+                                    </svg>
+                                    <span>기간: 2024.12.01 ~ 12.31</span>
+                                </div>
+                                <div class="flex items-center gap-2 text-[14px] text-gray-600">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z"></path>
+                                    </svg>
+                                    <span>대상: 24K, 18K 금 제품 전체</span>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <div class="text-[13px] text-gray-500">
+                                    <span class="mr-3">👍 좋아요 45</span>
+                                    <span>💬 댓글 12</span>
+                                </div>
+                                <button class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-900 font-semibold rounded-lg smooth-transition text-[14px]">
+                                    자세히 보기
+                                </button>
+                            </div>
+                        </div>
+                    </article>
+
+                    <!-- 블로그 포스트 3: 매장 소식 -->
+                    <article class="bg-white rounded-2xl overflow-hidden card-shadow">
+                        <div class="p-6">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-full flex items-center justify-center text-white font-bold text-[14px]">
+                                        강
+                                    </div>
+                                    <div>
+                                        <div class="text-[15px] font-semibold text-gray-900">강남금은방</div>
+                                        <div class="text-[13px] text-gray-500">3일 전</div>
+                                    </div>
+                                </div>
+                                <span class="px-3 py-1 bg-gray-100 text-gray-700 text-[12px] font-semibold rounded-full">공지</span>
+                            </div>
+                            <h2 class="text-[20px] font-bold text-gray-900 mb-3">12월 휴무일 안내</h2>
+                            <p class="text-[15px] text-gray-600 leading-relaxed mb-4">
+                                안녕하세요, 강남금은방입니다.<br>
+                                12월 휴무일을 아래와 같이 안내드립니다.
+                            </p>
+                            <div class="p-4 bg-gray-50 rounded-xl">
+                                <div class="text-[15px] text-gray-700 space-y-2">
+                                    <div>• 정기 휴무: 매주 일요일</div>
+                                    <div>• 크리스마스: 12월 25일 (수) 휴무</div>
+                                    <div>• 연말 휴무: 12월 31일 (화) 오후 3시 조기 마감</div>
+                                </div>
+                            </div>
+                        </div>
+                    </article>
+
+                    <!-- 블로그 포스트 4: 고객 후기 (AI 요약) -->
+                    <article class="bg-white rounded-2xl overflow-hidden card-shadow">
+                        <div class="p-6">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-full flex items-center justify-center text-white font-bold text-[14px]">
+                                        강
+                                    </div>
+                                    <div>
+                                        <div class="text-[15px] font-semibold text-gray-900">강남금은방</div>
+                                        <div class="text-[13px] text-gray-500">5일 전</div>
+                                    </div>
+                                </div>
+                                <span class="px-3 py-1 bg-purple-50 text-purple-700 text-[12px] font-semibold rounded-full">고객후기</span>
+                            </div>
+                            <h2 class="text-[20px] font-bold text-gray-900 mb-3">이번 주 고객 후기 모음</h2>
+                            <p class="text-[15px] text-gray-600 leading-relaxed mb-4">
+                                이번 주에도 많은 고객님들께서 소중한 후기를 남겨주셨습니다. 진심으로 감사드립니다!
+                            </p>
+                            <div class="space-y-3">
+                                <div class="p-4 bg-gray-50 rounded-xl">
+                                    <div class="flex items-center gap-2 mb-2">
+                                        <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-[12px] font-bold text-blue-700">김</div>
+                                        <span class="text-[14px] font-semibold text-gray-900">김**님</span>
+                                        <span class="text-yellow-500">★★★★★</span>
+                                    </div>
+                                    <p class="text-[14px] text-gray-600">"사장님이 정말 친절하시고 가격도 합리적이에요. 결혼 반지 여기서 맞췄는데 너무 만족스럽습니다!"</p>
+                                </div>
+                                <div class="p-4 bg-gray-50 rounded-xl">
+                                    <div class="flex items-center gap-2 mb-2">
+                                        <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center text-[12px] font-bold text-green-700">박</div>
+                                        <span class="text-[14px] font-semibold text-gray-900">박**님</span>
+                                        <span class="text-yellow-500">★★★★★</span>
+                                    </div>
+                                    <p class="text-[14px] text-gray-600">"금 매입 받으러 갔는데 다른 곳보다 훨씬 좋은 가격에 거래했어요. 추천합니다!"</p>
+                                </div>
+                            </div>
+                        </div>
+                    </article>
+
+                </div>
+
+                <!-- 우측: 고정 사이드바 (매장 정보) -->
+                <div class="lg:col-span-1">
+                    <div class="sticky top-[180px] space-y-4">
+
+                        <!-- 실시간 금 시세 -->
+                        <div class="bg-white rounded-2xl p-5 card-shadow">
+                            <h3 class="text-[16px] font-bold text-gray-900 mb-4">실시간 금 시세</h3>
+                            <div class="space-y-3">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-[14px] text-gray-600">24K (1g)</span>
+                                    <div class="text-right">
+                                        <div class="text-[15px] font-bold text-gray-900">452,000원</div>
+                                        <div class="text-[12px] text-red-500 font-medium">▼ 1,000</div>
+                                    </div>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-[14px] text-gray-600">18K (1g)</span>
+                                    <div class="text-right">
+                                        <div class="text-[15px] font-bold text-gray-900">339,000원</div>
+                                        <div class="text-[12px] text-green-500 font-medium">▲ 500</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-4 pt-4 border-t border-gray-100 text-[12px] text-gray-500 text-center">
+                                2024.12.02 14:30 기준
+                            </div>
+                        </div>
+
+                        <!-- 매장 정보 -->
+                        <div class="bg-white rounded-2xl p-5 card-shadow" id="info">
+                            <h3 class="text-[16px] font-bold text-gray-900 mb-4">매장 정보</h3>
+                            <div class="space-y-3 text-[14px]">
+                                <div class="flex gap-3">
+                                    <svg class="w-5 h-5 text-gray-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"></path>
+                                    </svg>
+                                    <div>
+                                        <div class="text-gray-900 font-medium mb-1">주소</div>
+                                        <div class="text-gray-600">서울 강남구 테헤란로 123<br>ABC빌딩 1층</div>
+                                    </div>
+                                </div>
+                                <div class="flex gap-3">
+                                    <svg class="w-5 h-5 text-gray-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                    <div>
+                                        <div class="text-gray-900 font-medium mb-1">영업시간</div>
+                                        <div class="text-gray-600">
+                                            평일 09:00 - 19:00<br>
+                                            토요일 09:00 - 18:00<br>
+                                            일요일 휴무
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="flex gap-3">
+                                    <svg class="w-5 h-5 text-gray-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z"></path>
+                                    </svg>
+                                    <div>
+                                        <div class="text-gray-900 font-medium mb-1">전화번호</div>
+                                        <a href="tel:02-1234-5678" class="text-blue-600 hover:underline">02-1234-5678</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 지도 미리보기 -->
+                        <div class="bg-white rounded-2xl overflow-hidden card-shadow">
+                            <div class="aspect-square bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
+                                <div class="text-center">
+                                    <svg class="w-12 h-12 text-gray-400 mx-auto mb-2" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 6.75V15m6-6v8.25m.503 3.498l4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 00-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0z"></path>
+                                    </svg>
+                                    <p class="text-[13px] text-gray-500">지도 보기</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 공유하기 -->
+                        <div class="bg-white rounded-2xl p-5 card-shadow">
+                            <h3 class="text-[16px] font-bold text-gray-900 mb-4">공유하기</h3>
+                            <div class="grid grid-cols-4 gap-3">
+                                <button class="flex flex-col items-center gap-2 p-3 bg-gray-50 hover:bg-gray-100 rounded-xl smooth-transition">
+                                    <div class="w-10 h-10 bg-yellow-400 rounded-full flex items-center justify-center">
+                                        <span class="text-[11px] font-bold text-gray-900">카톡</span>
+                                    </div>
+                                    <span class="text-[11px] text-gray-600">카카오톡</span>
+                                </button>
+                                <button class="flex flex-col items-center gap-2 p-3 bg-gray-50 hover:bg-gray-100 rounded-xl smooth-transition">
+                                    <div class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
+                                        <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                                        </svg>
+                                    </div>
+                                    <span class="text-[11px] text-gray-600">페이스북</span>
+                                </button>
+                                <button class="flex flex-col items-center gap-2 p-3 bg-gray-50 hover:bg-gray-100 rounded-xl smooth-transition">
+                                    <div class="w-10 h-10 bg-gray-900 rounded-full flex items-center justify-center">
+                                        <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
+                                        </svg>
+                                    </div>
+                                    <span class="text-[11px] text-gray-600">트위터</span>
+                                </button>
+                                <button class="flex flex-col items-center gap-2 p-3 bg-gray-50 hover:bg-gray-100 rounded-xl smooth-transition">
+                                    <div class="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
+                                        <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244"></path>
+                                        </svg>
+                                    </div>
+                                    <span class="text-[11px] text-gray-600">링크</span>
+                                </button>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </main>
+
+    <!-- 푸터 -->
+    <footer class="bg-gray-100 py-12 px-5 mt-12">
+        <div class="max-w-[1200px] mx-auto">
+            <div class="flex items-center gap-2 mb-4">
+                <div class="w-6 h-6 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded flex items-center justify-center">
+                    <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
+                    </svg>
+                </div>
+                <span class="text-[14px] font-semibold text-gray-700">우리동네금은방</span>
+            </div>
+            <p class="text-[12px] text-gray-400">© 2024 우리동네금은방. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        // 네비게이션 탭 활성화
+        document.querySelectorAll('.nav-tab').forEach(tab => {
+            tab.addEventListener('click', function(e) {
+                e.preventDefault();
+                document.querySelectorAll('.nav-tab').forEach(t => {
+                    t.classList.remove('active', 'text-gray-900', 'font-semibold');
+                    t.classList.add('text-gray-500', 'font-medium');
+                });
+                this.classList.add('active', 'text-gray-900', 'font-semibold');
+                this.classList.remove('text-gray-500', 'font-medium');
+            });
+        });
+    </script>
+
+</body>
+
+</html>

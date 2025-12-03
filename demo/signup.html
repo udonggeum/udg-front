@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>회원가입 - 우리동네금은방</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#FFD700',
+                        'primary-dark': '#E5C100',
+                        'gray-50': '#FAFAFA',
+                        'gray-100': '#F5F5F5',
+                        'gray-200': '#EEEEEE',
+                        'gray-300': '#E0E0E0',
+                        'gray-400': '#BDBDBD',
+                        'gray-500': '#9E9E9E',
+                        'gray-600': '#757575',
+                        'gray-700': '#616161',
+                        'gray-800': '#424242',
+                        'gray-900': '#191F28',
+                        'kakao': '#FEE500',
+                        'naver': '#03C75A',
+                    },
+                    fontFamily: {
+                        pretendard: ['Pretendard', '-apple-system', 'BlinkMacSystemFont', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+
+        * {
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+        }
+
+        html, body {
+            height: 100%;
+        }
+
+        .smooth-transition {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* 인풋 포커스 */
+        .input-field:focus {
+            outline: none;
+            border-color: #191F28;
+            background-color: #fff;
+        }
+
+        /* 인풋 성공 상태 */
+        .input-field.success {
+            border-color: #22C55E;
+        }
+
+        /* 인풋 에러 상태 */
+        .input-field.error {
+            border-color: #EF4444;
+        }
+
+        /* 체크박스 커스텀 */
+        .custom-checkbox {
+            appearance: none;
+            width: 22px;
+            height: 22px;
+            border: 2px solid #E0E0E0;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            flex-shrink: 0;
+        }
+
+        .custom-checkbox:checked {
+            background-color: #191F28;
+            border-color: #191F28;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M12.207 4.793a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0l-2-2a1 1 0 011.414-1.414L6.5 9.086l4.293-4.293a1 1 0 011.414 0z'/%3E%3C/svg%3E");
+            background-size: 14px;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+
+        /* 전체 동의 체크박스 */
+        .custom-checkbox-all {
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            border: 2px solid #191F28;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            flex-shrink: 0;
+        }
+
+        .custom-checkbox-all:checked {
+            background-color: #191F28;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M12.207 4.793a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0l-2-2a1 1 0 011.414-1.414L6.5 9.086l4.293-4.293a1 1 0 011.414 0z'/%3E%3C/svg%3E");
+            background-size: 14px;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+
+        /* 소셜 버튼 호버 */
+        .social-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        /* 구분선 */
+        .divider {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background-color: #EEEEEE;
+        }
+
+        /* 스텝 인디케이터 */
+        .step-indicator {
+            position: relative;
+        }
+
+        .step-indicator::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 100%;
+            width: 40px;
+            height: 2px;
+            background-color: #E0E0E0;
+            transform: translateY(-50%);
+        }
+
+        .step-indicator:last-child::after {
+            display: none;
+        }
+
+        .step-indicator.active .step-number {
+            background-color: #191F28;
+            color: white;
+        }
+
+        .step-indicator.completed .step-number {
+            background-color: #22C55E;
+            color: white;
+        }
+
+        .step-indicator.completed::after {
+            background-color: #22C55E;
+        }
+
+        /* 비밀번호 강도 */
+        .password-strength {
+            height: 4px;
+            border-radius: 2px;
+            transition: all 0.3s ease;
+        }
+
+        /* 스크롤바 */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #E0E0E0;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+
+<body class="bg-white text-gray-900 font-pretendard">
+
+    <div class="min-h-full flex flex-col">
+
+        <!-- 헤더 -->
+        <header class="w-full bg-white border-b border-gray-100 sticky top-0 z-50">
+            <div class="max-w-[520px] mx-auto px-5 h-[60px] flex items-center justify-between">
+                <a href="main.html" class="flex items-center gap-2">
+                    <div class="w-8 h-8 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-lg flex items-center justify-center">
+                        <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
+                        </svg>
+                    </div>
+                    <span class="text-lg font-bold text-gray-900">우리동네금은방</span>
+                </a>
+                <a href="login.html" class="text-[14px] text-gray-500 hover:text-gray-900 smooth-transition">로그인</a>
+            </div>
+        </header>
+
+        <!-- 메인 컨텐츠 -->
+        <main class="flex-1 flex flex-col">
+            <div class="max-w-[520px] w-full mx-auto px-5 py-10">
+
+                <!-- 스텝 인디케이터 -->
+                <div class="flex items-center justify-center gap-4 mb-10">
+                    <div class="step-indicator active flex items-center gap-2">
+                        <div class="step-number w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center text-[13px] font-semibold text-gray-500">1</div>
+                        <span class="text-[13px] font-medium text-gray-900 hidden sm:block">정보입력</span>
+                    </div>
+                    <div class="w-8 h-0.5 bg-gray-200"></div>
+                    <div class="step-indicator flex items-center gap-2">
+                        <div class="step-number w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center text-[13px] font-semibold text-gray-500">2</div>
+                        <span class="text-[13px] font-medium text-gray-400 hidden sm:block">약관동의</span>
+                    </div>
+                    <div class="w-8 h-0.5 bg-gray-200"></div>
+                    <div class="step-indicator flex items-center gap-2">
+                        <div class="step-number w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center text-[13px] font-semibold text-gray-500">3</div>
+                        <span class="text-[13px] font-medium text-gray-400 hidden sm:block">가입완료</span>
+                    </div>
+                </div>
+
+                <!-- 타이틀 -->
+                <div class="text-center mb-10">
+                    <h1 class="text-[26px] font-bold text-gray-900 mb-2">회원가입</h1>
+                    <p class="text-[15px] text-gray-500">간편하게 가입하고 다양한 서비스를 이용하세요</p>
+                </div>
+
+                <!-- 소셜 회원가입 -->
+                <div class="space-y-3 mb-8">
+                    <!-- 카카오 -->
+                    <button class="social-btn w-full flex items-center justify-center gap-3 py-4 bg-kakao rounded-xl text-[15px] font-semibold text-gray-900 smooth-transition">
+                        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 3C6.477 3 2 6.477 2 10.5c0 2.47 1.607 4.647 4.023 5.903-.176.657-.64 2.385-.733 2.758-.114.461.17.454.357.33.147-.097 2.343-1.595 3.293-2.243.349.05.706.076 1.06.076 5.523 0 10-3.477 10-7.824C20 6.477 17.523 3 12 3z"/>
+                        </svg>
+                        카카오로 3초만에 시작하기
+                    </button>
+
+                    <!-- 네이버 -->
+                    <button class="social-btn w-full flex items-center justify-center gap-3 py-4 bg-naver rounded-xl text-[15px] font-semibold text-white smooth-transition">
+                        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M16.273 12.845L7.376 3H3v18h4.726V12.155L16.624 21H21V3h-4.727z"/>
+                        </svg>
+                        네이버로 시작하기
+                    </button>
+                </div>
+
+                <!-- 구분선 -->
+                <div class="divider text-[13px] text-gray-400 mb-8">
+                    또는 이메일로 가입
+                </div>
+
+                <!-- 회원가입 폼 -->
+                <form class="space-y-5">
+
+                    <!-- 이메일 -->
+                    <div>
+                        <label class="block text-[13px] font-semibold text-gray-900 mb-2">이메일 <span class="text-red-500">*</span></label>
+                        <div class="flex gap-2">
+                            <input type="email" placeholder="example@email.com"
+                                class="input-field flex-1 px-4 py-4 bg-gray-100 border border-transparent rounded-xl text-[15px] text-gray-900 placeholder-gray-400 smooth-transition">
+                            <button type="button" class="px-5 py-4 bg-gray-200 hover:bg-gray-300 text-gray-700 text-[14px] font-semibold rounded-xl smooth-transition whitespace-nowrap">
+                                인증요청
+                            </button>
+                        </div>
+                        <p class="mt-2 text-[12px] text-gray-500">로그인 및 주요 알림에 사용됩니다</p>
+                    </div>
+
+                    <!-- 인증번호 (이메일 인증 후 표시) -->
+                    <div class="hidden">
+                        <label class="block text-[13px] font-semibold text-gray-900 mb-2">인증번호</label>
+                        <div class="flex gap-2">
+                            <div class="relative flex-1">
+                                <input type="text" placeholder="인증번호 6자리"
+                                    class="input-field w-full px-4 py-4 bg-gray-100 border border-transparent rounded-xl text-[15px] text-gray-900 placeholder-gray-400 smooth-transition">
+                                <span class="absolute right-4 top-1/2 -translate-y-1/2 text-[14px] font-semibold text-red-500">02:58</span>
+                            </div>
+                            <button type="button" class="px-5 py-4 bg-gray-900 hover:bg-gray-800 text-white text-[14px] font-semibold rounded-xl smooth-transition whitespace-nowrap">
+                                확인
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 비밀번호 -->
+                    <div>
+                        <label class="block text-[13px] font-semibold text-gray-900 mb-2">비밀번호 <span class="text-red-500">*</span></label>
+                        <div class="relative">
+                            <input type="password" placeholder="8자 이상, 영문/숫자/특수문자 조합"
+                                class="input-field w-full px-4 py-4 bg-gray-100 border border-transparent rounded-xl text-[15px] text-gray-900 placeholder-gray-400 smooth-transition pr-12">
+                            <button type="button" class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 smooth-transition">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                </svg>
+                            </button>
+                        </div>
+                        <!-- 비밀번호 강도 표시 -->
+                        <div class="flex gap-1 mt-3">
+                            <div class="password-strength flex-1 bg-gray-200"></div>
+                            <div class="password-strength flex-1 bg-gray-200"></div>
+                            <div class="password-strength flex-1 bg-gray-200"></div>
+                            <div class="password-strength flex-1 bg-gray-200"></div>
+                        </div>
+                        <div class="flex items-center justify-between mt-2">
+                            <p class="text-[12px] text-gray-400">비밀번호 강도: <span class="text-gray-500">입력해주세요</span></p>
+                        </div>
+                    </div>
+
+                    <!-- 비밀번호 확인 -->
+                    <div>
+                        <label class="block text-[13px] font-semibold text-gray-900 mb-2">비밀번호 확인 <span class="text-red-500">*</span></label>
+                        <div class="relative">
+                            <input type="password" placeholder="비밀번호를 한번 더 입력하세요"
+                                class="input-field w-full px-4 py-4 bg-gray-100 border border-transparent rounded-xl text-[15px] text-gray-900 placeholder-gray-400 smooth-transition pr-12">
+                            <button type="button" class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 smooth-transition">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 이름 -->
+                    <div>
+                        <label class="block text-[13px] font-semibold text-gray-900 mb-2">이름 <span class="text-red-500">*</span></label>
+                        <input type="text" placeholder="실명을 입력하세요"
+                            class="input-field w-full px-4 py-4 bg-gray-100 border border-transparent rounded-xl text-[15px] text-gray-900 placeholder-gray-400 smooth-transition">
+                    </div>
+
+                    <!-- 휴대폰 번호 -->
+                    <div>
+                        <label class="block text-[13px] font-semibold text-gray-900 mb-2">휴대폰 번호 <span class="text-red-500">*</span></label>
+                        <div class="flex gap-2">
+                            <input type="tel" placeholder="'-' 없이 숫자만 입력"
+                                class="input-field flex-1 px-4 py-4 bg-gray-100 border border-transparent rounded-xl text-[15px] text-gray-900 placeholder-gray-400 smooth-transition">
+                            <button type="button" class="px-5 py-4 bg-gray-200 hover:bg-gray-300 text-gray-700 text-[14px] font-semibold rounded-xl smooth-transition whitespace-nowrap">
+                                인증요청
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 구분선 -->
+                    <hr class="border-gray-100 my-8">
+
+                    <!-- 약관 동의 -->
+                    <div class="space-y-4">
+                        <h3 class="text-[15px] font-semibold text-gray-900">약관 동의</h3>
+
+                        <!-- 전체 동의 -->
+                        <label class="flex items-center gap-3 p-4 bg-gray-50 rounded-xl cursor-pointer group">
+                            <input type="checkbox" class="custom-checkbox-all">
+                            <span class="text-[15px] font-semibold text-gray-900">전체 동의</span>
+                        </label>
+
+                        <div class="space-y-3 pl-2">
+                            <!-- 이용약관 -->
+                            <label class="flex items-center justify-between cursor-pointer group">
+                                <div class="flex items-center gap-3">
+                                    <input type="checkbox" class="custom-checkbox">
+                                    <span class="text-[14px] text-gray-700">[필수] 이용약관 동의</span>
+                                </div>
+                                <button type="button" class="text-[13px] text-gray-400 hover:text-gray-600 smooth-transition">보기</button>
+                            </label>
+
+                            <!-- 개인정보 수집 -->
+                            <label class="flex items-center justify-between cursor-pointer group">
+                                <div class="flex items-center gap-3">
+                                    <input type="checkbox" class="custom-checkbox">
+                                    <span class="text-[14px] text-gray-700">[필수] 개인정보 수집 및 이용 동의</span>
+                                </div>
+                                <button type="button" class="text-[13px] text-gray-400 hover:text-gray-600 smooth-transition">보기</button>
+                            </label>
+
+                            <!-- 위치기반 서비스 -->
+                            <label class="flex items-center justify-between cursor-pointer group">
+                                <div class="flex items-center gap-3">
+                                    <input type="checkbox" class="custom-checkbox">
+                                    <span class="text-[14px] text-gray-700">[필수] 위치기반 서비스 이용약관 동의</span>
+                                </div>
+                                <button type="button" class="text-[13px] text-gray-400 hover:text-gray-600 smooth-transition">보기</button>
+                            </label>
+
+                            <!-- 마케팅 수신 -->
+                            <label class="flex items-center justify-between cursor-pointer group">
+                                <div class="flex items-center gap-3">
+                                    <input type="checkbox" class="custom-checkbox">
+                                    <span class="text-[14px] text-gray-500">[선택] 마케팅 정보 수신 동의</span>
+                                </div>
+                                <button type="button" class="text-[13px] text-gray-400 hover:text-gray-600 smooth-transition">보기</button>
+                            </label>
+
+                            <!-- 마케팅 수신 방법 -->
+                            <div class="flex items-center gap-4 pl-9">
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" class="custom-checkbox w-[18px] h-[18px]">
+                                    <span class="text-[13px] text-gray-500">SMS</span>
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" class="custom-checkbox w-[18px] h-[18px]">
+                                    <span class="text-[13px] text-gray-500">이메일</span>
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" class="custom-checkbox w-[18px] h-[18px]">
+                                    <span class="text-[13px] text-gray-500">앱 푸시</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 가입 버튼 -->
+                    <a href="main.html" class="block w-full py-4 bg-gray-900 hover:bg-gray-800 text-white text-[16px] font-semibold rounded-xl smooth-transition mt-8 text-center">
+                        가입하기
+                    </a>
+
+                </form>
+
+                <!-- 로그인 링크 -->
+                <p class="text-center text-[14px] text-gray-500 mt-6">
+                    이미 회원이신가요?
+                    <a href="login.html" class="font-semibold text-gray-900 hover:underline ml-1">로그인</a>
+                </p>
+
+            </div>
+        </main>
+
+        <!-- 하단 고정 영역 (모바일) -->
+        <div class="md:hidden fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-100">
+            <a href="main.html" class="block w-full py-4 bg-gray-900 hover:bg-gray-800 text-white text-[16px] font-semibold rounded-xl smooth-transition text-center">
+                가입하기
+            </a>
+        </div>
+
+        <!-- 푸터 -->
+        <footer class="border-t border-gray-100 py-6 px-5 md:block hidden">
+            <div class="max-w-[520px] mx-auto">
+                <p class="text-[12px] text-gray-400 text-center">
+                    © 2024 우리동네금은방. All rights reserved.
+                </p>
+            </div>
+        </footer>
+
+    </div>
+
+</body>
+
+</html>

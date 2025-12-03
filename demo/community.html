@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>커뮤니티 - 우리동네금은방</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#FFD700',
+                        'primary-dark': '#E5C100',
+                        'gray-50': '#FAFAFA',
+                        'gray-100': '#F5F5F5',
+                        'gray-200': '#EEEEEE',
+                        'gray-300': '#E0E0E0',
+                        'gray-400': '#BDBDBD',
+                        'gray-500': '#9E9E9E',
+                        'gray-600': '#757575',
+                        'gray-700': '#616161',
+                        'gray-800': '#424242',
+                        'gray-900': '#191F28',
+                    },
+                    fontFamily: {
+                        pretendard: ['Pretendard', '-apple-system', 'BlinkMacSystemFont', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+
+        * {
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        .smooth-transition {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .hover-lift:hover {
+            transform: translateY(-2px);
+        }
+
+        .card-shadow {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+
+        .card-shadow:hover {
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #E0E0E0;
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #BDBDBD;
+        }
+
+        .post-thumbnail {
+            aspect-ratio: 16 / 9;
+            object-fit: cover;
+        }
+
+        .line-clamp-2 {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .line-clamp-3 {
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .filter-btn.active {
+            background-color: #191F28;
+            color: white;
+        }
+
+        .store-filter-btn.active {
+            background-color: #FFD700;
+            color: #191F28;
+            border-color: #FFD700;
+        }
+    </style>
+</head>
+
+<body class="bg-white text-gray-900 font-pretendard">
+
+    <!-- 헤더 -->
+    <header class="w-full bg-white sticky top-0 z-50 border-b border-gray-100">
+        <div class="max-w-[1200px] mx-auto px-5 h-[60px] flex justify-between items-center">
+            <!-- 로고 -->
+            <a href="main.html" class="flex items-center gap-2">
+                <div class="w-8 h-8 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-lg flex items-center justify-center">
+                    <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
+                    </svg>
+                </div>
+                <span class="text-lg font-bold text-gray-900">우리동네금은방</span>
+            </a>
+
+            <!-- 네비게이션 -->
+            <nav class="hidden md:flex items-center gap-8">
+                <a href="price.html" class="nav-link text-[15px] font-medium text-gray-600 hover:text-gray-900 smooth-transition" data-page="price">금시세</a>
+                <a href="stores.html" class="nav-link text-[15px] font-medium text-gray-600 hover:text-gray-900 smooth-transition" data-page="stores">매장찾기</a>
+                <a href="community.html" class="nav-link text-[15px] font-medium text-gray-600 hover:text-gray-900 smooth-transition" data-page="community">커뮤니티</a>
+            </nav>
+
+            <!-- 우측 영역 -->
+            <div class="flex items-center gap-3">
+                <!-- 비로그인 상태 -->
+                <div id="guest-buttons" class="flex items-center gap-3">
+                    <a href="login.html" class="hidden md:block px-4 py-2 text-[14px] font-semibold text-gray-700 hover:bg-gray-100 rounded-lg smooth-transition">로그인</a>
+                    <a href="signup.html" class="px-4 py-2.5 text-[14px] font-semibold text-white bg-gray-900 hover:bg-gray-800 rounded-lg smooth-transition">시작하기</a>
+                </div>
+                <!-- 로그인 상태 -->
+                <div id="user-menu" class="hidden">
+                    <a href="mypage.html" class="w-9 h-9 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-full flex items-center justify-center text-white text-[14px] font-bold" id="user-avatar"></a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- 메인 콘텐츠 -->
+    <main>
+        <!-- 히어로 섹션 -->
+        <section class="py-12 px-5 bg-gradient-to-b from-gray-50 to-white">
+            <div class="max-w-[1200px] mx-auto">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
+                    <div>
+                        <h1 class="text-[32px] md:text-[40px] font-bold leading-tight tracking-[-0.02em] text-gray-900 mb-2">
+                            커뮤니티
+                        </h1>
+                        <p class="text-[16px] text-gray-500">
+                            각 매장의 다양한 소식과 정보를 확인하세요
+                        </p>
+                    </div>
+                    <button id="write-btn" class="px-6 py-3.5 bg-gray-900 hover:bg-gray-800 text-white text-[15px] font-semibold rounded-xl smooth-transition flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10"></path>
+                        </svg>
+                        글쓰기
+                    </button>
+                </div>
+
+                <!-- 필터 영역 -->
+                <div class="bg-white rounded-2xl p-5 border border-gray-200 mb-6">
+                    <!-- 정렬 버튼 -->
+                    <div class="flex items-center gap-2 mb-4 pb-4 border-b border-gray-100">
+                        <span class="text-[13px] text-gray-500 font-medium mr-2">정렬</span>
+                        <button class="filter-btn active px-4 py-2 bg-gray-100 text-gray-700 text-[14px] font-medium rounded-lg smooth-transition" data-sort="latest">
+                            최신순
+                        </button>
+                        <button class="filter-btn px-4 py-2 bg-gray-100 text-gray-700 text-[14px] font-medium rounded-lg smooth-transition" data-sort="popular">
+                            인기순
+                        </button>
+                    </div>
+
+                    <!-- 매장 필터 -->
+                    <div class="flex items-start gap-2">
+                        <span class="text-[13px] text-gray-500 font-medium mr-2 pt-2">매장</span>
+                        <div class="flex flex-wrap gap-2">
+                            <button class="store-filter-btn active px-4 py-2 bg-white border border-gray-200 text-gray-700 text-[14px] font-medium rounded-lg smooth-transition" data-store="all">
+                                전체
+                            </button>
+                            <button class="store-filter-btn px-4 py-2 bg-white border border-gray-200 text-gray-700 text-[14px] font-medium rounded-lg smooth-transition" data-store="강남금은방">
+                                강남금은방
+                            </button>
+                            <button class="store-filter-btn px-4 py-2 bg-white border border-gray-200 text-gray-700 text-[14px] font-medium rounded-lg smooth-transition" data-store="종로주얼리">
+                                종로주얼리
+                            </button>
+                            <button class="store-filter-btn px-4 py-2 bg-white border border-gray-200 text-gray-700 text-[14px] font-medium rounded-lg smooth-transition" data-store="다이아몬드하우스">
+                                다이아몬드하우스
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 포스트 목록 -->
+        <section class="py-8 px-5 bg-white">
+            <div class="max-w-[1200px] mx-auto">
+                <div id="posts-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- 포스트 카드들이 동적으로 추가됩니다 -->
+                </div>
+
+                <!-- 로딩 상태 -->
+                <div id="loading" class="hidden text-center py-12">
+                    <div class="inline-block w-8 h-8 border-4 border-gray-200 border-t-gray-900 rounded-full animate-spin"></div>
+                    <p class="text-gray-500 text-[14px] mt-4">불러오는 중...</p>
+                </div>
+
+                <!-- 빈 상태 -->
+                <div id="empty-state" class="hidden text-center py-20">
+                    <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-[18px] font-semibold text-gray-900 mb-2">아직 게시글이 없습니다</h3>
+                    <p class="text-[14px] text-gray-500">첫 번째 게시글을 작성해보세요!</p>
+                </div>
+
+                <!-- 더보기 버튼 -->
+                <div class="text-center mt-12">
+                    <button id="load-more" class="px-8 py-3.5 bg-white border-2 border-gray-200 hover:border-gray-300 text-gray-700 text-[15px] font-semibold rounded-xl smooth-transition">
+                        더보기
+                    </button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- 푸터 -->
+    <footer class="bg-gray-100 py-12 px-5 mt-20">
+        <div class="max-w-[1200px] mx-auto">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-8 mb-10">
+                <div>
+                    <h4 class="text-[14px] font-semibold text-gray-900 mb-4">서비스</h4>
+                    <ul class="space-y-3">
+                        <li><a href="price.html" class="text-[13px] text-gray-500 hover:text-gray-900 smooth-transition">금시세</a></li>
+                        <li><a href="stores.html" class="text-[13px] text-gray-500 hover:text-gray-900 smooth-transition">매장찾기</a></li>
+                        <li><a href="community.html" class="text-[13px] text-gray-500 hover:text-gray-900 smooth-transition">커뮤니티</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-[14px] font-semibold text-gray-900 mb-4">고객지원</h4>
+                    <ul class="space-y-3">
+                        <li><a href="#" class="text-[13px] text-gray-500 hover:text-gray-900 smooth-transition">공지사항</a></li>
+                        <li><a href="#" class="text-[13px] text-gray-500 hover:text-gray-900 smooth-transition">자주 묻는 질문</a></li>
+                        <li><a href="#" class="text-[13px] text-gray-500 hover:text-gray-900 smooth-transition">1:1 문의</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-[14px] font-semibold text-gray-900 mb-4">파트너</h4>
+                    <ul class="space-y-3">
+                        <li><a href="#" class="text-[13px] text-gray-500 hover:text-gray-900 smooth-transition">매장 등록</a></li>
+                        <li><a href="#" class="text-[13px] text-gray-500 hover:text-gray-900 smooth-transition">광고 문의</a></li>
+                        <li><a href="#" class="text-[13px] text-gray-500 hover:text-gray-900 smooth-transition">제휴 문의</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-[14px] font-semibold text-gray-900 mb-4">회사</h4>
+                    <ul class="space-y-3">
+                        <li><a href="#" class="text-[13px] text-gray-500 hover:text-gray-900 smooth-transition">회사 소개</a></li>
+                        <li><a href="#" class="text-[13px] text-gray-500 hover:text-gray-900 smooth-transition">채용</a></li>
+                        <li><a href="#" class="text-[13px] text-gray-500 hover:text-gray-900 smooth-transition">블로그</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="border-t border-gray-200 pt-8">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div class="flex items-center gap-2">
+                        <div class="w-6 h-6 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded flex items-center justify-center">
+                            <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
+                            </svg>
+                        </div>
+                        <span class="text-[14px] font-semibold text-gray-700">우리동네금은방</span>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <a href="#" class="text-[12px] text-gray-500 hover:text-gray-900 smooth-transition">이용약관</a>
+                        <a href="#" class="text-[12px] font-semibold text-gray-700 hover:text-gray-900 smooth-transition">개인정보처리방침</a>
+                        <a href="#" class="text-[12px] text-gray-500 hover:text-gray-900 smooth-transition">위치기반서비스 이용약관</a>
+                    </div>
+                </div>
+                <p class="text-[12px] text-gray-400 mt-4">© 2024 우리동네금은방. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // 샘플 포스트 데이터
+        const samplePosts = [
+            {
+                id: 1,
+                title: "2024년 설날 맞이 특별 이벤트 안내",
+                excerpt: "설날을 맞이하여 금목걸이 특가 행사를 진행합니다. 24K 순금 목걸이를 특별한 가격에 만나보세요. 선착순 50분께 드리는...",
+                thumbnail: "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=800&auto=format&fit=crop",
+                storeName: "강남금은방",
+                author: "강남금은방",
+                date: "2024-01-15",
+                likes: 42,
+                comments: 8,
+                views: 328
+            },
+            {
+                id: 2,
+                title: "금 투자 시작하기 - 초보자 가이드",
+                excerpt: "금 투자를 시작하려는 분들을 위한 가이드입니다. 24K, 18K, 14K의 차이점과 각각의 장단점을 알아보고, 현명한 투자 방법을...",
+                thumbnail: "https://images.unsplash.com/photo-1610375461246-83df859d849d?w=800&auto=format&fit=crop",
+                storeName: "종로주얼리",
+                author: "종로주얼리",
+                date: "2024-01-14",
+                likes: 156,
+                comments: 23,
+                views: 1247
+            },
+            {
+                id: 3,
+                title: "이번 주 금시세 전망과 매매 타이밍",
+                excerpt: "이번 주 국제 금시세가 상승세를 보이고 있습니다. 전문가들은 연준의 금리 정책 발표 이후 추가 상승을 예상하고 있는데요...",
+                thumbnail: "https://images.unsplash.com/photo-1611095790444-1dfa35e37b52?w=800&auto=format&fit=crop",
+                storeName: "다이아몬드하우스",
+                author: "다이아몬드하우스",
+                date: "2024-01-13",
+                likes: 89,
+                comments: 15,
+                views: 876
+            },
+            {
+                id: 4,
+                title: "웨딩 주얼리 고르는 법 - 결혼 예물 가이드",
+                excerpt: "평생 함께할 결혼 예물, 신중하게 선택하셔야죠. 예물 선택 시 고려해야 할 포인트와 최신 트렌드를 소개합니다. 클래식한 디자인부터...",
+                thumbnail: "https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=800&auto=format&fit=crop",
+                storeName: "강남금은방",
+                author: "강남금은방",
+                date: "2024-01-12",
+                likes: 234,
+                comments: 45,
+                views: 2103
+            },
+            {
+                id: 5,
+                title: "금 제품 관리하는 방법과 보관 팁",
+                excerpt: "소중한 금 제품, 제대로 관리하고 계신가요? 금 제품의 광택을 유지하는 세척 방법과 변색을 방지하는 보관 방법을 알려드립니다...",
+                thumbnail: "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=800&auto=format&fit=crop",
+                storeName: "종로주얼리",
+                author: "종로주얼리",
+                date: "2024-01-11",
+                likes: 67,
+                comments: 12,
+                views: 543
+            },
+            {
+                id: 6,
+                title: "다이아몬드 등급 완벽 가이드 - 4C 이해하기",
+                excerpt: "다이아몬드를 구매하실 때 가장 중요한 4C(Carat, Cut, Color, Clarity)에 대해 알기 쉽게 설명드립니다. 각 등급별 특징과...",
+                thumbnail: "https://images.unsplash.com/photo-1603561596112-0a132b757442?w=800&auto=format&fit=crop",
+                storeName: "다이아몬드하우스",
+                author: "다이아몬드하우스",
+                date: "2024-01-10",
+                likes: 178,
+                comments: 31,
+                views: 1456
+            }
+        ];
+
+        let currentPosts = [...samplePosts];
+        let currentSort = 'latest';
+        let currentStore = 'all';
+
+        // 포스트 카드 렌더링
+        function renderPosts(posts) {
+            const container = document.getElementById('posts-container');
+            const emptyState = document.getElementById('empty-state');
+
+            if (posts.length === 0) {
+                container.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+            container.innerHTML = posts.map(post => `
+                <a href="post-detail.html?id=${post.id}" class="bg-white rounded-2xl overflow-hidden card-shadow smooth-transition hover-lift">
+                    <!-- 썸네일 -->
+                    <div class="relative overflow-hidden bg-gray-100">
+                        <img src="${post.thumbnail}" alt="${post.title}" class="post-thumbnail w-full">
+                    </div>
+
+                    <!-- 콘텐츠 -->
+                    <div class="p-5">
+                        <!-- 제목 -->
+                        <h3 class="text-[18px] font-bold text-gray-900 mb-2 line-clamp-2">
+                            ${post.title}
+                        </h3>
+
+                        <!-- 본문 미리보기 -->
+                        <p class="text-[14px] text-gray-500 mb-4 line-clamp-3">
+                            ${post.excerpt}
+                        </p>
+
+                        <!-- 메타 정보 -->
+                        <div class="flex items-center justify-between pt-4 border-t border-gray-100">
+                            <div class="flex items-center gap-2">
+                                <div class="w-8 h-8 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-full flex items-center justify-center">
+                                    <span class="text-[11px] font-bold text-white">${post.storeName.charAt(0)}</span>
+                                </div>
+                                <div class="flex flex-col">
+                                    <span class="text-[12px] font-medium text-gray-900">${post.storeName}</span>
+                                    <span class="text-[11px] text-gray-400">${post.date}</span>
+                                </div>
+                            </div>
+
+                            <!-- 통계 -->
+                            <div class="flex items-center gap-3 text-[12px] text-gray-400">
+                                <span class="flex items-center gap-1">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"></path>
+                                    </svg>
+                                    ${post.likes}
+                                </span>
+                                <span class="flex items-center gap-1">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z"></path>
+                                    </svg>
+                                    ${post.comments}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            `).join('');
+        }
+
+        // 필터링 및 정렬
+        function filterAndSortPosts() {
+            let filtered = [...samplePosts];
+
+            // 매장 필터링
+            if (currentStore !== 'all') {
+                filtered = filtered.filter(post => post.storeName === currentStore);
+            }
+
+            // 정렬
+            if (currentSort === 'popular') {
+                filtered.sort((a, b) => (b.likes + b.comments * 2) - (a.likes + a.comments * 2));
+            } else {
+                filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
+            }
+
+            currentPosts = filtered;
+            renderPosts(currentPosts);
+        }
+
+        // 정렬 버튼 이벤트
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                currentSort = this.dataset.sort;
+                filterAndSortPosts();
+            });
+        });
+
+        // 매장 필터 버튼 이벤트
+        document.querySelectorAll('.store-filter-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.store-filter-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                currentStore = this.dataset.store;
+                filterAndSortPosts();
+            });
+        });
+
+        // 글쓰기 버튼
+        document.getElementById('write-btn').addEventListener('click', function() {
+            const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+            if (!isLoggedIn) {
+                if (confirm('로그인이 필요한 서비스입니다.\n로그인 페이지로 이동하시겠습니까?')) {
+                    window.location.href = 'login.html';
+                }
+            } else {
+                window.location.href = 'post-write.html';
+            }
+        });
+
+        // 인증 UI 업데이트
+        function updateAuthUI() {
+            const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+            const userName = localStorage.getItem('userName') || '사용자';
+            const guestButtons = document.getElementById('guest-buttons');
+            const userMenu = document.getElementById('user-menu');
+            const userAvatar = document.getElementById('user-avatar');
+
+            if (isLoggedIn && guestButtons && userMenu && userAvatar) {
+                guestButtons.classList.add('hidden');
+                userMenu.classList.remove('hidden');
+                userAvatar.textContent = userName.charAt(0);
+            }
+        }
+
+        // 현재 페이지 하이라이트
+        function highlightCurrentPage() {
+            const currentPage = window.location.pathname.split('/').pop().replace('.html', '') || 'main';
+            const navLinks = document.querySelectorAll('.nav-link');
+            navLinks.forEach(link => {
+                if (link.dataset.page === currentPage) {
+                    link.classList.remove('text-gray-600');
+                    link.classList.add('text-gray-900');
+                }
+            });
+        }
+
+        // 초기화
+        document.addEventListener('DOMContentLoaded', function() {
+            updateAuthUI();
+            highlightCurrentPage();
+            renderPosts(currentPosts);
+        });
+    </script>
+</body>
+
+</html>

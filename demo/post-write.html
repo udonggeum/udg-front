@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 글쓰기 - 우리동네금은방</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#FFD700',
+                        'primary-dark': '#E5C100',
+                        'gray-50': '#FAFAFA',
+                        'gray-100': '#F5F5F5',
+                        'gray-200': '#EEEEEE',
+                        'gray-300': '#E0E0E0',
+                        'gray-400': '#BDBDBD',
+                        'gray-500': '#9E9E9E',
+                        'gray-600': '#757575',
+                        'gray-700': '#616161',
+                        'gray-800': '#424242',
+                        'gray-900': '#191F28',
+                    },
+                    fontFamily: {
+                        pretendard: ['Pretendard', '-apple-system', 'BlinkMacSystemFont', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+
+        * {
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        .smooth-transition {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .card-shadow {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #E0E0E0;
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #BDBDBD;
+        }
+
+        .image-preview-item {
+            position: relative;
+            aspect-ratio: 1;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .image-preview-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .image-preview-item .remove-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(8px);
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .image-preview-item:hover .remove-btn {
+            opacity: 1;
+        }
+
+        .image-preview-item .remove-btn:hover {
+            background: rgba(0, 0, 0, 0.8);
+        }
+
+        .tone-option {
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .tone-option.selected {
+            background: #191F28;
+            color: white;
+            border-color: #191F28;
+        }
+
+        .generating-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .animate-spin {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .animate-pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        .result-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+
+        .result-content.show {
+            max-height: 2000px;
+        }
+
+        .keyword-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 6px 12px;
+            background: #F5F5F5;
+            border-radius: 20px;
+            font-size: 14px;
+            color: #424242;
+        }
+
+        .keyword-tag .remove {
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #BDBDBD;
+            color: white;
+            font-size: 12px;
+            line-height: 1;
+        }
+
+        .keyword-tag .remove:hover {
+            background: #757575;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 text-gray-900 font-pretendard">
+
+    <!-- 헤더 -->
+    <header class="w-full bg-white sticky top-0 z-50 border-b border-gray-100">
+        <div class="max-w-[1200px] mx-auto px-5 h-[60px] flex justify-between items-center">
+            <!-- 로고 -->
+            <a href="main.html" class="flex items-center gap-2">
+                <div class="w-8 h-8 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-lg flex items-center justify-center">
+                    <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
+                    </svg>
+                </div>
+                <span class="text-lg font-bold text-gray-900">우리동네금은방</span>
+            </a>
+
+            <!-- 네비게이션 -->
+            <nav class="hidden md:flex items-center gap-8">
+                <a href="price.html" class="nav-link text-[15px] font-medium text-gray-600 hover:text-gray-900 smooth-transition" data-page="price">금시세</a>
+                <a href="stores.html" class="nav-link text-[15px] font-medium text-gray-600 hover:text-gray-900 smooth-transition" data-page="stores">매장찾기</a>
+                <a href="community.html" class="nav-link text-[15px] font-medium text-gray-600 hover:text-gray-900 smooth-transition" data-page="community">커뮤니티</a>
+            </nav>
+
+            <!-- 우측 영역 -->
+            <div class="flex items-center gap-3">
+                <a href="community.html" class="text-[14px] text-gray-500 hover:text-gray-900 smooth-transition flex items-center gap-1">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                    닫기
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- 메인 콘텐츠 -->
+    <main class="max-w-[800px] mx-auto px-5 py-8 md:py-12">
+
+        <!-- AI 배지 -->
+        <div class="flex items-center gap-3 mb-6">
+            <div class="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full">
+                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z"></path>
+                </svg>
+                <span class="text-white text-[14px] font-bold">AI 자동 글쓰기</span>
+            </div>
+            <p class="text-[13px] text-gray-500">몇 가지만 입력하면 AI가 멋진 글을 작성해드려요</p>
+        </div>
+
+        <!-- 타이틀 -->
+        <h1 class="text-[28px] md:text-[32px] font-bold text-gray-900 mb-2">
+            어떤 글을 작성할까요?
+        </h1>
+        <p class="text-[15px] text-gray-500 mb-8">
+            간단한 정보만 입력하면 AI가 자동으로 완성도 높은 콘텐츠를 만들어줍니다
+        </p>
+
+        <!-- 입력 폼 -->
+        <form id="ai-post-form" class="space-y-6">
+
+            <!-- 매장 선택 -->
+            <div class="bg-white rounded-2xl p-6 card-shadow">
+                <label class="flex items-center gap-2 text-[16px] font-bold text-gray-900 mb-4">
+                    <span class="flex items-center justify-center w-7 h-7 bg-gray-900 text-white text-[14px] font-bold rounded-full">1</span>
+                    매장 선택
+                </label>
+                <select id="store-select" required class="w-full px-4 py-3.5 border-2 border-gray-200 rounded-xl text-[15px] text-gray-900 focus:border-gray-900 focus:outline-none smooth-transition">
+                    <option value="">어느 매장의 글인가요?</option>
+                    <option value="강남금은방">강남금은방</option>
+                    <option value="종로주얼리">종로주얼리</option>
+                    <option value="다이아몬드하우스">다이아몬드하우스</option>
+                </select>
+            </div>
+
+            <!-- 사진 업로드 -->
+            <div class="bg-white rounded-2xl p-6 card-shadow">
+                <label class="flex items-center gap-2 text-[16px] font-bold text-gray-900 mb-4">
+                    <span class="flex items-center justify-center w-7 h-7 bg-gray-900 text-white text-[14px] font-bold rounded-full">2</span>
+                    사진 추가 (선택)
+                </label>
+                <p class="text-[14px] text-gray-500 mb-4">글과 관련된 사진을 올려주세요. 최대 5장까지 가능해요</p>
+
+                <div id="images-preview" class="grid grid-cols-3 gap-3 mb-3 hidden">
+                    <!-- 이미지 미리보기가 여기에 추가됩니다 -->
+                </div>
+
+                <input type="file" id="images-input" accept="image/*" multiple class="hidden">
+                <button type="button" id="images-select-btn" class="w-full px-4 py-3.5 bg-gray-50 hover:bg-gray-100 border-2 border-dashed border-gray-300 text-gray-600 text-[15px] font-semibold rounded-xl smooth-transition flex items-center justify-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"></path>
+                    </svg>
+                    <span id="images-btn-text">사진 선택하기</span>
+                </button>
+            </div>
+
+            <!-- 포함할 키워드 -->
+            <div class="bg-white rounded-2xl p-6 card-shadow">
+                <label class="flex items-center gap-2 text-[16px] font-bold text-gray-900 mb-4">
+                    <span class="flex items-center justify-center w-7 h-7 bg-gray-900 text-white text-[14px] font-bold rounded-full">3</span>
+                    포함할 키워드
+                </label>
+                <p class="text-[14px] text-gray-500 mb-4">글에 꼭 들어갔으면 하는 단어나 문구가 있나요?</p>
+
+                <div id="keywords-container" class="flex flex-wrap gap-2 mb-3 min-h-[40px]">
+                    <!-- 키워드 태그가 여기에 추가됩니다 -->
+                </div>
+
+                <div class="flex gap-2">
+                    <input type="text" id="keyword-input" placeholder="예: 24K 순금, 할인 이벤트, 무료 배송" class="flex-1 px-4 py-3 border-2 border-gray-200 rounded-xl text-[15px] text-gray-900 placeholder-gray-400 focus:border-gray-900 focus:outline-none smooth-transition">
+                    <button type="button" id="keyword-add-btn" class="px-5 py-3 bg-gray-900 hover:bg-gray-800 text-white text-[14px] font-semibold rounded-xl smooth-transition">
+                        추가
+                    </button>
+                </div>
+            </div>
+
+            <!-- 강조하고 싶은 내용 -->
+            <div class="bg-white rounded-2xl p-6 card-shadow">
+                <label class="flex items-center gap-2 text-[16px] font-bold text-gray-900 mb-4">
+                    <span class="flex items-center justify-center w-7 h-7 bg-gray-900 text-white text-[14px] font-bold rounded-full">4</span>
+                    강조하고 싶은 내용
+                </label>
+                <p class="text-[14px] text-gray-500 mb-4">이 글에서 가장 중요한 메시지는 무엇인가요?</p>
+                <textarea id="emphasis-input" rows="4" placeholder="예: 설날 맞이 특별 할인, 선착순 50명, 24K 순금 목걸이 15% 할인" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl text-[15px] text-gray-900 placeholder-gray-400 focus:border-gray-900 focus:outline-none smooth-transition resize-none"></textarea>
+            </div>
+
+            <!-- 말투 선택 -->
+            <div class="bg-white rounded-2xl p-6 card-shadow">
+                <label class="flex items-center gap-2 text-[16px] font-bold text-gray-900 mb-4">
+                    <span class="flex items-center justify-center w-7 h-7 bg-gray-900 text-white text-[14px] font-bold rounded-full">5</span>
+                    말투 선택
+                </label>
+                <p class="text-[14px] text-gray-500 mb-4">어떤 분위기로 글을 작성할까요?</p>
+
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <div class="tone-option selected border-2 border-gray-200 rounded-xl p-4 text-center" data-tone="friendly">
+                        <div class="text-[24px] mb-2">😊</div>
+                        <div class="text-[14px] font-semibold">친근한</div>
+                        <div class="text-[12px] text-gray-500 mt-1">~해요 체</div>
+                    </div>
+                    <div class="tone-option border-2 border-gray-200 rounded-xl p-4 text-center" data-tone="professional">
+                        <div class="text-[24px] mb-2">💼</div>
+                        <div class="text-[14px] font-semibold">전문적인</div>
+                        <div class="text-[12px] text-gray-500 mt-1">~입니다 체</div>
+                    </div>
+                    <div class="tone-option border-2 border-gray-200 rounded-xl p-4 text-center" data-tone="casual">
+                        <div class="text-[24px] mb-2">✌️</div>
+                        <div class="text-[14px] font-semibold">편안한</div>
+                        <div class="text-[12px] text-gray-500 mt-1">반말체</div>
+                    </div>
+                    <div class="tone-option border-2 border-gray-200 rounded-xl p-4 text-center" data-tone="exciting">
+                        <div class="text-[24px] mb-2">🎉</div>
+                        <div class="text-[14px] font-semibold">활기찬</div>
+                        <div class="text-[12px] text-gray-500 mt-1">느낌표 많이</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI 생성 버튼 -->
+            <div class="pt-4">
+                <button type="submit" id="generate-btn" class="w-full px-6 py-4 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white text-[16px] font-bold rounded-xl smooth-transition flex items-center justify-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z"></path>
+                    </svg>
+                    AI로 글 작성하기
+                </button>
+            </div>
+        </form>
+
+        <!-- AI 생성 결과 -->
+        <div id="result-section" class="hidden mt-8 space-y-6">
+
+            <!-- 생성된 제목 -->
+            <div class="bg-white rounded-2xl p-6 card-shadow">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-[16px] font-bold text-gray-900">생성된 제목</h3>
+                    <button type="button" id="regenerate-title-btn" class="text-[13px] text-purple-500 hover:text-purple-600 font-medium flex items-center gap-1">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"></path>
+                        </svg>
+                        다시 생성
+                    </button>
+                </div>
+                <input type="text" id="generated-title" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl text-[15px] text-gray-900 focus:border-gray-900 focus:outline-none smooth-transition" readonly>
+            </div>
+
+            <!-- 생성된 본문 -->
+            <div class="bg-white rounded-2xl p-6 card-shadow">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-[16px] font-bold text-gray-900">생성된 본문</h3>
+                    <button type="button" id="regenerate-content-btn" class="text-[13px] text-purple-500 hover:text-purple-600 font-medium flex items-center gap-1">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"></path>
+                        </svg>
+                        다시 생성
+                    </button>
+                </div>
+                <textarea id="generated-content" rows="15" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl text-[15px] text-gray-900 focus:border-gray-900 focus:outline-none smooth-transition resize-none"></textarea>
+            </div>
+
+            <!-- 게시 버튼 -->
+            <div class="flex gap-3">
+                <button type="button" id="cancel-btn" class="flex-1 px-6 py-4 bg-white border-2 border-gray-200 hover:border-gray-300 text-gray-700 text-[15px] font-semibold rounded-xl smooth-transition">
+                    취소
+                </button>
+                <button type="button" id="publish-btn" class="flex-1 px-6 py-4 bg-gray-900 hover:bg-gray-800 text-white text-[15px] font-semibold rounded-xl smooth-transition">
+                    게시하기
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <!-- 로딩 오버레이 -->
+    <div id="loading-overlay" class="generating-overlay hidden">
+        <div class="bg-white rounded-2xl p-8 max-w-sm text-center card-shadow">
+            <div class="w-16 h-16 mx-auto mb-4 border-4 border-purple-200 border-t-purple-500 rounded-full animate-spin"></div>
+            <h3 class="text-[18px] font-bold text-gray-900 mb-2">AI가 글을 작성하고 있어요</h3>
+            <p class="text-[14px] text-gray-500 mb-4">조금만 기다려주세요...</p>
+            <div class="flex items-center justify-center gap-2">
+                <div class="w-2 h-2 bg-purple-500 rounded-full animate-pulse"></div>
+                <div class="w-2 h-2 bg-purple-500 rounded-full animate-pulse" style="animation-delay: 0.2s"></div>
+                <div class="w-2 h-2 bg-purple-500 rounded-full animate-pulse" style="animation-delay: 0.4s"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 로그인 체크
+        const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+        if (!isLoggedIn) {
+            alert('로그인이 필요한 서비스입니다.');
+            window.location.href = 'login.html';
+        }
+
+        // 전역 변수
+        let selectedImages = [];
+        let keywords = [];
+        let selectedTone = 'friendly';
+
+        // 이미지 업로드
+        const imagesInput = document.getElementById('images-input');
+        const imagesPreview = document.getElementById('images-preview');
+        const imagesSelectBtn = document.getElementById('images-select-btn');
+        const imagesBtnText = document.getElementById('images-btn-text');
+
+        imagesSelectBtn.addEventListener('click', () => {
+            imagesInput.click();
+        });
+
+        imagesInput.addEventListener('change', function(e) {
+            const files = Array.from(e.target.files);
+
+            if (selectedImages.length + files.length > 5) {
+                alert('최대 5장까지만 업로드 가능합니다.');
+                return;
+            }
+
+            files.forEach(file => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    selectedImages.push({
+                        file: file,
+                        url: e.target.result
+                    });
+                    renderImages();
+                };
+                reader.readAsDataURL(file);
+            });
+        });
+
+        function renderImages() {
+            if (selectedImages.length === 0) {
+                imagesPreview.classList.add('hidden');
+                imagesBtnText.textContent = '사진 선택하기';
+                return;
+            }
+
+            imagesPreview.classList.remove('hidden');
+            imagesBtnText.textContent = `사진 ${selectedImages.length}장 선택됨`;
+
+            imagesPreview.innerHTML = selectedImages.map((img, index) => `
+                <div class="image-preview-item">
+                    <img src="${img.url}" alt="이미지 ${index + 1}">
+                    <div class="remove-btn" onclick="removeImage(${index})">
+                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        window.removeImage = function(index) {
+            selectedImages.splice(index, 1);
+            renderImages();
+        };
+
+        // 키워드 추가
+        const keywordInput = document.getElementById('keyword-input');
+        const keywordAddBtn = document.getElementById('keyword-add-btn');
+        const keywordsContainer = document.getElementById('keywords-container');
+
+        keywordAddBtn.addEventListener('click', addKeyword);
+        keywordInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                addKeyword();
+            }
+        });
+
+        function addKeyword() {
+            const keyword = keywordInput.value.trim();
+            if (!keyword) return;
+
+            if (keywords.includes(keyword)) {
+                alert('이미 추가된 키워드입니다.');
+                return;
+            }
+
+            keywords.push(keyword);
+            keywordInput.value = '';
+            renderKeywords();
+        }
+
+        function renderKeywords() {
+            if (keywords.length === 0) {
+                keywordsContainer.innerHTML = '<p class="text-[14px] text-gray-400">추가된 키워드가 없습니다</p>';
+                return;
+            }
+
+            keywordsContainer.innerHTML = keywords.map((keyword, index) => `
+                <span class="keyword-tag">
+                    ${keyword}
+                    <span class="remove" onclick="removeKeyword(${index})">×</span>
+                </span>
+            `).join('');
+        }
+
+        window.removeKeyword = function(index) {
+            keywords.splice(index, 1);
+            renderKeywords();
+        };
+
+        renderKeywords();
+
+        // 말투 선택
+        document.querySelectorAll('.tone-option').forEach(option => {
+            option.addEventListener('click', function() {
+                document.querySelectorAll('.tone-option').forEach(opt => opt.classList.remove('selected'));
+                this.classList.add('selected');
+                selectedTone = this.dataset.tone;
+            });
+        });
+
+        // AI 생성
+        document.getElementById('ai-post-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const store = document.getElementById('store-select').value;
+            const emphasis = document.getElementById('emphasis-input').value.trim();
+
+            if (!store) {
+                alert('매장을 선택해주세요.');
+                return;
+            }
+
+            // 로딩 표시
+            document.getElementById('loading-overlay').classList.remove('hidden');
+
+            // 실제로는 여기서 AI API 호출
+            // 현재는 데모이므로 시뮬레이션
+            await simulateAIGeneration(store, emphasis);
+        });
+
+        async function simulateAIGeneration(store, emphasis) {
+            // 2초 대기 (AI 생성 시뮬레이션)
+            await new Promise(resolve => setTimeout(resolve, 2000));
+
+            // 샘플 생성 결과
+            const toneTemplates = {
+                friendly: {
+                    title: `${store}에서 알려드리는 특별한 소식이에요!`,
+                    content: `안녕하세요, ${store}입니다!\n\n${emphasis || '특별한 이벤트를 준비했어요'}.\n\n${keywords.length > 0 ? `특히 ${keywords.join(', ')} 등 다양한 혜택을 만나보실 수 있습니다.` : ''}\n\n많은 관심 부탁드려요. 궁금하신 점이 있으시면 언제든지 문의해주세요!\n\n감사합니다 :)`
+                },
+                professional: {
+                    title: `${store} ${emphasis ? emphasis.split(',')[0] : '특별 안내'}`,
+                    content: `안녕하십니까, ${store}입니다.\n\n${emphasis || '특별한 안내사항을 전달드립니다'}.\n\n${keywords.length > 0 ? `본 행사에서는 ${keywords.join(', ')} 등의 다양한 혜택을 제공합니다.` : ''}\n\n자세한 사항은 매장으로 문의 주시기 바랍니다.\n\n감사합니다.`
+                },
+                casual: {
+                    title: `${store} ${emphasis ? emphasis.split(',')[0] : '핫딜'} 떴다!`,
+                    content: `${store}야!\n\n${emphasis || '대박 이벤트 시작'}!\n\n${keywords.length > 0 ? `${keywords.join(', ')} 이런 것들 다 있음!` : ''}\n\n놓치지 말고 빨리 와봐~`
+                },
+                exciting: {
+                    title: `🎉 ${store} ${emphasis ? emphasis.split(',')[0] : '특별 이벤트'} 시작! 🎉`,
+                    content: `안녕하세요! ${store}입니다!\n\n드디어! ${emphasis || '특별한 이벤트가 시작되었습니다'}!\n\n${keywords.length > 0 ? `${keywords.join(', ')} 등등!! 정말 다양한 혜택이 가득해요!` : ''}\n\n지금 바로 확인해보세요! 놓치면 후회할 거예요! 😍`
+                }
+            };
+
+            const template = toneTemplates[selectedTone];
+
+            document.getElementById('generated-title').value = template.title;
+            document.getElementById('generated-content').value = template.content;
+
+            // 로딩 숨기고 결과 표시
+            document.getElementById('loading-overlay').classList.add('hidden');
+            document.getElementById('result-section').classList.remove('hidden');
+            document.getElementById('result-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        // 재생성 버튼
+        document.getElementById('regenerate-title-btn').addEventListener('click', async () => {
+            const store = document.getElementById('store-select').value;
+            const emphasis = document.getElementById('emphasis-input').value.trim();
+
+            document.getElementById('loading-overlay').classList.remove('hidden');
+            await simulateAIGeneration(store, emphasis);
+        });
+
+        document.getElementById('regenerate-content-btn').addEventListener('click', async () => {
+            const store = document.getElementById('store-select').value;
+            const emphasis = document.getElementById('emphasis-input').value.trim();
+
+            document.getElementById('loading-overlay').classList.remove('hidden');
+            await simulateAIGeneration(store, emphasis);
+        });
+
+        // 취소 버튼
+        document.getElementById('cancel-btn').addEventListener('click', () => {
+            if (confirm('작성을 취소하시겠습니까?')) {
+                window.location.href = 'community.html';
+            }
+        });
+
+        // 게시 버튼
+        document.getElementById('publish-btn').addEventListener('click', () => {
+            const title = document.getElementById('generated-title').value;
+            const content = document.getElementById('generated-content').value;
+
+            if (!title || !content) {
+                alert('제목과 본문을 확인해주세요.');
+                return;
+            }
+
+            alert('게시글이 작성되었습니다!');
+            window.location.href = 'community.html';
+        });
+    </script>
+</body>
+
+</html>

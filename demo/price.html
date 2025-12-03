@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>금시세 - 우리동네금은방</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#FFD700',
+                        'primary-dark': '#E5C100',
+                        'gray-50': '#FAFAFA',
+                        'gray-100': '#F5F5F5',
+                        'gray-200': '#EEEEEE',
+                        'gray-300': '#E0E0E0',
+                        'gray-400': '#BDBDBD',
+                        'gray-500': '#9E9E9E',
+                        'gray-600': '#757575',
+                        'gray-700': '#616161',
+                        'gray-800': '#424242',
+                        'gray-900': '#191F28',
+                    },
+                    fontFamily: {
+                        pretendard: ['Pretendard', '-apple-system', 'BlinkMacSystemFont', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+
+        * {
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        .smooth-transition {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .hover-lift:hover {
+            transform: translateY(-2px);
+        }
+
+        .card-shadow {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+
+        .card-shadow:hover {
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #E0E0E0;
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #BDBDBD;
+        }
+
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        /* 실시간 표시 애니메이션 */
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.1); }
+        }
+
+        .pulse-dot {
+            animation: pulse-dot 2s ease-in-out infinite;
+        }
+
+        /* 차트 placeholder */
+        .chart-grid {
+            background-image:
+                linear-gradient(to right, #f5f5f5 1px, transparent 1px),
+                linear-gradient(to bottom, #f5f5f5 1px, transparent 1px);
+            background-size: 40px 30px;
+        }
+
+        /* 탭 활성화 */
+        .tab-btn.active {
+            color: #191F28;
+            border-color: #191F28;
+        }
+
+        /* 기간 버튼 활성화 */
+        .period-btn.active {
+            background-color: #191F28;
+            color: white;
+        }
+
+        /* 테이블 행 호버 */
+        .table-row:hover {
+            background-color: #FAFAFA;
+        }
+
+        /* 숫자 폰트 */
+        .num {
+            font-variant-numeric: tabular-nums;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 text-gray-900 font-pretendard">
+
+    <!-- 헤더 -->
+    <header class="w-full bg-white sticky top-0 z-50 border-b border-gray-100">
+        <div class="max-w-[1200px] mx-auto px-5 h-[60px] flex justify-between items-center">
+            <!-- 로고 -->
+            <a href="main.html" class="flex items-center gap-2">
+                <div class="w-8 h-8 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-lg flex items-center justify-center">
+                    <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
+                    </svg>
+                </div>
+                <span class="text-lg font-bold text-gray-900">우리동네금은방</span>
+            </a>
+
+            <!-- 네비게이션 -->
+            <nav class="hidden md:flex items-center gap-8">
+                <a href="price.html" class="nav-link text-[15px] font-medium text-gray-600 hover:text-gray-900 smooth-transition" data-page="price">금시세</a>
+                <a href="stores.html" class="nav-link text-[15px] font-medium text-gray-600 hover:text-gray-900 smooth-transition" data-page="stores">매장찾기</a>
+                <a href="community.html" class="nav-link text-[15px] font-medium text-gray-600 hover:text-gray-900 smooth-transition" data-page="community">커뮤니티</a>
+            </nav>
+
+            <!-- 우측 영역 -->
+            <div class="flex items-center gap-3">
+                <!-- 비로그인 상태 -->
+                <div id="guest-buttons" class="flex items-center gap-3">
+                    <a href="login.html" class="hidden md:block px-4 py-2 text-[14px] font-semibold text-gray-700 hover:bg-gray-100 rounded-lg smooth-transition">로그인</a>
+                    <a href="signup.html" class="px-4 py-2.5 text-[14px] font-semibold text-white bg-gray-900 hover:bg-gray-800 rounded-lg smooth-transition">시작하기</a>
+                </div>
+                <!-- 로그인 상태 -->
+                <div id="user-menu" class="hidden">
+                    <a href="mypage.html" class="w-9 h-9 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-full flex items-center justify-center text-white text-[14px] font-bold" id="user-avatar"></a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-[1200px] mx-auto px-5 py-8">
+
+        <!-- 페이지 헤더 -->
+        <div class="mb-8">
+            <div class="flex items-center gap-3 mb-2">
+                <h1 class="text-[28px] font-bold text-gray-900">실시간 금시세</h1>
+                <div class="flex items-center gap-1.5 px-3 py-1.5 bg-green-50 rounded-full">
+                    <span class="w-2 h-2 bg-green-500 rounded-full pulse-dot"></span>
+                    <span class="text-[12px] font-semibold text-green-700">LIVE</span>
+                </div>
+            </div>
+            <p class="text-[15px] text-gray-500">2024년 12월 1일 (일) 오전 10:32 기준</p>
+        </div>
+
+        <!-- 메인 시세 카드 (토스/크림 스타일) -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+
+            <!-- 24K 순금 -->
+            <div class="bg-white p-6 rounded-2xl card-shadow smooth-transition hover-lift cursor-pointer border-2 border-yellow-400">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center gap-2">
+                        <div class="w-10 h-10 bg-yellow-100 rounded-xl flex items-center justify-center">
+                            <span class="text-[13px] font-bold text-yellow-700">24K</span>
+                        </div>
+                        <div>
+                            <span class="text-[15px] font-semibold text-gray-900">순금</span>
+                            <p class="text-[11px] text-gray-400">99.99%</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-1 px-2 py-1 bg-red-50 rounded-lg">
+                        <svg class="w-3 h-3 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                        </svg>
+                        <span class="text-[12px] font-semibold text-red-500">-0.22%</span>
+                    </div>
+                </div>
+                <div class="mb-2">
+                    <span class="text-[28px] font-bold text-gray-900 num">452,000</span>
+                    <span class="text-[14px] text-gray-500 ml-1">원/g</span>
+                </div>
+                <div class="flex items-center gap-2 text-[13px]">
+                    <span class="text-red-500 font-medium num">▼ 1,000</span>
+                    <span class="text-gray-300">|</span>
+                    <span class="text-gray-500">1돈 <span class="font-semibold text-gray-900 num">1,695,000</span>원</span>
+                </div>
+            </div>
+
+            <!-- 18K -->
+            <div class="bg-white p-6 rounded-2xl card-shadow smooth-transition hover-lift cursor-pointer">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center gap-2">
+                        <div class="w-10 h-10 bg-yellow-100 rounded-xl flex items-center justify-center">
+                            <span class="text-[13px] font-bold text-yellow-700">18K</span>
+                        </div>
+                        <div>
+                            <span class="text-[15px] font-semibold text-gray-900">18K금</span>
+                            <p class="text-[11px] text-gray-400">75%</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-1 px-2 py-1 bg-green-50 rounded-lg">
+                        <svg class="w-3 h-3 text-green-500 rotate-180" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                        </svg>
+                        <span class="text-[12px] font-semibold text-green-500">+0.15%</span>
+                    </div>
+                </div>
+                <div class="mb-2">
+                    <span class="text-[28px] font-bold text-gray-900 num">339,000</span>
+                    <span class="text-[14px] text-gray-500 ml-1">원/g</span>
+                </div>
+                <div class="flex items-center gap-2 text-[13px]">
+                    <span class="text-green-500 font-medium num">▲ 500</span>
+                    <span class="text-gray-300">|</span>
+                    <span class="text-gray-500">1돈 <span class="font-semibold text-gray-900 num">1,271,250</span>원</span>
+                </div>
+            </div>
+
+            <!-- 14K -->
+            <div class="bg-white p-6 rounded-2xl card-shadow smooth-transition hover-lift cursor-pointer">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center gap-2">
+                        <div class="w-10 h-10 bg-yellow-100 rounded-xl flex items-center justify-center">
+                            <span class="text-[13px] font-bold text-yellow-700">14K</span>
+                        </div>
+                        <div>
+                            <span class="text-[15px] font-semibold text-gray-900">14K금</span>
+                            <p class="text-[11px] text-gray-400">58.5%</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-1 px-2 py-1 bg-gray-100 rounded-lg">
+                        <span class="text-[12px] font-semibold text-gray-500">0.00%</span>
+                    </div>
+                </div>
+                <div class="mb-2">
+                    <span class="text-[28px] font-bold text-gray-900 num">264,000</span>
+                    <span class="text-[14px] text-gray-500 ml-1">원/g</span>
+                </div>
+                <div class="flex items-center gap-2 text-[13px]">
+                    <span class="text-gray-500 font-medium num">- 0</span>
+                    <span class="text-gray-300">|</span>
+                    <span class="text-gray-500">1돈 <span class="font-semibold text-gray-900 num">990,000</span>원</span>
+                </div>
+            </div>
+
+            <!-- 백금 -->
+            <div class="bg-white p-6 rounded-2xl card-shadow smooth-transition hover-lift cursor-pointer">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center gap-2">
+                        <div class="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center">
+                            <span class="text-[13px] font-bold text-gray-600">Pt</span>
+                        </div>
+                        <div>
+                            <span class="text-[15px] font-semibold text-gray-900">백금</span>
+                            <p class="text-[11px] text-gray-400">99.95%</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-1 px-2 py-1 bg-green-50 rounded-lg">
+                        <svg class="w-3 h-3 text-green-500 rotate-180" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                        </svg>
+                        <span class="text-[12px] font-semibold text-green-500">+1.28%</span>
+                    </div>
+                </div>
+                <div class="mb-2">
+                    <span class="text-[28px] font-bold text-gray-900 num">158,000</span>
+                    <span class="text-[14px] text-gray-500 ml-1">원/g</span>
+                </div>
+                <div class="flex items-center gap-2 text-[13px]">
+                    <span class="text-green-500 font-medium num">▲ 2,000</span>
+                    <span class="text-gray-300">|</span>
+                    <span class="text-gray-500">1돈 <span class="font-semibold text-gray-900 num">592,500</span>원</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 시세 차트 섹션 -->
+        <div class="bg-white rounded-2xl card-shadow p-6 mb-8">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                <div>
+                    <h2 class="text-[20px] font-bold text-gray-900 mb-1">24K 순금 시세 추이</h2>
+                    <p class="text-[14px] text-gray-500">국내 금 시세 변동 그래프</p>
+                </div>
+
+                <!-- 기간 선택 -->
+                <div class="flex items-center gap-2">
+                    <button class="period-btn px-4 py-2 text-[13px] font-medium text-gray-600 rounded-lg hover:bg-gray-100 smooth-transition">1일</button>
+                    <button class="period-btn px-4 py-2 text-[13px] font-medium text-gray-600 rounded-lg hover:bg-gray-100 smooth-transition">1주</button>
+                    <button class="period-btn active px-4 py-2 text-[13px] font-medium rounded-lg smooth-transition">1개월</button>
+                    <button class="period-btn px-4 py-2 text-[13px] font-medium text-gray-600 rounded-lg hover:bg-gray-100 smooth-transition">3개월</button>
+                    <button class="period-btn px-4 py-2 text-[13px] font-medium text-gray-600 rounded-lg hover:bg-gray-100 smooth-transition">1년</button>
+                    <button class="period-btn px-4 py-2 text-[13px] font-medium text-gray-600 rounded-lg hover:bg-gray-100 smooth-transition">전체</button>
+                </div>
+            </div>
+
+            <!-- 차트 영역 (Placeholder) -->
+            <div class="relative h-[320px] chart-grid rounded-xl border border-gray-100 overflow-hidden">
+                <!-- Y축 레이블 -->
+                <div class="absolute left-0 top-0 bottom-0 w-16 flex flex-col justify-between py-4 text-[11px] text-gray-400 font-medium">
+                    <span>460,000</span>
+                    <span>455,000</span>
+                    <span>450,000</span>
+                    <span>445,000</span>
+                    <span>440,000</span>
+                </div>
+
+                <!-- 차트 라인 (SVG) -->
+                <svg class="absolute left-16 right-0 top-0 bottom-0 h-full" preserveAspectRatio="none" viewBox="0 0 400 200">
+                    <!-- 그리드 라인 -->
+                    <line x1="0" y1="40" x2="400" y2="40" stroke="#f5f5f5" stroke-width="1"/>
+                    <line x1="0" y1="80" x2="400" y2="80" stroke="#f5f5f5" stroke-width="1"/>
+                    <line x1="0" y1="120" x2="400" y2="120" stroke="#f5f5f5" stroke-width="1"/>
+                    <line x1="0" y1="160" x2="400" y2="160" stroke="#f5f5f5" stroke-width="1"/>
+
+                    <!-- 시세 라인 -->
+                    <defs>
+                        <linearGradient id="lineGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" style="stop-color:#FFD700;stop-opacity:0.3" />
+                            <stop offset="100%" style="stop-color:#FFD700;stop-opacity:0" />
+                        </linearGradient>
+                    </defs>
+
+                    <!-- 영역 채우기 -->
+                    <path d="M0,120 Q50,100 100,110 T200,80 T300,90 T400,70 L400,200 L0,200 Z" fill="url(#lineGradient)"/>
+
+                    <!-- 라인 -->
+                    <path d="M0,120 Q50,100 100,110 T200,80 T300,90 T400,70" fill="none" stroke="#FFD700" stroke-width="3" stroke-linecap="round"/>
+
+                    <!-- 현재 포인트 -->
+                    <circle cx="400" cy="70" r="6" fill="#FFD700"/>
+                    <circle cx="400" cy="70" r="10" fill="#FFD700" opacity="0.3"/>
+                </svg>
+
+                <!-- 현재 가격 표시 -->
+                <div class="absolute right-4 top-[calc(35%-20px)] bg-gray-900 text-white px-3 py-1.5 rounded-lg text-[13px] font-semibold">
+                    452,000원
+                </div>
+
+                <!-- X축 레이블 -->
+                <div class="absolute left-16 right-0 bottom-0 h-8 flex justify-between items-center px-4 text-[11px] text-gray-400 font-medium">
+                    <span>11/01</span>
+                    <span>11/08</span>
+                    <span>11/15</span>
+                    <span>11/22</span>
+                    <span>11/29</span>
+                </div>
+            </div>
+
+            <!-- 차트 하단 요약 -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 pt-6 border-t border-gray-100">
+                <div>
+                    <p class="text-[12px] text-gray-500 mb-1">기간 최고가</p>
+                    <p class="text-[16px] font-bold text-gray-900 num">458,000원</p>
+                    <p class="text-[11px] text-gray-400">11/15</p>
+                </div>
+                <div>
+                    <p class="text-[12px] text-gray-500 mb-1">기간 최저가</p>
+                    <p class="text-[16px] font-bold text-gray-900 num">445,000원</p>
+                    <p class="text-[11px] text-gray-400">11/03</p>
+                </div>
+                <div>
+                    <p class="text-[12px] text-gray-500 mb-1">기간 평균가</p>
+                    <p class="text-[16px] font-bold text-gray-900 num">451,200원</p>
+                </div>
+                <div>
+                    <p class="text-[12px] text-gray-500 mb-1">기간 변동폭</p>
+                    <p class="text-[16px] font-bold text-green-500 num">+1.57%</p>
+                    <p class="text-[11px] text-gray-400">+7,000원</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+
+            <!-- 상세 시세표 -->
+            <div class="lg:col-span-2 bg-white rounded-2xl card-shadow overflow-hidden">
+                <div class="p-6 border-b border-gray-100">
+                    <h2 class="text-[18px] font-bold text-gray-900">상세 시세표</h2>
+                </div>
+
+                <!-- 탭 -->
+                <div class="flex border-b border-gray-100">
+                    <button class="tab-btn active flex-1 py-4 text-[14px] font-semibold text-gray-400 border-b-2 border-transparent smooth-transition">
+                        국내 시세
+                    </button>
+                    <button class="tab-btn flex-1 py-4 text-[14px] font-semibold text-gray-400 border-b-2 border-transparent smooth-transition">
+                        국제 시세
+                    </button>
+                    <button class="tab-btn flex-1 py-4 text-[14px] font-semibold text-gray-400 border-b-2 border-transparent smooth-transition">
+                        환율
+                    </button>
+                </div>
+
+                <!-- 테이블 -->
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="bg-gray-50 text-[12px] text-gray-500 font-medium">
+                                <th class="py-3 px-6 text-left">품목</th>
+                                <th class="py-3 px-4 text-right">살때 (원/g)</th>
+                                <th class="py-3 px-4 text-right">팔때 (원/g)</th>
+                                <th class="py-3 px-4 text-right">전일대비</th>
+                                <th class="py-3 px-4 text-right">등락률</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-[14px]">
+                            <tr class="table-row border-b border-gray-50 smooth-transition">
+                                <td class="py-4 px-6">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center">
+                                            <span class="text-[10px] font-bold text-yellow-700">24K</span>
+                                        </div>
+                                        <span class="font-medium text-gray-900">순금 (24K)</span>
+                                    </div>
+                                </td>
+                                <td class="py-4 px-4 text-right font-semibold text-gray-900 num">452,000</td>
+                                <td class="py-4 px-4 text-right font-semibold text-gray-900 num">442,000</td>
+                                <td class="py-4 px-4 text-right text-red-500 font-medium num">▼ 1,000</td>
+                                <td class="py-4 px-4 text-right text-red-500 font-medium num">-0.22%</td>
+                            </tr>
+                            <tr class="table-row border-b border-gray-50 smooth-transition">
+                                <td class="py-4 px-6">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center">
+                                            <span class="text-[10px] font-bold text-yellow-700">18K</span>
+                                        </div>
+                                        <span class="font-medium text-gray-900">18K금</span>
+                                    </div>
+                                </td>
+                                <td class="py-4 px-4 text-right font-semibold text-gray-900 num">339,000</td>
+                                <td class="py-4 px-4 text-right font-semibold text-gray-900 num">331,500</td>
+                                <td class="py-4 px-4 text-right text-green-500 font-medium num">▲ 500</td>
+                                <td class="py-4 px-4 text-right text-green-500 font-medium num">+0.15%</td>
+                            </tr>
+                            <tr class="table-row border-b border-gray-50 smooth-transition">
+                                <td class="py-4 px-6">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center">
+                                            <span class="text-[10px] font-bold text-yellow-700">14K</span>
+                                        </div>
+                                        <span class="font-medium text-gray-900">14K금</span>
+                                    </div>
+                                </td>
+                                <td class="py-4 px-4 text-right font-semibold text-gray-900 num">264,000</td>
+                                <td class="py-4 px-4 text-right font-semibold text-gray-900 num">258,000</td>
+                                <td class="py-4 px-4 text-right text-gray-400 font-medium num">- 0</td>
+                                <td class="py-4 px-4 text-right text-gray-400 font-medium num">0.00%</td>
+                            </tr>
+                            <tr class="table-row border-b border-gray-50 smooth-transition">
+                                <td class="py-4 px-6">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center">
+                                            <span class="text-[10px] font-bold text-yellow-700">10K</span>
+                                        </div>
+                                        <span class="font-medium text-gray-900">10K금</span>
+                                    </div>
+                                </td>
+                                <td class="py-4 px-4 text-right font-semibold text-gray-900 num">188,000</td>
+                                <td class="py-4 px-4 text-right font-semibold text-gray-900 num">184,000</td>
+                                <td class="py-4 px-4 text-right text-red-500 font-medium num">▼ 500</td>
+                                <td class="py-4 px-4 text-right text-red-500 font-medium num">-0.27%</td>
+                            </tr>
+                            <tr class="table-row border-b border-gray-50 smooth-transition">
+                                <td class="py-4 px-6">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
+                                            <span class="text-[10px] font-bold text-gray-600">Pt</span>
+                                        </div>
+                                        <span class="font-medium text-gray-900">백금</span>
+                                    </div>
+                                </td>
+                                <td class="py-4 px-4 text-right font-semibold text-gray-900 num">158,000</td>
+                                <td class="py-4 px-4 text-right font-semibold text-gray-900 num">154,000</td>
+                                <td class="py-4 px-4 text-right text-green-500 font-medium num">▲ 2,000</td>
+                                <td class="py-4 px-4 text-right text-green-500 font-medium num">+1.28%</td>
+                            </tr>
+                            <tr class="table-row smooth-transition">
+                                <td class="py-4 px-6">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
+                                            <span class="text-[10px] font-bold text-gray-600">Ag</span>
+                                        </div>
+                                        <span class="font-medium text-gray-900">은</span>
+                                    </div>
+                                </td>
+                                <td class="py-4 px-4 text-right font-semibold text-gray-900 num">5,200</td>
+                                <td class="py-4 px-4 text-right font-semibold text-gray-900 num">5,100</td>
+                                <td class="py-4 px-4 text-right text-green-500 font-medium num">▲ 50</td>
+                                <td class="py-4 px-4 text-right text-green-500 font-medium num">+0.97%</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="p-4 bg-gray-50 text-[12px] text-gray-500">
+                    * 위 시세는 참고용이며, 실제 거래 시세는 매장별로 상이할 수 있습니다.
+                </div>
+            </div>
+
+            <!-- 사이드바 -->
+            <div class="space-y-6">
+
+                <!-- 시세 계산기 -->
+                <div class="bg-white rounded-2xl card-shadow p-6">
+                    <h3 class="text-[16px] font-bold text-gray-900 mb-4">시세 계산기</h3>
+
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-[13px] font-medium text-gray-600 mb-2">금 종류</label>
+                            <select class="w-full px-4 py-3 bg-gray-100 rounded-xl text-[14px] text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900">
+                                <option>24K 순금</option>
+                                <option>18K금</option>
+                                <option>14K금</option>
+                                <option>10K금</option>
+                                <option>백금</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-[13px] font-medium text-gray-600 mb-2">중량</label>
+                            <div class="flex gap-2">
+                                <input type="number" value="3.75" class="flex-1 px-4 py-3 bg-gray-100 rounded-xl text-[14px] text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900 num">
+                                <select class="px-4 py-3 bg-gray-100 rounded-xl text-[14px] text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900">
+                                    <option>g</option>
+                                    <option>돈</option>
+                                    <option>oz</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="pt-4 border-t border-gray-100">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-[13px] text-gray-500">살때 예상가</span>
+                                <span class="text-[18px] font-bold text-gray-900 num">1,695,000원</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-[13px] text-gray-500">팔때 예상가</span>
+                                <span class="text-[18px] font-bold text-blue-600 num">1,657,500원</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 국제 시세 -->
+                <div class="bg-white rounded-2xl card-shadow p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-[16px] font-bold text-gray-900">국제 금시세</h3>
+                        <span class="text-[12px] text-gray-400">USD 기준</span>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between py-3 border-b border-gray-100">
+                            <div class="flex items-center gap-3">
+                                <span class="text-[20px]">🇺🇸</span>
+                                <span class="text-[14px] font-medium text-gray-700">XAU/USD</span>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-[15px] font-bold text-gray-900 num">$2,045.30</p>
+                                <p class="text-[12px] text-green-500 font-medium num">+0.45%</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between py-3 border-b border-gray-100">
+                            <div class="flex items-center gap-3">
+                                <span class="text-[20px]">🇬🇧</span>
+                                <span class="text-[14px] font-medium text-gray-700">런던 금</span>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-[15px] font-bold text-gray-900 num">$2,044.85</p>
+                                <p class="text-[12px] text-green-500 font-medium num">+0.38%</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between py-3">
+                            <div class="flex items-center gap-3">
+                                <span class="text-[20px]">🇰🇷</span>
+                                <span class="text-[14px] font-medium text-gray-700">USD/KRW</span>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-[15px] font-bold text-gray-900 num">₩1,305.50</p>
+                                <p class="text-[12px] text-red-500 font-medium num">-0.12%</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 알림 설정 -->
+                <div class="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-6 text-white">
+                    <div class="flex items-start gap-4">
+                        <div class="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center flex-shrink-0">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0"></path>
+                            </svg>
+                        </div>
+                        <div class="flex-1">
+                            <h3 class="text-[15px] font-semibold mb-1">시세 알림 받기</h3>
+                            <p class="text-[13px] text-gray-400 mb-4">원하는 가격에 도달하면 알림을 받아보세요</p>
+                            <button class="w-full py-3 bg-white text-gray-900 text-[14px] font-semibold rounded-xl hover:bg-gray-100 smooth-transition">
+                                알림 설정하기
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- 돈 단위 환산표 -->
+        <div class="bg-white rounded-2xl card-shadow overflow-hidden mb-8">
+            <div class="p-6 border-b border-gray-100">
+                <h2 class="text-[18px] font-bold text-gray-900 mb-1">24K 순금 돈 단위 환산표</h2>
+                <p class="text-[13px] text-gray-500">현재 시세 기준 (1돈 = 3.75g)</p>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead>
+                        <tr class="bg-gray-50 text-[12px] text-gray-500 font-medium">
+                            <th class="py-3 px-6 text-left">단위</th>
+                            <th class="py-3 px-4 text-right">중량 (g)</th>
+                            <th class="py-3 px-4 text-right">살때</th>
+                            <th class="py-3 px-4 text-right">팔때</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-[14px]">
+                        <tr class="table-row border-b border-gray-50 smooth-transition">
+                            <td class="py-4 px-6 font-medium text-gray-900">1돈</td>
+                            <td class="py-4 px-4 text-right text-gray-600 num">3.75g</td>
+                            <td class="py-4 px-4 text-right font-semibold text-gray-900 num">1,695,000원</td>
+                            <td class="py-4 px-4 text-right font-semibold text-blue-600 num">1,657,500원</td>
+                        </tr>
+                        <tr class="table-row border-b border-gray-50 smooth-transition">
+                            <td class="py-4 px-6 font-medium text-gray-900">2돈</td>
+                            <td class="py-4 px-4 text-right text-gray-600 num">7.5g</td>
+                            <td class="py-4 px-4 text-right font-semibold text-gray-900 num">3,390,000원</td>
+                            <td class="py-4 px-4 text-right font-semibold text-blue-600 num">3,315,000원</td>
+                        </tr>
+                        <tr class="table-row border-b border-gray-50 smooth-transition">
+                            <td class="py-4 px-6 font-medium text-gray-900">3돈</td>
+                            <td class="py-4 px-4 text-right text-gray-600 num">11.25g</td>
+                            <td class="py-4 px-4 text-right font-semibold text-gray-900 num">5,085,000원</td>
+                            <td class="py-4 px-4 text-right font-semibold text-blue-600 num">4,972,500원</td>
+                        </tr>
+                        <tr class="table-row border-b border-gray-50 smooth-transition">
+                            <td class="py-4 px-6 font-medium text-gray-900">5돈</td>
+                            <td class="py-4 px-4 text-right text-gray-600 num">18.75g</td>
+                            <td class="py-4 px-4 text-right font-semibold text-gray-900 num">8,475,000원</td>
+                            <td class="py-4 px-4 text-right font-semibold text-blue-600 num">8,287,500원</td>
+                        </tr>
+                        <tr class="table-row border-b border-gray-50 smooth-transition">
+                            <td class="py-4 px-6 font-medium text-gray-900">1냥 (10돈)</td>
+                            <td class="py-4 px-4 text-right text-gray-600 num">37.5g</td>
+                            <td class="py-4 px-4 text-right font-semibold text-gray-900 num">16,950,000원</td>
+                            <td class="py-4 px-4 text-right font-semibold text-blue-600 num">16,575,000원</td>
+                        </tr>
+                        <tr class="table-row smooth-transition">
+                            <td class="py-4 px-6 font-medium text-gray-900">1근 (160돈)</td>
+                            <td class="py-4 px-4 text-right text-gray-600 num">600g</td>
+                            <td class="py-4 px-4 text-right font-semibold text-gray-900 num">271,200,000원</td>
+                            <td class="py-4 px-4 text-right font-semibold text-blue-600 num">265,200,000원</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 시세 정보 안내 -->
+        <div class="bg-gray-100 rounded-2xl p-6">
+            <h3 class="text-[15px] font-semibold text-gray-900 mb-3">금 시세 안내</h3>
+            <ul class="space-y-2 text-[13px] text-gray-600">
+                <li class="flex items-start gap-2">
+                    <span class="text-gray-400">•</span>
+                    <span>금 시세는 국제 금 시세(XAU/USD)와 원/달러 환율을 반영하여 실시간으로 업데이트됩니다.</span>
+                </li>
+                <li class="flex items-start gap-2">
+                    <span class="text-gray-400">•</span>
+                    <span>살때/팔때 가격은 한국금거래소 소매 기준가이며, 실제 거래가는 매장별로 상이할 수 있습니다.</span>
+                </li>
+                <li class="flex items-start gap-2">
+                    <span class="text-gray-400">•</span>
+                    <span>1돈 = 3.75g, 1냥 = 10돈 = 37.5g, 1근 = 16냥 = 160돈 = 600g 입니다.</span>
+                </li>
+                <li class="flex items-start gap-2">
+                    <span class="text-gray-400">•</span>
+                    <span>위 시세는 참고용 정보이며, 투자 판단의 책임은 본인에게 있습니다.</span>
+                </li>
+            </ul>
+        </div>
+
+    </main>
+
+    <!-- 푸터 -->
+    <footer class="bg-gray-100 py-12 px-5 mt-16">
+        <div class="max-w-[1200px] mx-auto">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-8 mb-10">
+                <div>
+                    <h4 class="text-[14px] font-semibold text-gray-900 mb-4">서비스</h4>
+                    <ul class="space-y-3">
+                        <li><a href="price.html" class="text-[13px] text-gray-500 hover:text-gray-900 smooth-transition">금시세</a></li>
+                        <li><a href="stores.html" class="text-[13px] text-gray-500 hover:text-gray-900 smooth-transition">매장찾기</a></li>
+                        <li><a href="products.html" class="text-[13px] text-gray-500 hover:text-gray-900 smooth-transition">상품검색</a></li>
+                        <li><a href="#" class="text-[13px] text-gray-500 hover:text-gray-900 smooth-transition">이벤트</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-[14px] font-semibold text-gray-900 mb-4">고객지원</h4>
+                    <ul class="space-y-3">
+                        <li><a href="#" class="text-[13px] text-gray-500 hover:text-gray-900 smooth-transition">공지사항</a></li>
+                        <li><a href="#" class="text-[13px] text-gray-500 hover:text-gray-900 smooth-transition">자주 묻는 질문</a></li>
+                        <li><a href="#" class="text-[13px] text-gray-500 hover:text-gray-900 smooth-transition">1:1 문의</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-[14px] font-semibold text-gray-900 mb-4">파트너</h4>
+                    <ul class="space-y-3">
+                        <li><a href="#" class="text-[13px] text-gray-500 hover:text-gray-900 smooth-transition">매장 등록</a></li>
+                        <li><a href="#" class="text-[13px] text-gray-500 hover:text-gray-900 smooth-transition">광고 문의</a></li>
+                        <li><a href="#" class="text-[13px] text-gray-500 hover:text-gray-900 smooth-transition">제휴 문의</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-[14px] font-semibold text-gray-900 mb-4">회사</h4>
+                    <ul class="space-y-3">
+                        <li><a href="#" class="text-[13px] text-gray-500 hover:text-gray-900 smooth-transition">회사 소개</a></li>
+                        <li><a href="#" class="text-[13px] text-gray-500 hover:text-gray-900 smooth-transition">채용</a></li>
+                        <li><a href="#" class="text-[13px] text-gray-500 hover:text-gray-900 smooth-transition">블로그</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="border-t border-gray-200 pt-8">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div class="flex items-center gap-2">
+                        <div class="w-6 h-6 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded flex items-center justify-center">
+                            <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
+                            </svg>
+                        </div>
+                        <span class="text-[14px] font-semibold text-gray-700">우리동네금은방</span>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <a href="#" class="text-[12px] text-gray-500 hover:text-gray-900 smooth-transition">이용약관</a>
+                        <a href="#" class="text-[12px] font-semibold text-gray-700 hover:text-gray-900 smooth-transition">개인정보처리방침</a>
+                        <a href="#" class="text-[12px] text-gray-500 hover:text-gray-900 smooth-transition">위치기반서비스 이용약관</a>
+                    </div>
+                </div>
+                <p class="text-[12px] text-gray-400 mt-4">© 2024 우리동네금은방. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- 네비게이션 스크립트 -->
+    <script>
+        function updateAuthUI() {
+            const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+            const userName = localStorage.getItem('userName') || '사용자';
+            const guestButtons = document.getElementById('guest-buttons');
+            const userMenu = document.getElementById('user-menu');
+            const userAvatar = document.getElementById('user-avatar');
+
+            if (isLoggedIn && guestButtons && userMenu && userAvatar) {
+                guestButtons.classList.add('hidden');
+                userMenu.classList.remove('hidden');
+                userAvatar.textContent = userName.charAt(0);
+            }
+        }
+
+        function highlightCurrentPage() {
+            const currentPage = window.location.pathname.split('/').pop().replace('.html', '') || 'main';
+            const navLinks = document.querySelectorAll('.nav-link');
+            navLinks.forEach(link => {
+                if (link.dataset.page === currentPage) {
+                    link.classList.remove('text-gray-600');
+                    link.classList.add('text-gray-900');
+                }
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            updateAuthUI();
+            highlightCurrentPage();
+        });
+    </script>
+</body>
+
+</html>
