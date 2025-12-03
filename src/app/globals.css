@@ -115,8 +115,72 @@
 @layer base {
   * {
     @apply border-border outline-ring/50;
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   }
   body {
     @apply bg-background text-foreground;
   }
+
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+@layer utilities {
+  /* 토스 스타일 부드러운 트랜지션 */
+  .smooth-transition {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* 당근/크림 스타일 호버 효과 */
+  .hover-lift:hover {
+    transform: translateY(-2px);
+  }
+
+  /* 무신사/크림 스타일 카드 */
+  .card-shadow {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  }
+
+  .card-shadow:hover {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  }
+}
+
+/* 프라이스 업다운 애니메이션 */
+@keyframes pulse-soft {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.pulse-soft {
+  animation: pulse-soft 2s ease-in-out infinite;
+}
+
+/* 스크롤바 스타일링 (오늘의집 스타일) */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #E0E0E0;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #BDBDBD;
+}
+
+/* 검색바 포커스 효과 */
+.search-input:focus {
+  outline: none;
+}
+
+.search-container:focus-within {
+  border-color: #191F28;
 }
