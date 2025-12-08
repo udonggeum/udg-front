@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "Bash(npx shadcn@latest add:*)",
-      "Bash(npm run dev:*)"
+      "Bash(npm run dev:*)",
+      "Read(//c/Users/eoyld/leejaeshin/udonggeum-frontend/src/pages/**)"
     ],
     "deny": [],
     "ask": []
