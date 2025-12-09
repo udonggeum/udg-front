@@ -6,7 +6,10 @@
       "Read(//c/Users/eoyld/leejaeshin/udonggeum-frontend/src/pages/**)",
       "Read(//c/Users/eoyld/leejaeshin/udonggeum-frontend/src/**)",
       "Bash(npm install:*)",
-      "Read(//c/Users/eoyld/leejaeshin/PokeSrc/lib/**)"
+      "Read(//c/Users/eoyld/leejaeshin/PokeSrc/lib/**)",
+      "Bash(cat:*)",
+      "Bash(npm run build:*)",
+      "Bash(tail:*)"
     ],
     "deny": [],
     "ask": []

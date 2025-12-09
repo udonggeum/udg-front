@@ -142,3 +142,37 @@ export async function resetPasswordAction(
     };
   }
 }
+
+/**
+ * 로그아웃 Server Action
+ * 서버에 refresh token을 보내 토큰을 무효화합니다.
+ */
+export async function logoutUserAction(
+  refreshToken: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    await apiClient.post("/auth/logout", {
+      refresh_token: refreshToken,
+    });
+
+    return {
+      success: true,
+    };
+  } catch (error) {
+    console.error("Logout error:", error);
+
+    // 로그아웃은 서버 호출이 실패해도 클라이언트 측 정리는 진행해야 함
+    if (axios.isAxiosError(error)) {
+      const axiosError = error as AxiosError<{ message?: string }>;
+      return {
+        success: false,
+        error: axiosError.response?.data?.message || "로그아웃 API 호출에 실패했습니다.",
+      };
+    }
+
+    return {
+      success: false,
+      error: "서버에 연결할 수 없습니다.",
+    };
+  }
+}

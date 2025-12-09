@@ -1,33 +1,172 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, type FormEvent, type ChangeEvent, Suspense } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { Eye, EyeOff } from "lucide-react";
+import { PasswordInput } from "@/components/ui/password-input";
+import { useAuthStore } from "@/stores/useAuthStore";
+import { loginUserAction } from "@/actions/auth";
+import { LoginRequestSchema, type LoginRequest } from "@/schemas/auth";
+import { ZodError } from "zod";
+import { toast } from "sonner";
 
-export default function LoginPage() {
+interface FormErrors {
+  email?: string;
+  password?: string;
+}
+
+function LoginForm() {
   const router = useRouter();
-  const [showPassword, setShowPassword] = useState(false);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const searchParams = useSearchParams();
+  const { isAuthenticated, user, setAuth } = useAuthStore();
+
+  const [formData, setFormData] = useState<LoginRequest>({
+    email: "",
+    password: "",
+  });
+  const [formErrors, setFormErrors] = useState<FormErrors>({});
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
+  const [isLoading, setIsLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
 
-  const handleLogin = () => {
-    // 실제로는 API 호출
-    localStorage.setItem("isLoggedIn", "true");
-    localStorage.setItem("userName", "사용자");
-    router.push("/");
+  // 인증된 사용자를 로그인 페이지에서 리다이렉트
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      const redirectParam = searchParams?.get("redirect");
+      if (redirectParam) {
+        router.replace(redirectParam);
+      } else {
+        // 루트로 리다이렉트
+        router.replace("/");
+      }
+    }
+  }, [isAuthenticated, user, router, searchParams]);
+
+  /**
+   * 단일 필드 검증
+   */
+  const validateField = (name: string, value: string): string | undefined => {
+    try {
+      if (name === "email") {
+        LoginRequestSchema.pick({ email: true }).parse({ email: value });
+      } else if (name === "password") {
+        LoginRequestSchema.pick({ password: true }).parse({ password: value });
+      }
+      return undefined;
+    } catch (err: unknown) {
+      if (err instanceof ZodError && err.issues.length > 0) {
+        return err.issues[0]?.message;
+      }
+      return "유효하지 않은 값입니다.";
+    }
+  };
+
+  /**
+   * 전체 폼 검증
+   */
+  const validateForm = (): boolean => {
+    const errors: FormErrors = {};
+    let isValid = true;
+
+    // 이메일 검증
+    const emailError = validateField("email", formData.email);
+    if (emailError) {
+      errors.email = emailError;
+      isValid = false;
+    }
+
+    // 비밀번호 검증
+    const passwordError = validateField("password", formData.password);
+    if (passwordError) {
+      errors.password = passwordError;
+      isValid = false;
+    }
+
+    setFormErrors(errors);
+    setTouched({ email: true, password: true });
+
+    return isValid;
+  };
+
+  /**
+   * 입력 변경 처리
+   */
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+
+    // 에러가 있으면 제거
+    if (formErrors[name as keyof FormErrors]) {
+      setFormErrors((prev) => ({ ...prev, [name]: undefined }));
+    }
+  };
+
+  /**
+   * 입력 블러 처리 (필드를 터치된 것으로 표시)
+   */
+  const handleBlur = (e: ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setTouched((prev) => ({ ...prev, [name]: true }));
+
+    // 블러 시 필드 검증
+    const error = validateField(name, value);
+    if (error) {
+      setFormErrors((prev) => ({ ...prev, [name]: error }));
+    }
+  };
+
+  /**
+   * 이메일 로그인 제출 처리
+   */
+  const handleEmailLogin = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    // 폼 검증
+    if (!validateForm()) {
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      // Zod로 데이터 파싱 및 검증
+      const validatedData = LoginRequestSchema.parse(formData);
+
+      // 로그인 서버 액션 호출
+      const result = await loginUserAction(validatedData);
+
+      if (result.success && result.data) {
+        // auth store에 사용자 정보와 토큰 업데이트
+        setAuth(result.data.user, result.data.tokens);
+
+        toast.success("로그인 성공!");
+
+        // 리다이렉트 파라미터가 있으면 사용
+        const redirectParam = searchParams?.get("redirect");
+        if (redirectParam) {
+          router.replace(redirectParam);
+        } else {
+          // 루트로 리다이렉트
+          router.replace("/");
+        }
+      } else {
+        toast.error(result.error || "로그인에 실패했습니다.");
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+      toast.error("로그인 중 오류가 발생했습니다.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleSocialLogin = (provider: string) => {
-    // 실제로는 소셜 로그인 API 호출
-    localStorage.setItem("isLoggedIn", "true");
-    localStorage.setItem("userName", `${provider} 사용자`);
-    router.push("/");
+    // TODO: 소셜 로그인 구현
+    toast.info(`${provider} 로그인 준비 중입니다.`);
   };
 
   return (
@@ -205,38 +344,42 @@ export default function LoginPage() {
             </div>
 
             {/* 이메일 로그인 폼 */}
-            <form className="space-y-4 mb-6" onSubmit={(e) => { e.preventDefault(); handleLogin(); }}>
+            <form className="space-y-4 mb-6" onSubmit={handleEmailLogin} noValidate>
               {/* 이메일 */}
               <div>
                 <Label className="block text-[13px] font-medium text-gray-700 mb-2">이메일</Label>
                 <Input
                   type="email"
+                  name="email"
                   placeholder="example@email.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-4 py-6 bg-gray-100 border-transparent focus:border-gray-900 focus:bg-white rounded-xl text-[15px] placeholder-gray-400 smooth-transition"
+                  value={formData.email}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  required
+                  className={`w-full px-4 py-6 bg-gray-100 border-transparent focus:border-gray-900 focus:bg-white rounded-xl text-[15px] placeholder-gray-400 smooth-transition ${
+                    touched.email && formErrors.email
+                      ? "border-red-400 focus:border-red-400"
+                      : ""
+                  }`}
                 />
+                {touched.email && formErrors.email && (
+                  <p className="mt-2 text-sm text-red-400">{formErrors.email}</p>
+                )}
               </div>
 
               {/* 비밀번호 */}
               <div>
-                <Label className="block text-[13px] font-medium text-gray-700 mb-2">비밀번호</Label>
-                <div className="relative">
-                  <Input
-                    type={showPassword ? "text" : "password"}
-                    placeholder="비밀번호를 입력하세요"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full px-4 py-6 bg-gray-100 border-transparent focus:border-gray-900 focus:bg-white rounded-xl text-[15px] placeholder-gray-400 smooth-transition pr-12"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 smooth-transition"
-                  >
-                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                  </button>
-                </div>
+                <PasswordInput
+                  name="password"
+                  label="비밀번호"
+                  placeholder="비밀번호를 입력하세요"
+                  value={formData.password}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  error={touched.password ? formErrors.password : undefined}
+                  required
+                  className="w-full px-4 py-6 bg-gray-100 border-transparent focus:border-gray-900 focus:bg-white rounded-xl text-[15px] placeholder-gray-400 smooth-transition"
+                />
               </div>
 
               {/* 로그인 유지 & 비밀번호 찾기 */}
@@ -252,7 +395,7 @@ export default function LoginPage() {
                     로그인 유지
                   </Label>
                 </div>
-                <Link href="#" className="text-[13px] text-gray-500 hover:text-gray-900 smooth-transition">
+                <Link href="/forgot-password" className="text-[13px] text-gray-500 hover:text-gray-900 smooth-transition">
                   비밀번호 찾기
                 </Link>
               </div>
@@ -260,9 +403,10 @@ export default function LoginPage() {
               {/* 로그인 버튼 */}
               <Button
                 type="submit"
-                className="w-full py-6 bg-gray-900 hover:bg-gray-800 text-white text-[15px] font-semibold rounded-xl smooth-transition mt-6 h-auto"
+                disabled={isLoading}
+                className="w-full py-6 bg-gray-900 hover:bg-gray-800 text-white text-[15px] font-semibold rounded-xl smooth-transition mt-6 h-auto disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                로그인
+                {isLoading ? "로그인 중..." : "로그인"}
               </Button>
             </form>
 
@@ -292,5 +436,13 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div>로딩 중...</div>}>
+      <LoginForm />
+    </Suspense>
   );
 }
