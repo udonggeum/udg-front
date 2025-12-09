@@ -3,11 +3,15 @@
 import { useState, useEffect, type FormEvent, type ChangeEvent, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Lock, ArrowLeft, Eye, EyeOff } from "lucide-react";
+import { Lock, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { PasswordInput } from "@/components/ui/password-input";
+import { resetPasswordAction } from "@/actions/auth";
+import { ResetPasswordRequestSchema } from "@/schemas/auth";
+import { ZodError } from "zod";
+import { toast } from "sonner";
 
 interface FormData {
   password: string;
@@ -36,8 +40,6 @@ function ResetPasswordForm() {
 
   const [formErrors, setFormErrors] = useState<FormErrors>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
-  const [showPassword, setShowPassword] = useState(false);
-  const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
 
   // 토큰 유효성 검사
   useEffect(() => {
@@ -63,30 +65,21 @@ function ResetPasswordForm() {
    * 단일 필드 유효성 검사
    */
   const validateField = (name: string, value: string): string | undefined => {
-    if (name === "password") {
-      if (!value) {
-        return "비밀번호를 입력해주세요.";
+    try {
+      if (name === "password") {
+        ResetPasswordRequestSchema.pick({ password: true }).parse({ password: value });
+      } else if (name === "passwordConfirm") {
+        if (value !== formData.password) {
+          return "비밀번호가 일치하지 않습니다.";
+        }
       }
-      if (value.length < 8) {
-        return "비밀번호는 최소 8자 이상이어야 합니다.";
+      return undefined;
+    } catch (err: unknown) {
+      if (err instanceof ZodError && err.issues.length > 0) {
+        return err.issues[0]?.message;
       }
-      // 영문, 숫자, 특수문자 포함 검사
-      const hasLetter = /[a-zA-Z]/.test(value);
-      const hasNumber = /[0-9]/.test(value);
-      const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(value);
-
-      if (!hasLetter || !hasNumber || !hasSpecial) {
-        return "영문, 숫자, 특수문자를 모두 포함해야 합니다.";
-      }
-    } else if (name === "passwordConfirm") {
-      if (!value) {
-        return "비밀번호 확인을 입력해주세요.";
-      }
-      if (value !== formData.password) {
-        return "비밀번호가 일치하지 않습니다.";
-      }
+      return "유효하지 않은 값입니다.";
     }
-    return undefined;
   };
 
   /**
@@ -173,20 +166,31 @@ function ResetPasswordForm() {
       return;
     }
 
-    // API 호출 시뮬레이션 (실제 API 연동 시 수정)
     setIsPending(true);
     setErrorMessage("");
 
     try {
-      // TODO: 실제 API 호출로 대체
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      // Zod로 데이터 파싱 및 검증
+      const validatedData = ResetPasswordRequestSchema.parse({
+        token,
+        password: formData.password,
+      });
 
-      // 성공 처리
-      setIsSuccess(true);
+      // 비밀번호 재설정 서버 액션 호출
+      const result = await resetPasswordAction(validatedData);
+
+      if (result.success) {
+        setIsSuccess(true);
+        toast.success("비밀번호가 변경되었습니다. 로그인 페이지로 이동합니다.");
+      } else {
+        setErrorMessage(result.error || "비밀번호 재설정에 실패했습니다.");
+        toast.error(result.error || "비밀번호 재설정에 실패했습니다.");
+      }
     } catch (error) {
-      setErrorMessage(
-        error instanceof Error ? error.message : "오류가 발생했습니다."
-      );
+      console.error("Reset password error:", error);
+      const message = error instanceof Error ? error.message : "오류가 발생했습니다.";
+      setErrorMessage(message);
+      toast.error(message);
     } finally {
       setIsPending(false);
     }
@@ -244,80 +248,32 @@ function ResetPasswordForm() {
             <p className="text-sm text-gray-600">새로운 비밀번호를 입력하세요.</p>
 
             {/* 새 비밀번호 필드 */}
-            <div className="space-y-2">
-              <Label htmlFor="password">새 비밀번호</Label>
-              <div className="relative">
-                <Input
-                  id="password"
-                  name="password"
-                  type={showPassword ? "text" : "password"}
-                  placeholder="최소 8자 이상"
-                  className={
-                    touched.password && formErrors.password
-                      ? "border-red-500 focus-visible:ring-red-500 pr-10"
-                      : "pr-10"
-                  }
-                  value={formData.password}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  disabled={isPending}
-                  autoComplete="new-password"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                >
-                  {showPassword ? (
-                    <EyeOff className="w-5 h-5" />
-                  ) : (
-                    <Eye className="w-5 h-5" />
-                  )}
-                </button>
-              </div>
-              {touched.password && formErrors.password && (
-                <p className="text-sm text-red-500">{formErrors.password}</p>
-              )}
-            </div>
+            <PasswordInput
+              id="password"
+              name="password"
+              label="새 비밀번호"
+              placeholder="최소 8자 이상"
+              value={formData.password}
+              onChange={handleChange}
+              onBlur={handleBlur}
+              error={touched.password ? formErrors.password : undefined}
+              disabled={isPending}
+              autoComplete="new-password"
+            />
 
             {/* 비밀번호 확인 필드 */}
-            <div className="space-y-2">
-              <Label htmlFor="passwordConfirm">비밀번호 확인</Label>
-              <div className="relative">
-                <Input
-                  id="passwordConfirm"
-                  name="passwordConfirm"
-                  type={showPasswordConfirm ? "text" : "password"}
-                  placeholder="비밀번호를 다시 입력하세요"
-                  className={
-                    touched.passwordConfirm && formErrors.passwordConfirm
-                      ? "border-red-500 focus-visible:ring-red-500 pr-10"
-                      : "pr-10"
-                  }
-                  value={formData.passwordConfirm}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  disabled={isPending}
-                  autoComplete="new-password"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPasswordConfirm(!showPasswordConfirm)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                >
-                  {showPasswordConfirm ? (
-                    <EyeOff className="w-5 h-5" />
-                  ) : (
-                    <Eye className="w-5 h-5" />
-                  )}
-                </button>
-              </div>
-              {touched.passwordConfirm && formErrors.passwordConfirm && (
-                <p className="text-sm text-red-500">
-                  {formErrors.passwordConfirm}
-                </p>
-              )}
-            </div>
+            <PasswordInput
+              id="passwordConfirm"
+              name="passwordConfirm"
+              label="비밀번호 확인"
+              placeholder="비밀번호를 다시 입력하세요"
+              value={formData.passwordConfirm}
+              onChange={handleChange}
+              onBlur={handleBlur}
+              error={touched.passwordConfirm ? formErrors.passwordConfirm : undefined}
+              disabled={isPending}
+              autoComplete="new-password"
+            />
 
             {/* 제출 버튼 */}
             <Button
