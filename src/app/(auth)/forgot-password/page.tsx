@@ -8,6 +8,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { forgotPasswordAction } from "@/actions/auth";
+import { ForgotPasswordRequestSchema, type ForgotPasswordRequest } from "@/schemas/auth";
+import { ZodError } from "zod";
+import { toast } from "sonner";
 
 interface FormErrors {
   email?: string;
@@ -19,7 +23,7 @@ export default function ForgotPasswordPage() {
   const [isSuccess, setIsSuccess] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<ForgotPasswordRequest>({
     email: "",
   });
 
@@ -30,16 +34,17 @@ export default function ForgotPasswordPage() {
    * 단일 필드 유효성 검사
    */
   const validateField = (name: string, value: string): string | undefined => {
-    if (name === "email") {
-      if (!value) {
-        return "이메일을 입력해주세요.";
+    try {
+      if (name === "email") {
+        ForgotPasswordRequestSchema.pick({ email: true }).parse({ email: value });
       }
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(value)) {
-        return "올바른 이메일 형식이 아닙니다.";
+      return undefined;
+    } catch (err: unknown) {
+      if (err instanceof ZodError && err.issues.length > 0) {
+        return err.issues[0]?.message;
       }
+      return "유효하지 않은 값입니다.";
     }
-    return undefined;
   };
 
   /**
@@ -111,20 +116,28 @@ export default function ForgotPasswordPage() {
       return;
     }
 
-    // API 호출 시뮬레이션 (실제 API 연동 시 수정)
     setIsPending(true);
     setErrorMessage("");
 
     try {
-      // TODO: 실제 API 호출로 대체
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      // Zod로 데이터 파싱 및 검증
+      const validatedData = ForgotPasswordRequestSchema.parse(formData);
 
-      // 성공 처리
-      setIsSuccess(true);
+      // 비밀번호 찾기 서버 액션 호출
+      const result = await forgotPasswordAction(validatedData);
+
+      if (result.success) {
+        setIsSuccess(true);
+        toast.success("이메일로 비밀번호 재설정 링크를 전송했습니다.");
+      } else {
+        setErrorMessage(result.error || "비밀번호 찾기에 실패했습니다.");
+        toast.error(result.error || "비밀번호 찾기에 실패했습니다.");
+      }
     } catch (error) {
-      setErrorMessage(
-        error instanceof Error ? error.message : "오류가 발생했습니다."
-      );
+      console.error("Forgot password error:", error);
+      const message = error instanceof Error ? error.message : "오류가 발생했습니다.";
+      setErrorMessage(message);
+      toast.error(message);
     } finally {
       setIsPending(false);
     }
