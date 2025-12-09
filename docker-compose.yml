@@ -1,0 +1,22 @@
+version: "3.9"
+
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ghcr.io/udonggeum/udonggeum-frontend:renewal
+    container_name: udonggeum-frontend-renewal
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - HOSTNAME=0.0.0.0
+    networks:
+      - udonggeum-backend_default  # Connect to backend network
+
+networks:
+  udonggeum-backend_default:
+    external: true  # Use existing backend network created by backend docker-compose
