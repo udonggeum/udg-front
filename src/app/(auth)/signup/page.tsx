@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, type FormEvent, type ChangeEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
@@ -8,17 +8,49 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { Eye, EyeOff } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Eye, EyeOff, AlertCircle } from "lucide-react";
+import { useAuthStore } from "@/stores/useAuthStore";
+import { useUIStore } from "@/stores/useUIStore";
+import { registerUserAction } from "@/actions/auth";
+
+interface FormErrors {
+  email?: string;
+  password?: string;
+  passwordConfirm?: string;
+  name?: string;
+  phone?: string;
+}
 
 export default function SignupPage() {
   const router = useRouter();
+  const { isAuthenticated, setAuth } = useAuthStore();
+  const { showToast } = useUIStore();
+
+  const [isPending, setIsPending] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+
   const [showPassword, setShowPassword] = useState(false);
   const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [passwordConfirm, setPasswordConfirm] = useState("");
-  const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
+
+  // 이미 로그인된 경우 메인 페이지로 리다이렉트
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.replace("/");
+    }
+  }, [isAuthenticated, router]);
+
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+    passwordConfirm: "",
+    name: "",
+    phone: "",
+  });
+
+  const [formErrors, setFormErrors] = useState<FormErrors>({});
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
+
   const [allAgreed, setAllAgreed] = useState(false);
   const [agreements, setAgreements] = useState({
     terms: false,
@@ -32,12 +64,239 @@ export default function SignupPage() {
     push: false,
   });
 
-  const handleSocialSignup = (provider: string) => {
-    localStorage.setItem("isLoggedIn", "true");
-    localStorage.setItem("userName", `${provider} 사용자`);
-    router.push("/");
+  /**
+   * 비밀번호 강도 계산
+   */
+  const getPasswordStrength = (password: string): number => {
+    let strength = 0;
+    if (password.length >= 8) strength++;
+    if (/[a-z]/.test(password)) strength++;
+    if (/[A-Z]/.test(password)) strength++;
+    if (/[0-9]/.test(password)) strength++;
+    if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) strength++;
+    return Math.min(strength, 4);
   };
 
+  const passwordStrength = getPasswordStrength(formData.password);
+  const passwordStrengthText =
+    passwordStrength === 0
+      ? "입력해주세요"
+      : passwordStrength === 1
+      ? "매우 약함"
+      : passwordStrength === 2
+      ? "약함"
+      : passwordStrength === 3
+      ? "보통"
+      : "강함";
+
+  /**
+   * 폼 제출 가능 여부 확인
+   */
+  const isFormValid = (): boolean => {
+    // 필수 필드 입력 확인
+    if (!formData.email || !formData.password || !formData.passwordConfirm || !formData.name || !formData.phone) {
+      return false;
+    }
+
+    // 이메일 형식 확인
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      return false;
+    }
+
+    // 비밀번호 조건 확인
+    if (formData.password.length < 8 || !/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(formData.password)) {
+      return false;
+    }
+
+    // 비밀번호 일치 확인
+    if (formData.password !== formData.passwordConfirm) {
+      return false;
+    }
+
+    // 휴대폰 번호 형식 확인
+    if (!/^01[0-9]-?[0-9]{3,4}-?[0-9]{4}$/.test(formData.phone)) {
+      return false;
+    }
+
+    // 필수 약관 동의 확인 (이용약관, 개인정보처리방침, 위치기반서비스)
+    if (!agreements.terms || !agreements.privacy || !agreements.location) {
+      return false;
+    }
+
+    // 현재 에러가 있는지 확인
+    if (Object.keys(formErrors).some(key => formErrors[key as keyof FormErrors])) {
+      return false;
+    }
+
+    return true;
+  };
+
+  /**
+   * 단일 필드 유효성 검사
+   */
+  const validateField = (field: keyof FormErrors): boolean => {
+    const errors: FormErrors = {};
+
+    switch (field) {
+      case "email":
+        if (!formData.email) {
+          errors.email = "이메일을 입력해주세요.";
+        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+          errors.email = "올바른 이메일 형식이 아닙니다.";
+        }
+        break;
+
+      case "password":
+        if (!formData.password) {
+          errors.password = "비밀번호를 입력해주세요.";
+        } else if (formData.password.length < 8) {
+          errors.password = "비밀번호는 최소 8자 이상이어야 합니다.";
+        } else if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(formData.password)) {
+          errors.password = "영문 대소문자, 숫자를 모두 포함해야 합니다.";
+        }
+        break;
+
+      case "passwordConfirm":
+        if (!formData.passwordConfirm) {
+          errors.passwordConfirm = "비밀번호 확인을 입력해주세요.";
+        } else if (formData.password !== formData.passwordConfirm) {
+          errors.passwordConfirm = "비밀번호가 일치하지 않습니다.";
+        }
+        break;
+
+      case "name":
+        if (!formData.name || formData.name.trim().length === 0) {
+          errors.name = "이름을 입력해주세요.";
+        }
+        break;
+
+      case "phone":
+        if (!formData.phone) {
+          errors.phone = "휴대폰 번호를 입력해주세요.";
+        } else if (!/^01[0-9]-?[0-9]{3,4}-?[0-9]{4}$/.test(formData.phone)) {
+          errors.phone = "올바른 휴대폰 번호 형식이 아닙니다.";
+        }
+        break;
+    }
+
+    setFormErrors((prev) => ({ ...prev, ...errors }));
+    return Object.keys(errors).length === 0;
+  };
+
+  /**
+   * 전체 폼 유효성 검사
+   */
+  const validateForm = (): boolean => {
+    const errors: FormErrors = {};
+
+    // 이메일 검증
+    if (!formData.email) {
+      errors.email = "이메일을 입력해주세요.";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      errors.email = "올바른 이메일 형식이 아닙니다.";
+    }
+
+    // 비밀번호 검증
+    if (!formData.password) {
+      errors.password = "비밀번호를 입력해주세요.";
+    } else if (formData.password.length < 8) {
+      errors.password = "비밀번호는 최소 8자 이상이어야 합니다.";
+    } else if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(formData.password)) {
+      errors.password = "영문 대소문자, 숫자를 모두 포함해야 합니다.";
+    }
+
+    // 비밀번호 확인 검증
+    if (!formData.passwordConfirm) {
+      errors.passwordConfirm = "비밀번호 확인을 입력해주세요.";
+    } else if (formData.password !== formData.passwordConfirm) {
+      errors.passwordConfirm = "비밀번호가 일치하지 않습니다.";
+    }
+
+    // 이름 검증
+    if (!formData.name || formData.name.trim().length === 0) {
+      errors.name = "이름을 입력해주세요.";
+    }
+
+    // 휴대폰 번호 검증
+    if (!formData.phone) {
+      errors.phone = "휴대폰 번호를 입력해주세요.";
+    } else if (!/^01[0-9]-?[0-9]{3,4}-?[0-9]{4}$/.test(formData.phone)) {
+      errors.phone = "올바른 휴대폰 번호 형식이 아닙니다.";
+    }
+
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  /**
+   * 입력값 변경 처리
+   */
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+
+    // 이미 터치된 필드는 실시간 검증
+    if (touched[name]) {
+      validateField(name as keyof FormErrors);
+    }
+
+    // 에러 메시지 초기화
+    if (formErrors[name as keyof FormErrors]) {
+      setFormErrors((prev) => ({ ...prev, [name]: undefined }));
+    }
+  };
+
+  /**
+   * 입력 필드 블러 처리
+   */
+  const handleBlur = (field: keyof FormErrors) => {
+    setTouched((prev) => ({ ...prev, [field]: true }));
+    validateField(field);
+  };
+
+  /**
+   * 소셜 회원가입
+   */
+  const handleSocialSignup = async (provider: string) => {
+    // TODO: 실제 소셜 로그인 API 연동
+    try {
+      // 시뮬레이션: 소셜 로그인 성공 후 받은 데이터
+      const mockUser = {
+        id: 1,
+        email: `${provider.toLowerCase()}@example.com`,
+        name: `${provider} 사용자`,
+        role: "user" as const,
+      };
+
+      const mockTokens = {
+        access_token: "mock_access_token",
+        refresh_token: "mock_refresh_token",
+      };
+
+      // Zustand 스토어에 저장 (자동으로 localStorage에도 저장됨)
+      setAuth(mockUser, mockTokens);
+
+      // 성공 토스트 표시
+      showToast({
+        message: `${provider} 로그인에 성공했습니다!`,
+        type: "success",
+        duration: 3000,
+      });
+
+      // 메인 페이지로 이동
+      router.push("/");
+    } catch (error) {
+      showToast({
+        message: "소셜 로그인에 실패했습니다.",
+        type: "error",
+        duration: 3000,
+      });
+    }
+  };
+
+  /**
+   * 전체 동의 처리
+   */
   const handleAllAgreed = (checked: boolean) => {
     setAllAgreed(checked);
     setAgreements({
@@ -55,11 +314,82 @@ export default function SignupPage() {
     }
   };
 
-  const handleSignup = () => {
-    // 실제로는 API 호출
-    localStorage.setItem("isLoggedIn", "true");
-    localStorage.setItem("userName", name || "사용자");
-    router.push("/");
+  /**
+   * 폼 제출 처리
+   */
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    // 모든 필드를 터치 상태로 변경
+    setTouched({
+      email: true,
+      password: true,
+      passwordConfirm: true,
+      name: true,
+      phone: true,
+    });
+
+    // 폼 유효성 검사
+    if (!validateForm()) {
+      return;
+    }
+
+    // 필수 약관 동의 확인
+    if (!agreements.terms || !agreements.privacy || !agreements.location) {
+      setErrorMessage("필수 약관에 동의해주세요.");
+      return;
+    }
+
+    // API 호출
+    setIsPending(true);
+    setErrorMessage("");
+
+    try {
+      // 회원가입 데이터 준비 (passwordConfirm 제외)
+      const { passwordConfirm, ...registerData } = formData;
+
+      // Server Action 호출 (서버 사이드에서 실행되므로 CORS 문제 없음)
+      const result = await registerUserAction(registerData);
+
+      if (!result.success) {
+        // 에러 처리
+        setErrorMessage(result.error || "회원가입에 실패했습니다.");
+        showToast({
+          message: result.error || "회원가입에 실패했습니다.",
+          type: "error",
+          duration: 3000,
+        });
+        return;
+      }
+
+      // 성공 토스트 표시
+      showToast({
+        message: "회원 가입이 완료되었습니다",
+        type: "success",
+        duration: 3000,
+      });
+
+      // 약관 동의 정보 로깅 (필요시 서버에 별도 저장)
+      console.log("약관 동의 정보:", {
+        agreements,
+        marketingChannels,
+      });
+
+      // 로그인 페이지로 이동
+      router.push("/login");
+    } catch (error) {
+      // 예상치 못한 에러 처리
+      const errorMessage = error instanceof Error ? error.message : "회원가입 중 오류가 발생했습니다.";
+
+      setErrorMessage(errorMessage);
+      showToast({
+        message: errorMessage,
+        type: "error",
+        duration: 3000,
+      });
+    } finally {
+      setIsPending(false);
+    }
   };
 
   return (
@@ -114,12 +444,23 @@ export default function SignupPage() {
             <p className="text-[15px] text-gray-500">간편하게 가입하고 다양한 서비스를 이용하세요</p>
           </div>
 
+          {/* 에러 메시지 */}
+          {errorMessage && (
+            <Alert className="mb-6 bg-red-50 border-red-200">
+              <AlertCircle className="w-5 h-5 text-red-600" />
+              <AlertDescription className="text-red-800 ml-2">
+                {errorMessage}
+              </AlertDescription>
+            </Alert>
+          )}
+
           {/* 소셜 회원가입 */}
           <div className="space-y-3 mb-8">
             {/* 카카오 */}
             <Button
               type="button"
               onClick={() => handleSocialSignup("카카오")}
+              disabled={isPending}
               className="w-full flex items-center justify-center gap-3 py-6 bg-[#FEE500] hover:bg-[#FEE500]/90 text-gray-900 rounded-xl text-[15px] font-semibold smooth-transition h-auto"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
@@ -132,6 +473,7 @@ export default function SignupPage() {
             <Button
               type="button"
               onClick={() => handleSocialSignup("네이버")}
+              disabled={isPending}
               className="w-full flex items-center justify-center gap-3 py-6 bg-[#03C75A] hover:bg-[#03C75A]/90 text-white rounded-xl text-[15px] font-semibold smooth-transition h-auto"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
@@ -149,29 +491,42 @@ export default function SignupPage() {
           </div>
 
           {/* 회원가입 폼 */}
-          <form className="space-y-5" onSubmit={(e) => { e.preventDefault(); handleSignup(); }}>
+          <form className="space-y-5" onSubmit={handleSubmit}>
             {/* 이메일 */}
             <div>
               <Label className="block text-[13px] font-semibold text-gray-900 mb-2">
                 이메일 <span className="text-red-500">*</span>
               </Label>
               <div className="flex gap-2">
-                <Input
-                  type="email"
-                  placeholder="example@email.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="flex-1 px-4 py-6 bg-gray-100 border-transparent focus:border-gray-900 focus:bg-white rounded-xl text-[15px] placeholder-gray-400 smooth-transition"
-                />
+                <div className="flex-1">
+                  <Input
+                    type="email"
+                    name="email"
+                    placeholder="example@email.com"
+                    value={formData.email}
+                    onChange={handleChange}
+                    onBlur={() => handleBlur("email")}
+                    disabled={isPending}
+                    className={`px-4 py-6 bg-gray-100 border-transparent focus:border-gray-900 focus:bg-white rounded-xl text-[15px] placeholder-gray-400 smooth-transition ${
+                      touched.email && formErrors.email ? "border-red-500 focus:border-red-500" : ""
+                    }`}
+                  />
+                  {touched.email && formErrors.email && (
+                    <p className="mt-1.5 text-[12px] text-red-500">{formErrors.email}</p>
+                  )}
+                </div>
                 <Button
                   type="button"
                   variant="secondary"
+                  disabled={isPending}
                   className="px-5 py-6 bg-gray-200 hover:bg-gray-300 text-gray-700 text-[14px] font-semibold rounded-xl whitespace-nowrap"
                 >
                   인증요청
                 </Button>
               </div>
-              <p className="mt-2 text-[12px] text-gray-500">로그인 및 주요 알림에 사용됩니다</p>
+              {!(touched.email && formErrors.email) && (
+                <p className="mt-2 text-[12px] text-gray-500">로그인 및 주요 알림에 사용됩니다</p>
+              )}
             </div>
 
             {/* 비밀번호 */}
@@ -182,10 +537,15 @@ export default function SignupPage() {
               <div className="relative">
                 <Input
                   type={showPassword ? "text" : "password"}
+                  name="password"
                   placeholder="8자 이상, 영문/숫자/특수문자 조합"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-4 py-6 bg-gray-100 border-transparent focus:border-gray-900 focus:bg-white rounded-xl text-[15px] placeholder-gray-400 smooth-transition pr-12"
+                  value={formData.password}
+                  onChange={handleChange}
+                  onBlur={() => handleBlur("password")}
+                  disabled={isPending}
+                  className={`w-full px-4 py-6 bg-gray-100 border-transparent focus:border-gray-900 focus:bg-white rounded-xl text-[15px] placeholder-gray-400 smooth-transition pr-12 ${
+                    touched.password && formErrors.password ? "border-red-500 focus:border-red-500" : ""
+                  }`}
                 />
                 <button
                   type="button"
@@ -195,16 +555,45 @@ export default function SignupPage() {
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
-              {/* 비밀번호 강도 표시 */}
-              <div className="flex gap-1 mt-3">
-                <div className="h-1 flex-1 bg-gray-200 rounded-full"></div>
-                <div className="h-1 flex-1 bg-gray-200 rounded-full"></div>
-                <div className="h-1 flex-1 bg-gray-200 rounded-full"></div>
-                <div className="h-1 flex-1 bg-gray-200 rounded-full"></div>
-              </div>
-              <p className="text-[12px] text-gray-400 mt-2">
-                비밀번호 강도: <span className="text-gray-500">입력해주세요</span>
-              </p>
+              {touched.password && formErrors.password ? (
+                <p className="mt-2 text-[12px] text-red-500">{formErrors.password}</p>
+              ) : (
+                <>
+                  {/* 비밀번호 강도 표시 */}
+                  <div className="flex gap-1 mt-3">
+                    {[1, 2, 3, 4].map((level) => (
+                      <div
+                        key={level}
+                        className={`h-1 flex-1 rounded-full ${
+                          level <= passwordStrength
+                            ? passwordStrength <= 2
+                              ? "bg-red-400"
+                              : passwordStrength === 3
+                              ? "bg-yellow-400"
+                              : "bg-green-400"
+                            : "bg-gray-200"
+                        }`}
+                      ></div>
+                    ))}
+                  </div>
+                  <p className="text-[12px] text-gray-400 mt-2">
+                    비밀번호 강도:{" "}
+                    <span
+                      className={
+                        passwordStrength === 0
+                          ? "text-gray-500"
+                          : passwordStrength <= 2
+                          ? "text-red-500"
+                          : passwordStrength === 3
+                          ? "text-yellow-600"
+                          : "text-green-600"
+                      }
+                    >
+                      {passwordStrengthText}
+                    </span>
+                  </p>
+                </>
+              )}
             </div>
 
             {/* 비밀번호 확인 */}
@@ -215,10 +604,17 @@ export default function SignupPage() {
               <div className="relative">
                 <Input
                   type={showPasswordConfirm ? "text" : "password"}
+                  name="passwordConfirm"
                   placeholder="비밀번호를 한번 더 입력하세요"
-                  value={passwordConfirm}
-                  onChange={(e) => setPasswordConfirm(e.target.value)}
-                  className="w-full px-4 py-6 bg-gray-100 border-transparent focus:border-gray-900 focus:bg-white rounded-xl text-[15px] placeholder-gray-400 smooth-transition pr-12"
+                  value={formData.passwordConfirm}
+                  onChange={handleChange}
+                  onBlur={() => handleBlur("passwordConfirm")}
+                  disabled={isPending}
+                  className={`w-full px-4 py-6 bg-gray-100 border-transparent focus:border-gray-900 focus:bg-white rounded-xl text-[15px] placeholder-gray-400 smooth-transition pr-12 ${
+                    touched.passwordConfirm && formErrors.passwordConfirm
+                      ? "border-red-500 focus:border-red-500"
+                      : ""
+                  }`}
                 />
                 <button
                   type="button"
@@ -228,6 +624,9 @@ export default function SignupPage() {
                   {showPasswordConfirm ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
+              {touched.passwordConfirm && formErrors.passwordConfirm && (
+                <p className="mt-2 text-[12px] text-red-500">{formErrors.passwordConfirm}</p>
+              )}
             </div>
 
             {/* 이름 */}
@@ -237,11 +636,19 @@ export default function SignupPage() {
               </Label>
               <Input
                 type="text"
+                name="name"
                 placeholder="실명을 입력하세요"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="w-full px-4 py-6 bg-gray-100 border-transparent focus:border-gray-900 focus:bg-white rounded-xl text-[15px] placeholder-gray-400 smooth-transition"
+                value={formData.name}
+                onChange={handleChange}
+                onBlur={() => handleBlur("name")}
+                disabled={isPending}
+                className={`w-full px-4 py-6 bg-gray-100 border-transparent focus:border-gray-900 focus:bg-white rounded-xl text-[15px] placeholder-gray-400 smooth-transition ${
+                  touched.name && formErrors.name ? "border-red-500 focus:border-red-500" : ""
+                }`}
               />
+              {touched.name && formErrors.name && (
+                <p className="mt-2 text-[12px] text-red-500">{formErrors.name}</p>
+              )}
             </div>
 
             {/* 휴대폰 번호 */}
@@ -250,16 +657,27 @@ export default function SignupPage() {
                 휴대폰 번호 <span className="text-red-500">*</span>
               </Label>
               <div className="flex gap-2">
-                <Input
-                  type="tel"
-                  placeholder="'-' 없이 숫자만 입력"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  className="flex-1 px-4 py-6 bg-gray-100 border-transparent focus:border-gray-900 focus:bg-white rounded-xl text-[15px] placeholder-gray-400 smooth-transition"
-                />
+                <div className="flex-1">
+                  <Input
+                    type="tel"
+                    name="phone"
+                    placeholder="'-' 없이 숫자만 입력"
+                    value={formData.phone}
+                    onChange={handleChange}
+                    onBlur={() => handleBlur("phone")}
+                    disabled={isPending}
+                    className={`px-4 py-6 bg-gray-100 border-transparent focus:border-gray-900 focus:bg-white rounded-xl text-[15px] placeholder-gray-400 smooth-transition ${
+                      touched.phone && formErrors.phone ? "border-red-500 focus:border-red-500" : ""
+                    }`}
+                  />
+                  {touched.phone && formErrors.phone && (
+                    <p className="mt-1.5 text-[12px] text-red-500">{formErrors.phone}</p>
+                  )}
+                </div>
                 <Button
                   type="button"
                   variant="secondary"
+                  disabled={isPending}
                   className="px-5 py-6 bg-gray-200 hover:bg-gray-300 text-gray-700 text-[14px] font-semibold rounded-xl whitespace-nowrap"
                 >
                   인증요청
@@ -280,6 +698,7 @@ export default function SignupPage() {
                   id="all"
                   checked={allAgreed}
                   onCheckedChange={handleAllAgreed}
+                  disabled={isPending}
                   className="w-6 h-6 rounded-full border-2 border-gray-900 data-[state=checked]:bg-gray-900"
                 />
                 <Label htmlFor="all" className="text-[15px] font-semibold text-gray-900 cursor-pointer">
@@ -294,14 +713,21 @@ export default function SignupPage() {
                     <Checkbox
                       id="terms"
                       checked={agreements.terms}
-                      onCheckedChange={(checked) => setAgreements({ ...agreements, terms: checked as boolean })}
+                      onCheckedChange={(checked) =>
+                        setAgreements({ ...agreements, terms: checked as boolean })
+                      }
+                      disabled={isPending}
                       className="rounded"
                     />
                     <Label htmlFor="terms" className="text-[14px] text-gray-700 cursor-pointer">
                       [필수] 이용약관 동의
                     </Label>
                   </div>
-                  <Button type="button" variant="ghost" className="text-[13px] text-gray-400 hover:text-gray-600 h-auto p-0">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="text-[13px] text-gray-400 hover:text-gray-600 h-auto p-0"
+                  >
                     보기
                   </Button>
                 </div>
@@ -312,14 +738,21 @@ export default function SignupPage() {
                     <Checkbox
                       id="privacy"
                       checked={agreements.privacy}
-                      onCheckedChange={(checked) => setAgreements({ ...agreements, privacy: checked as boolean })}
+                      onCheckedChange={(checked) =>
+                        setAgreements({ ...agreements, privacy: checked as boolean })
+                      }
+                      disabled={isPending}
                       className="rounded"
                     />
                     <Label htmlFor="privacy" className="text-[14px] text-gray-700 cursor-pointer">
                       [필수] 개인정보 수집 및 이용 동의
                     </Label>
                   </div>
-                  <Button type="button" variant="ghost" className="text-[13px] text-gray-400 hover:text-gray-600 h-auto p-0">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="text-[13px] text-gray-400 hover:text-gray-600 h-auto p-0"
+                  >
                     보기
                   </Button>
                 </div>
@@ -330,14 +763,21 @@ export default function SignupPage() {
                     <Checkbox
                       id="location"
                       checked={agreements.location}
-                      onCheckedChange={(checked) => setAgreements({ ...agreements, location: checked as boolean })}
+                      onCheckedChange={(checked) =>
+                        setAgreements({ ...agreements, location: checked as boolean })
+                      }
+                      disabled={isPending}
                       className="rounded"
                     />
                     <Label htmlFor="location" className="text-[14px] text-gray-700 cursor-pointer">
                       [필수] 위치기반 서비스 이용약관 동의
                     </Label>
                   </div>
-                  <Button type="button" variant="ghost" className="text-[13px] text-gray-400 hover:text-gray-600 h-auto p-0">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="text-[13px] text-gray-400 hover:text-gray-600 h-auto p-0"
+                  >
                     보기
                   </Button>
                 </div>
@@ -348,14 +788,21 @@ export default function SignupPage() {
                     <Checkbox
                       id="marketing"
                       checked={agreements.marketing}
-                      onCheckedChange={(checked) => setAgreements({ ...agreements, marketing: checked as boolean })}
+                      onCheckedChange={(checked) =>
+                        setAgreements({ ...agreements, marketing: checked as boolean })
+                      }
+                      disabled={isPending}
                       className="rounded"
                     />
                     <Label htmlFor="marketing" className="text-[14px] text-gray-500 cursor-pointer">
                       [선택] 마케팅 정보 수신 동의
                     </Label>
                   </div>
-                  <Button type="button" variant="ghost" className="text-[13px] text-gray-400 hover:text-gray-600 h-auto p-0">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="text-[13px] text-gray-400 hover:text-gray-600 h-auto p-0"
+                  >
                     보기
                   </Button>
                 </div>
@@ -366,28 +813,43 @@ export default function SignupPage() {
                     <Checkbox
                       id="sms"
                       checked={marketingChannels.sms}
-                      onCheckedChange={(checked) => setMarketingChannels({ ...marketingChannels, sms: checked as boolean })}
+                      onCheckedChange={(checked) =>
+                        setMarketingChannels({ ...marketingChannels, sms: checked as boolean })
+                      }
+                      disabled={isPending}
                       className="w-[18px] h-[18px] rounded"
                     />
-                    <Label htmlFor="sms" className="text-[13px] text-gray-500 cursor-pointer">SMS</Label>
+                    <Label htmlFor="sms" className="text-[13px] text-gray-500 cursor-pointer">
+                      SMS
+                    </Label>
                   </div>
                   <div className="flex items-center gap-2">
                     <Checkbox
                       id="email-marketing"
                       checked={marketingChannels.email}
-                      onCheckedChange={(checked) => setMarketingChannels({ ...marketingChannels, email: checked as boolean })}
+                      onCheckedChange={(checked) =>
+                        setMarketingChannels({ ...marketingChannels, email: checked as boolean })
+                      }
+                      disabled={isPending}
                       className="w-[18px] h-[18px] rounded"
                     />
-                    <Label htmlFor="email-marketing" className="text-[13px] text-gray-500 cursor-pointer">이메일</Label>
+                    <Label htmlFor="email-marketing" className="text-[13px] text-gray-500 cursor-pointer">
+                      이메일
+                    </Label>
                   </div>
                   <div className="flex items-center gap-2">
                     <Checkbox
                       id="push"
                       checked={marketingChannels.push}
-                      onCheckedChange={(checked) => setMarketingChannels({ ...marketingChannels, push: checked as boolean })}
+                      onCheckedChange={(checked) =>
+                        setMarketingChannels({ ...marketingChannels, push: checked as boolean })
+                      }
+                      disabled={isPending}
                       className="w-[18px] h-[18px] rounded"
                     />
-                    <Label htmlFor="push" className="text-[13px] text-gray-500 cursor-pointer">앱 푸시</Label>
+                    <Label htmlFor="push" className="text-[13px] text-gray-500 cursor-pointer">
+                      앱 푸시
+                    </Label>
                   </div>
                 </div>
               </div>
@@ -396,9 +858,17 @@ export default function SignupPage() {
             {/* 가입 버튼 */}
             <Button
               type="submit"
-              className="w-full py-6 bg-gray-900 hover:bg-gray-800 text-white text-[16px] font-semibold rounded-xl smooth-transition mt-8 h-auto"
+              disabled={isPending || !isFormValid()}
+              className="w-full py-6 bg-gray-900 hover:bg-gray-800 text-white text-[16px] font-semibold rounded-xl smooth-transition mt-8 h-auto disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             >
-              가입하기
+              {isPending ? (
+                <>
+                  <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></span>
+                  가입 중...
+                </>
+              ) : (
+                "가입하기"
+              )}
             </Button>
           </form>
 
@@ -415,10 +885,24 @@ export default function SignupPage() {
       {/* 하단 고정 영역 (모바일) */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-100">
         <Button
-          onClick={handleSignup}
-          className="w-full py-6 bg-gray-900 hover:bg-gray-800 text-white text-[16px] font-semibold rounded-xl smooth-transition h-auto"
+          onClick={(e) => {
+            e.preventDefault();
+            const form = document.querySelector('form');
+            if (form) {
+              form.requestSubmit();
+            }
+          }}
+          disabled={isPending}
+          className="w-full py-6 bg-gray-900 hover:bg-gray-800 text-white text-[16px] font-semibold rounded-xl smooth-transition h-auto cursor-pointer"
         >
-          가입하기
+          {isPending ? (
+            <>
+              <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></span>
+              가입 중...
+            </>
+          ) : (
+            "가입하기"
+          )}
         </Button>
       </div>
 

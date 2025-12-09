@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { Toaster } from "@/components/ui/sonner";
 
 export const metadata: Metadata = {
   title: "우리동네금은방 - 투명한 금 거래, 쉽고 빠르게",
@@ -15,6 +16,7 @@ export default function RootLayout({
     <html lang="ko">
       <body className="bg-white text-gray-900 font-sans antialiased">
         {children}
+        <Toaster />
       </body>
     </html>
   );
