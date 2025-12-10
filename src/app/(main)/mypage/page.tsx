@@ -232,9 +232,9 @@ export default function MyPage() {
                     <Button
                       className="w-full bg-gray-900 hover:bg-gray-800 text-white"
                       size="sm"
-                      onClick={() => router.push("/products")}
+                      onClick={() => router.push("/wishlist")}
                     >
-                      상품 둘러보기
+                      찜 목록 보기
                     </Button>
                   </div>
                 </div>
