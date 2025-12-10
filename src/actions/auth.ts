@@ -8,6 +8,8 @@ import type {
   MessageResponse,
   ForgotPasswordRequest,
   ResetPasswordRequest,
+  UpdateProfileRequest,
+  UpdateProfileResponse,
 } from "@/types/auth";
 
 const apiClient = axios.create({
@@ -173,6 +175,43 @@ export async function logoutUserAction(
     return {
       success: false,
       error: "서버에 연결할 수 없습니다.",
+    };
+  }
+}
+
+/**
+ * 프로필 업데이트 Server Action
+ * 사용자의 이름과 전화번호를 업데이트합니다.
+ */
+export async function updateProfileAction(
+  data: UpdateProfileRequest,
+  accessToken: string
+): Promise<{ success: boolean; data?: UpdateProfileResponse; error?: string }> {
+  try {
+    const response = await apiClient.put<UpdateProfileResponse>("/auth/me", data, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+
+    return {
+      success: true,
+      data: response.data,
+    };
+  } catch (error) {
+    console.error("Update profile error:", error);
+
+    if (axios.isAxiosError(error)) {
+      const axiosError = error as AxiosError<{ message?: string }>;
+      return {
+        success: false,
+        error: axiosError.response?.data?.message || "프로필 업데이트에 실패했습니다.",
+      };
+    }
+
+    return {
+      success: false,
+      error: "서버에 연결할 수 없습니다. 네트워크를 확인해주세요.",
     };
   }
 }

@@ -75,3 +75,21 @@ export interface ResetPasswordRequest {
   token: string;
   password: string;
 }
+
+/**
+ * Update profile request type
+ * 프로필 업데이트 요청
+ */
+export interface UpdateProfileRequest {
+  name: string;
+  phone?: string;
+}
+
+/**
+ * Update profile response type
+ * 프로필 업데이트 응답
+ */
+export interface UpdateProfileResponse {
+  message: string;
+  user: User;
+}
