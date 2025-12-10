@@ -7,14 +7,17 @@ import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { logoutUserAction } from "@/actions/auth";
 import { toast } from "sonner";
+import { User, Settings, LogOut, ChevronDown } from "lucide-react";
 
 export function Header() {
   const router = useRouter();
   const { isAuthenticated, user, tokens, clearAuth } = useAuthStore();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
+    setIsDropdownOpen(false);
 
     try {
       // 서버에 로그아웃 요청 (refresh token 무효화)
@@ -101,15 +104,69 @@ export function Header() {
               </Link>
             </div>
           ) : (
-            // 로그인 상태
-            <Button
-              variant="ghost"
-              onClick={handleLogout}
-              disabled={isLoggingOut}
-              className="text-[14px] font-semibold text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isLoggingOut ? "로그아웃 중..." : "로그아웃"}
-            </Button>
+            // 로그인 상태 - 드롭다운 메뉴
+            <div className="relative">
+              <Button
+                variant="ghost"
+                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                className="flex items-center gap-2 text-[14px] font-semibold text-gray-700 hover:bg-gray-100"
+              >
+                <User className="w-4 h-4" />
+                <span className="hidden sm:inline">{user?.name || "사용자"}</span>
+                <ChevronDown className="w-4 h-4" />
+              </Button>
+
+              {isDropdownOpen && (
+                <>
+                  {/* 배경 오버레이 */}
+                  <div
+                    className="fixed inset-0 z-10"
+                    onClick={() => setIsDropdownOpen(false)}
+                  />
+
+                  {/* 드롭다운 메뉴 */}
+                  <div className="absolute right-0 mt-2 w-52 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-20">
+                    {/* 사용자 정보 */}
+                    <div className="px-4 py-2 border-b border-gray-100">
+                      <p className="text-xs text-gray-500 truncate">{user?.email}</p>
+                    </div>
+
+                    {/* 마이페이지 */}
+                    <Link
+                      href="/mypage"
+                      onClick={() => setIsDropdownOpen(false)}
+                      className="flex items-center gap-2 px-4 py-2.5 text-[14px] text-gray-700 hover:bg-gray-50 smooth-transition"
+                    >
+                      <User className="w-4 h-4" />
+                      마이페이지
+                    </Link>
+
+                    {/* 프로필 수정 */}
+                    <Link
+                      href="/mypage/edit"
+                      onClick={() => setIsDropdownOpen(false)}
+                      className="flex items-center gap-2 px-4 py-2.5 text-[14px] text-gray-700 hover:bg-gray-50 smooth-transition"
+                    >
+                      <Settings className="w-4 h-4" />
+                      프로필 수정
+                    </Link>
+
+                    {/* 구분선 */}
+                    <div className="border-t border-gray-100 my-1" />
+
+                    {/* 로그아웃 */}
+                    <button
+                      onClick={handleLogout}
+                      disabled={isLoggingOut}
+                      className="flex items-center gap-2 w-full px-4 py-2.5 text-[14px] text-red-600 hover:bg-gray-50 smooth-transition disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      {isLoggingOut ? "로그아웃 중..." : "로그아웃"}
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
           )}
         </div>
       </div>
