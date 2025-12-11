@@ -11,7 +11,8 @@
       "Bash(npm run build:*)",
       "Bash(tail:*)",
       "Read(//c/Users/eoyld/leejaeshin/udonggeum-frontend/**)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(npx tsc:*)"
     ],
     "deny": [],
     "ask": []
