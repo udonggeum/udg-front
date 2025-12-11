@@ -23,7 +23,7 @@ interface FormErrors {
 
 export default function ProfileEditPage() {
   const router = useRouter();
-  const { user, isAuthenticated, tokens, setUser } = useAuthStore();
+  const { user, isAuthenticated, tokens, updateUser } = useAuthStore();
   const [isPending, setIsPending] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
 
@@ -158,7 +158,7 @@ export default function ProfileEditPage() {
       if (result.success && result.data) {
         setIsSuccess(true);
         // Zustand 스토어의 사용자 정보 업데이트
-        setUser(result.data.user);
+        updateUser(result.data.user);
         toast.success("프로필이 성공적으로 업데이트되었습니다!");
       } else {
         toast.error(result.error || "프로필 업데이트에 실패했습니다.");
