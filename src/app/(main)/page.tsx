@@ -97,7 +97,7 @@ export default function Home() {
         <div className="max-w-[1200px] mx-auto">
           <div className="grid grid-cols-4 md:grid-cols-8 gap-4">
             {[
-              { icon: DollarSign, label: "금시세", href: "/price", bgColor: "bg-yellow-50", iconColor: "text-yellow-600" },
+              { icon: DollarSign, label: "금시세", href: "/prices", bgColor: "bg-yellow-50", iconColor: "text-yellow-600" },
               { icon: MapPin, label: "내주변", href: "/stores", bgColor: "bg-blue-50", iconColor: "text-blue-600" },
               { icon: Store, label: "매장찾기", href: "/stores", bgColor: "bg-purple-50", iconColor: "text-purple-600" },
               { icon: Heart, label: "찜목록", href: "/wishlist", bgColor: "bg-pink-50", iconColor: "text-pink-600" },

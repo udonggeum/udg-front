@@ -10,7 +10,8 @@
       "Bash(cat:*)",
       "Bash(npm run build:*)",
       "Bash(tail:*)",
-      "Read(//c/Users/eoyld/leejaeshin/udonggeum-frontend/**)"
+      "Read(//c/Users/eoyld/leejaeshin/udonggeum-frontend/**)",
+      "Bash(curl:*)"
     ],
     "deny": [],
     "ask": []

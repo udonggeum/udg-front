@@ -154,6 +154,16 @@
   .card-shadow:hover {
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
   }
+
+  /* 스크롤바 숨김 */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 /* 프라이스 업다운 애니메이션 */
