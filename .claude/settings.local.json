@@ -9,7 +9,8 @@
       "Read(//c/Users/eoyld/leejaeshin/PokeSrc/lib/**)",
       "Bash(cat:*)",
       "Bash(npm run build:*)",
-      "Bash(tail:*)"
+      "Bash(tail:*)",
+      "Read(//c/Users/eoyld/leejaeshin/udonggeum-frontend/**)"
     ],
     "deny": [],
     "ask": []

@@ -65,7 +65,7 @@ export function Header() {
         {/* 네비게이션 */}
         <nav className="hidden md:flex items-center gap-8">
           <Link
-            href="/price"
+            href="/prices"
             className="nav-link text-[15px] font-medium text-gray-600 hover:text-gray-900 smooth-transition"
           >
             금시세
