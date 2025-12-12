@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { getPostsAction } from "@/actions/community";
@@ -11,7 +11,7 @@ import type {
   PostListResponse,
 } from "@/types/community";
 
-export default function CommunityPage() {
+function CommunityPageContent() {
   const searchParams = useSearchParams();
   const [selectedCategory, setSelectedCategory] =
     useState<PostCategory>("gold_trade");
@@ -556,5 +556,19 @@ export default function CommunityPage() {
         </div>
       </section>
     </div>
+  );
+}
+
+export default function CommunityPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-white flex items-center justify-center">
+          <div className="inline-block w-8 h-8 border-4 border-gray-200 border-t-gray-900 rounded-full animate-spin"></div>
+        </div>
+      }
+    >
+      <CommunityPageContent />
+    </Suspense>
   );
 }
