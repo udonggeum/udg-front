@@ -1,0 +1,519 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { useParams, useRouter } from "next/navigation";
+import Link from "next/link";
+import {
+  getPostDetailAction,
+  togglePostLikeAction,
+  deletePostAction,
+  createCommentAction,
+  toggleCommentLikeAction,
+  deleteCommentAction,
+  acceptAnswerAction,
+} from "@/actions/community";
+import { useAuthStore } from "@/stores/useAuthStore";
+import {
+  POST_TYPE_LABELS,
+  type PostDetailResponse,
+  type CommunityComment,
+} from "@/types/community";
+
+export default function CommunityDetailPage() {
+  const params = useParams();
+  const router = useRouter();
+  const { user, tokens } = useAuthStore();
+
+  const [post, setPost] = useState<PostDetailResponse | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [commentContent, setCommentContent] = useState("");
+  const [replyTo, setReplyTo] = useState<number | null>(null);
+
+  const postId = Number(params?.id);
+
+  // 게시글 데이터 로드
+  useEffect(() => {
+    const fetchPost = async () => {
+      setIsLoading(true);
+      setError(null);
+
+      const result = await getPostDetailAction(
+        postId,
+        tokens?.access_token
+      );
+
+      if (result.success && result.data) {
+        setPost(result.data);
+      } else {
+        setError(result.error || "게시글을 불러오는데 실패했습니다.");
+      }
+
+      setIsLoading(false);
+    };
+
+    if (postId) {
+      fetchPost();
+    }
+  }, [postId, tokens?.access_token]);
+
+  const handleLike = async () => {
+    if (!tokens?.access_token) return;
+
+    const result = await togglePostLikeAction(postId, tokens.access_token);
+    if (result.success && post) {
+      // 좋아요 상태 업데이트
+      const updatedPost = {
+        ...post,
+        is_liked: result.data?.is_liked || false,
+        data: {
+          ...post.data,
+          like_count: result.data?.is_liked
+            ? post.data.like_count + 1
+            : post.data.like_count - 1,
+        },
+      };
+      setPost(updatedPost);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!tokens?.access_token) return;
+    if (!confirm("정말 삭제하시겠습니까?")) return;
+
+    const result = await deletePostAction(postId, tokens.access_token);
+    if (result.success) {
+      router.push("/community");
+    }
+  };
+
+  const handleCommentSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!commentContent.trim() || !tokens?.access_token) return;
+
+    const result = await createCommentAction(
+      {
+        content: commentContent,
+        post_id: postId,
+        parent_id: replyTo || undefined,
+        is_answer: post?.data.category === "qna",
+      },
+      tokens.access_token
+    );
+
+    if (result.success) {
+      setCommentContent("");
+      setReplyTo(null);
+      // 댓글 목록 새로고침
+      const updatedPost = await getPostDetailAction(
+        postId,
+        tokens.access_token
+      );
+      if (updatedPost.success && updatedPost.data) {
+        setPost(updatedPost.data);
+      }
+    }
+  };
+
+  const handleCommentLike = async (commentId: number) => {
+    if (!tokens?.access_token) return;
+
+    await toggleCommentLikeAction(commentId, tokens.access_token);
+    // 댓글 목록 새로고침
+    const updatedPost = await getPostDetailAction(postId, tokens.access_token);
+    if (updatedPost.success && updatedPost.data) {
+      setPost(updatedPost.data);
+    }
+  };
+
+  const handleCommentDelete = async (commentId: number) => {
+    if (!tokens?.access_token) return;
+    if (!confirm("댓글을 삭제하시겠습니까?")) return;
+
+    const result = await deleteCommentAction(commentId, tokens.access_token);
+    if (result.success) {
+      // 댓글 목록 새로고침
+      const updatedPost = await getPostDetailAction(
+        postId,
+        tokens.access_token
+      );
+      if (updatedPost.success && updatedPost.data) {
+        setPost(updatedPost.data);
+      }
+    }
+  };
+
+  const handleAcceptAnswer = async (commentId: number) => {
+    if (!tokens?.access_token) return;
+    if (!confirm("이 답변을 채택하시겠습니까?")) return;
+
+    const result = await acceptAnswerAction(
+      postId,
+      commentId,
+      tokens.access_token
+    );
+    if (result.success) {
+      // 게시글 새로고침
+      const updatedPost = await getPostDetailAction(
+        postId,
+        tokens.access_token
+      );
+      if (updatedPost.success && updatedPost.data) {
+        setPost(updatedPost.data);
+      }
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="inline-block w-8 h-8 border-4 border-gray-200 border-t-gray-900 rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  if (error || !post) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-xl max-w-md">
+          <span>게시글을 찾을 수 없습니다.</span>
+        </div>
+      </div>
+    );
+  }
+
+  const postData = post.data;
+  const isAuthor = user?.id === postData.user_id;
+  const isAdmin = user?.role === "admin";
+  const canEdit = isAuthor || isAdmin;
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-[1080px] mx-auto px-5 py-8 w-full">
+        {/* Back Button */}
+        <div className="mb-6">
+          <Link
+            href="/community"
+            className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 font-medium transition-colors"
+          >
+            ← 목록으로
+          </Link>
+        </div>
+
+        {/* Post Card */}
+        <div className="bg-white rounded-2xl shadow-sm mb-6 overflow-hidden">
+          <div className="p-8">
+            {/* Header */}
+            <div className="flex items-start justify-between mb-4">
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="px-3 py-1 bg-yellow-50 text-yellow-700 text-[12px] font-semibold rounded-full border border-yellow-200">
+                    {POST_TYPE_LABELS[postData.type]}
+                  </span>
+                  {postData.is_answered && postData.category === "qna" && (
+                    <span className="px-3 py-1 bg-green-50 text-green-700 text-[12px] font-semibold rounded-full border border-green-200">
+                      답변 완료
+                    </span>
+                  )}
+                </div>
+                <h1 className="text-3xl font-bold mb-3">{postData.title}</h1>
+
+                <div className="flex items-center gap-4 text-sm text-gray-500">
+                  <span>
+                    {postData.user.role === "admin"
+                      ? postData.store?.name || postData.user.nickname
+                      : postData.user.nickname}
+                  </span>
+                  <span>{new Date(postData.created_at).toLocaleString()}</span>
+                  <span>조회 {postData.view_count}</span>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              {canEdit && (
+                <div className="relative">
+                  <button className="px-3 py-2 text-gray-600 hover:text-gray-900 font-bold">
+                    ⋮
+                  </button>
+                  <div className="hidden group-hover:block absolute right-0 mt-2 w-32 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-10">
+                    <Link
+                      href={`/community/edit/${postData.id}`}
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                    >
+                      수정
+                    </Link>
+                    <button
+                      onClick={handleDelete}
+                      className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-50"
+                    >
+                      삭제
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Gold Trade Info */}
+            {postData.category === "gold_trade" && (
+              <div className="bg-gray-50 p-4 rounded-lg mb-4">
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div>
+                    <span className="font-semibold">금 종류:</span>{" "}
+                    {postData.gold_type || (
+                      <span className="text-gray-500">문의</span>
+                    )}
+                  </div>
+                  <div>
+                    <span className="font-semibold">중량:</span>{" "}
+                    {postData.weight ? (
+                      `${postData.weight}g`
+                    ) : (
+                      <span className="text-gray-500">문의</span>
+                    )}
+                  </div>
+                  <div>
+                    <span className="font-semibold">가격:</span>{" "}
+                    {postData.price ? (
+                      `${postData.price.toLocaleString()}원`
+                    ) : (
+                      <span className="text-gray-500">문의</span>
+                    )}
+                  </div>
+                  <div>
+                    <span className="font-semibold">지역:</span>{" "}
+                    {postData.location || <span className="text-gray-500">-</span>}
+                  </div>
+                  {postData.store && (
+                    <div className="col-span-2">
+                      <span className="font-semibold">매장:</span>{" "}
+                      <Link
+                        href={`/stores/${postData.store.id}`}
+                        className="text-blue-600 hover:underline"
+                      >
+                        {postData.store.name}
+                      </Link>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Content */}
+            <div className="prose max-w-none mb-6">
+              <p className="whitespace-pre-wrap text-gray-700">
+                {postData.content}
+              </p>
+            </div>
+
+            {/* Images */}
+            {postData.image_urls && postData.image_urls.length > 0 && (
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
+                {postData.image_urls.map((url, index) => (
+                  <img
+                    key={index}
+                    src={url}
+                    alt={`이미지 ${index + 1}`}
+                    className="w-full h-48 object-cover rounded-lg"
+                  />
+                ))}
+              </div>
+            )}
+
+            {/* Like Button */}
+            <div className="flex items-center gap-4">
+              <button
+                onClick={handleLike}
+                className={`px-4 py-2 text-sm font-semibold rounded-lg transition-all ${
+                  post.is_liked
+                    ? "bg-red-50 text-red-600 border border-red-200"
+                    : "bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-200"
+                }`}
+                disabled={!user}
+              >
+                ❤️ 좋아요 {postData.like_count}
+              </button>
+              <span className="text-sm text-gray-500">
+                댓글 {postData.comment_count}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Comments Section */}
+        <div className="bg-white rounded-2xl shadow-sm p-8">
+          <h2 className="text-xl font-bold mb-4">
+            댓글 {postData.comment_count}
+            {postData.category === "qna" &&
+              !postData.is_answered &&
+              " (답변 채택 대기 중)"}
+          </h2>
+
+          {/* Comment Form */}
+          {user ? (
+            <form onSubmit={handleCommentSubmit} className="mb-6">
+              {replyTo && (
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-sm text-gray-500">답글 작성 중...</span>
+                  <button
+                    type="button"
+                    onClick={() => setReplyTo(null)}
+                    className="text-sm text-gray-600 hover:text-gray-900"
+                  >
+                    취소
+                  </button>
+                </div>
+              )}
+              <textarea
+                className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 mb-2"
+                placeholder={
+                  postData.category === "qna"
+                    ? "답변을 작성하세요"
+                    : "댓글을 입력하세요"
+                }
+                rows={3}
+                value={commentContent}
+                onChange={(e) => setCommentContent(e.target.value)}
+              />
+              <button
+                type="submit"
+                className="px-6 py-2.5 bg-gray-900 text-white text-sm font-semibold rounded-lg hover:bg-gray-800 transition-all disabled:opacity-50"
+                disabled={!commentContent.trim()}
+              >
+                {postData.category === "qna" ? "답변 작성" : "댓글 작성"}
+              </button>
+            </form>
+          ) : (
+            <div className="bg-blue-50 border border-blue-200 text-blue-700 px-6 py-4 rounded-lg mb-6">
+              <span>
+                댓글을 작성하려면{" "}
+                <Link href="/login" className="underline font-semibold">
+                  로그인
+                </Link>
+                이 필요합니다.
+              </span>
+            </div>
+          )}
+
+          {/* Comment List */}
+          <div className="space-y-4">
+            {postData.comments?.map((comment) => (
+              <div
+                key={comment.id}
+                className="border-l-4 border-gray-200 pl-4"
+              >
+                <div className="flex items-start justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold">{comment.user.name}</span>
+                    <span className="text-sm text-gray-500">
+                      {new Date(comment.created_at).toLocaleString()}
+                    </span>
+                    {comment.is_accepted && (
+                      <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs font-semibold rounded">
+                        채택됨
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    {/* Accept Answer Button (QnA only) */}
+                    {postData.category === "qna" &&
+                      !postData.is_answered &&
+                      isAuthor &&
+                      comment.is_answer &&
+                      !comment.parent_id && (
+                        <button
+                          onClick={() => handleAcceptAnswer(comment.id)}
+                          className="px-3 py-1 bg-green-600 text-white text-xs font-semibold rounded hover:bg-green-700"
+                        >
+                          채택
+                        </button>
+                      )}
+
+                    {/* Like Button */}
+                    <button
+                      onClick={() => handleCommentLike(comment.id)}
+                      className="text-sm text-gray-600 hover:text-gray-900"
+                      disabled={!user}
+                    >
+                      ❤️ {comment.like_count}
+                    </button>
+
+                    {/* Reply Button */}
+                    {user && !comment.parent_id && (
+                      <button
+                        onClick={() => setReplyTo(comment.id)}
+                        className="text-sm text-gray-600 hover:text-gray-900"
+                      >
+                        답글
+                      </button>
+                    )}
+
+                    {/* Delete Button */}
+                    {(user?.id === comment.user_id || isAdmin) && (
+                      <button
+                        onClick={() => handleCommentDelete(comment.id)}
+                        className="text-sm text-red-600 hover:text-red-700"
+                      >
+                        삭제
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                <p className="whitespace-pre-wrap mb-2 text-gray-700">
+                  {comment.content}
+                </p>
+
+                {/* Replies */}
+                {comment.replies && comment.replies.length > 0 && (
+                  <div className="mt-4 space-y-3 ml-6">
+                    {comment.replies.map((reply: CommunityComment) => (
+                      <div
+                        key={reply.id}
+                        className="border-l-2 border-gray-200 pl-4"
+                      >
+                        <div className="flex items-start justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold">
+                              {reply.user.name}
+                            </span>
+                            <span className="text-sm text-gray-500">
+                              {new Date(reply.created_at).toLocaleString()}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => handleCommentLike(reply.id)}
+                              className="text-sm text-gray-600 hover:text-gray-900"
+                              disabled={!user}
+                            >
+                              ❤️ {reply.like_count}
+                            </button>
+
+                            {(user?.id === reply.user_id || isAdmin) && (
+                              <button
+                                onClick={() => handleCommentDelete(reply.id)}
+                                className="text-sm text-red-600 hover:text-red-700"
+                              >
+                                삭제
+                              </button>
+                            )}
+                          </div>
+                        </div>
+
+                        <p className="whitespace-pre-wrap text-sm text-gray-700">
+                          {reply.content}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

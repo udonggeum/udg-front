@@ -107,7 +107,7 @@ export async function createPostAction(
   accessToken: string
 ): Promise<{ success: boolean; data?: CommunityPost; error?: string }> {
   try {
-    const response = await apiClient.post<{ post: CommunityPost; message: string }>(
+    const response = await apiClient.post<CommunityPost | { post: CommunityPost; message: string }>(
       "/community/posts",
       data,
       {
@@ -117,9 +117,14 @@ export async function createPostAction(
       }
     );
 
+    console.log("Create post response:", response.data);
+
+    // 응답 구조 확인: { post: ... } 형태인지, 직접 post 객체인지
+    const postData = 'post' in response.data ? response.data.post : response.data;
+
     return {
       success: true,
-      data: response.data.post,
+      data: postData,
     };
   } catch (error) {
     console.error("Create post error:", error);
