@@ -12,7 +12,11 @@
       "Bash(tail:*)",
       "Read(//c/Users/eoyld/leejaeshin/udonggeum-frontend/**)",
       "Bash(curl:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(ls:*)",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)",
+      "Bash(taskkill:*)"
     ],
     "deny": [],
     "ask": []
