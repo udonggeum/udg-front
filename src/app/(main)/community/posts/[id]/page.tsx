@@ -14,7 +14,6 @@ import {
 } from "@/actions/community";
 import { useAuthStore } from "@/stores/useAuthStore";
 import {
-  POST_TYPE_LABELS,
   type PostDetailResponse,
   type CommunityComment,
 } from "@/types/community";
@@ -188,34 +187,14 @@ export default function CommunityDetailPage() {
   const canEdit = isAuthor || isAdmin;
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-[1080px] mx-auto px-5 py-8 w-full">
-        {/* Back Button */}
+    <div className="min-h-screen bg-white">
+      <div className="max-w-[800px] mx-auto px-5 py-8 w-full min-h-screen">
+        {/* Post Content */}
         <div className="mb-6">
-          <Link
-            href="/community"
-            className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 font-medium transition-colors"
-          >
-            ← 목록으로
-          </Link>
-        </div>
-
-        {/* Post Card */}
-        <div className="bg-white rounded-2xl shadow-sm mb-6 overflow-hidden">
-          <div className="p-8">
+          <div>
             {/* Header */}
             <div className="flex items-start justify-between mb-4">
               <div className="flex-1">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="px-3 py-1 bg-yellow-50 text-yellow-700 text-[12px] font-semibold rounded-full border border-yellow-200">
-                    {POST_TYPE_LABELS[postData.type]}
-                  </span>
-                  {postData.is_answered && postData.category === "qna" && (
-                    <span className="px-3 py-1 bg-green-50 text-green-700 text-[12px] font-semibold rounded-full border border-green-200">
-                      답변 완료
-                    </span>
-                  )}
-                </div>
                 <h1 className="text-3xl font-bold mb-3">{postData.title}</h1>
 
                 <div className="flex items-center gap-4 text-sm text-gray-500">
@@ -255,7 +234,7 @@ export default function CommunityDetailPage() {
 
             {/* Gold Trade Info */}
             {postData.category === "gold_trade" && (
-              <div className="bg-gray-50 p-4 rounded-lg mb-4">
+              <div className="bg-white p-4 mb-4">
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   <div>
                     <span className="font-semibold">금 종류:</span>{" "}
@@ -299,7 +278,7 @@ export default function CommunityDetailPage() {
             )}
 
             {/* Content */}
-            <div className="prose max-w-none mb-6">
+            <div className="prose max-w-none my-8">
               <p className="whitespace-pre-wrap text-gray-700">
                 {postData.content}
               </p>
@@ -320,7 +299,7 @@ export default function CommunityDetailPage() {
             )}
 
             {/* Like Button */}
-            <div className="flex items-center gap-4">
+            <div className="flex justify-center items-center gap-4">
               <button
                 onClick={handleLike}
                 className={`px-4 py-2 text-sm font-semibold rounded-lg transition-all ${
@@ -332,16 +311,14 @@ export default function CommunityDetailPage() {
               >
                 ❤️ 좋아요 {postData.like_count}
               </button>
-              <span className="text-sm text-gray-500">
-                댓글 {postData.comment_count}
-              </span>
             </div>
           </div>
         </div>
 
         {/* Comments Section */}
-        <div className="bg-white rounded-2xl shadow-sm p-8">
-          <h2 className="text-xl font-bold mb-4">
+        <div className="mt-8">
+          <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
+            <img src="/favicon.ico" alt="favicon" className="w-5 h-5" />
             댓글 {postData.comment_count}
             {postData.category === "qna" &&
               !postData.is_answered &&
@@ -374,13 +351,15 @@ export default function CommunityDetailPage() {
                 value={commentContent}
                 onChange={(e) => setCommentContent(e.target.value)}
               />
-              <button
-                type="submit"
-                className="px-6 py-2.5 bg-gray-900 text-white text-sm font-semibold rounded-lg hover:bg-gray-800 transition-all disabled:opacity-50"
-                disabled={!commentContent.trim()}
-              >
-                {postData.category === "qna" ? "답변 작성" : "댓글 작성"}
-              </button>
+              <div className="flex justify-end">
+                <button
+                  type="submit"
+                  className="px-6 py-2.5 bg-gray-900 text-white text-sm font-semibold rounded-lg hover:bg-gray-800 transition-all disabled:opacity-50"
+                  disabled={!commentContent.trim()}
+                >
+                  {postData.category === "qna" ? "답변 작성" : "댓글 작성"}
+                </button>
+              </div>
             </form>
           ) : (
             <div className="bg-blue-50 border border-blue-200 text-blue-700 px-6 py-4 rounded-lg mb-6">
