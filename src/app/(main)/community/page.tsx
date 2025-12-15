@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, Suspense, useRef, useCallback } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { getPostsAction } from "@/actions/community";
@@ -22,16 +22,22 @@ function CommunityPageContent() {
     "latest"
   );
   const [currentPage, setCurrentPage] = useState(1);
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
   const { user } = useAuthStore();
 
   // 게시글 데이터
   const [data, setData] = useState<PostListResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [hasMore, setHasMore] = useState(true);
 
   // FAQ 데이터
   const [faqData, setFaqData] = useState<PostListResponse | null>(null);
+
+  // Infinite scroll observer
+  const observerTarget = useRef<HTMLDivElement>(null);
 
   // URL 쿼리 파라미터로 초기 state 설정
   useEffect(() => {
@@ -59,7 +65,7 @@ function CommunityPageContent() {
       const result = await getPostsAction({
         category: selectedCategory,
         type: selectedType,
-        page: currentPage,
+        page: 1,
         page_size: 9,
         sort_by: currentSort === "latest" ? "created_at" : "like_count",
         sort_order: "desc",
@@ -67,6 +73,8 @@ function CommunityPageContent() {
 
       if (result.success && result.data) {
         setData(result.data);
+        setCurrentPage(1);
+        setHasMore(result.data.data.length < result.data.total);
       } else {
         setError(result.error || "게시글을 불러오는데 실패했습니다.");
       }
@@ -75,7 +83,69 @@ function CommunityPageContent() {
     };
 
     fetchPosts();
-  }, [selectedCategory, selectedType, currentPage, currentSort]);
+  }, [selectedCategory, selectedType, currentSort]);
+
+  // 추가 데이터 로드 (무한스크롤)
+  const loadMorePosts = useCallback(async () => {
+    if (isLoadingMore || !hasMore || !data) return;
+
+    setIsLoadingMore(true);
+
+    const result = await getPostsAction({
+      category: selectedCategory,
+      type: selectedType,
+      page: currentPage + 1,
+      page_size: 9,
+      sort_by: currentSort === "latest" ? "created_at" : "like_count",
+      sort_order: "desc",
+    });
+
+    if (result.success && result.data) {
+      setData((prevData) => {
+        if (!prevData || !result.data) return prevData;
+        return {
+          ...result.data,
+          data: [...prevData.data, ...result.data.data],
+        };
+      });
+      setCurrentPage((prev) => prev + 1);
+      const totalLoaded = (data?.data.length || 0) + result.data.data.length;
+      setHasMore(totalLoaded < result.data.total);
+    }
+
+    setIsLoadingMore(false);
+  }, [
+    isLoadingMore,
+    hasMore,
+    data,
+    selectedCategory,
+    selectedType,
+    currentPage,
+    currentSort,
+  ]);
+
+  // Intersection Observer 설정
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !isLoadingMore) {
+          loadMorePosts();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    const currentTarget = observerTarget.current;
+    if (currentTarget) {
+      observer.observe(currentTarget);
+    }
+
+    return () => {
+      if (currentTarget) {
+        observer.unobserve(currentTarget);
+      }
+    };
+  }, [hasMore, isLoadingMore, loadMorePosts]);
 
   // FAQ 데이터 로드
   useEffect(() => {
@@ -124,7 +194,7 @@ function CommunityPageContent() {
   return (
     <div className="min-h-screen bg-white">
       {/* Hero Section */}
-      <section className="py-12 px-5 bg-gradient-to-b from-gray-50 to-white">
+      <section className="pt-12 px-5 bg-gradient-to-b from-gray-50 to-white">
         <div className="max-w-[1200px] mx-auto">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-6">
             <div>
@@ -192,31 +262,63 @@ function CommunityPageContent() {
 
           {/* Filters */}
           <div className="bg-white rounded-xl p-5 border border-gray-200 space-y-4">
-            {/* Sort */}
-            <div className="flex items-center gap-2 mb-4 pb-4 border-b border-gray-100">
-              <span className="text-[13px] text-gray-500 font-medium mr-2">
-                정렬
-              </span>
-              <button
-                onClick={() => setCurrentSort("latest")}
-                className={`px-4 py-2 text-[14px] font-medium rounded-lg transition-all ${
-                  currentSort === "latest"
-                    ? "bg-gray-900 text-white"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                }`}
-              >
-                최신순
-              </button>
-              <button
-                onClick={() => setCurrentSort("popular")}
-                className={`px-4 py-2 text-[14px] font-medium rounded-lg transition-all ${
-                  currentSort === "popular"
-                    ? "bg-gray-900 text-white"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                }`}
-              >
-                인기순
-              </button>
+            {/* Sort and View Mode */}
+            <div className="flex items-center justify-between mb-4 pb-4 border-b border-gray-100">
+              <div className="flex items-center gap-2">
+                <span className="text-[13px] text-gray-500 font-medium mr-2">
+                  정렬
+                </span>
+                <button
+                  onClick={() => setCurrentSort("latest")}
+                  className={`px-4 py-2 text-[14px] font-medium rounded-lg transition-all ${
+                    currentSort === "latest"
+                      ? "bg-gray-900 text-white"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  }`}
+                >
+                  최신순
+                </button>
+                <button
+                  onClick={() => setCurrentSort("popular")}
+                  className={`px-4 py-2 text-[14px] font-medium rounded-lg transition-all ${
+                    currentSort === "popular"
+                      ? "bg-gray-900 text-white"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  }`}
+                >
+                  인기순
+                </button>
+              </div>
+
+              {/* View Mode Toggle */}
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setViewMode("grid")}
+                  className={`p-2 rounded-lg transition-all ${
+                    viewMode === "grid"
+                      ? "bg-gray-900 text-white"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  }`}
+                  title="블럭뷰"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
+                  </svg>
+                </button>
+                <button
+                  onClick={() => setViewMode("list")}
+                  className={`p-2 rounded-lg transition-all ${
+                    viewMode === "list"
+                      ? "bg-gray-900 text-white"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  }`}
+                  title="리스트뷰"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 010 3.75H5.625a1.875 1.875 0 010-3.75z" />
+                  </svg>
+                </button>
+              </div>
             </div>
 
             {/* Type Filters - 금거래 */}
@@ -429,53 +531,140 @@ function CommunityPageContent() {
             </div>
           )}
 
-          {/* Posts Grid */}
+          {/* Posts Grid or List */}
           {data && data.data.length > 0 && (
             <>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {data.data.map((post) => (
-                  <Link
-                    key={post.id}
-                    href={`/community/posts/${post.id}`}
-                    className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all hover:-translate-y-1 border border-gray-100"
-                  >
-                    {/* Thumbnail */}
-                    {post.image_urls && post.image_urls.length > 0 ? (
-                      <div className="relative overflow-hidden bg-gray-100">
-                        <img
-                          src={post.image_urls[0]}
-                          alt={post.title}
-                          className="w-full aspect-[16/9] object-cover"
-                        />
-                      </div>
-                    ) : (
-                      <div className="w-full aspect-[16/9] bg-gradient-to-br from-yellow-400 to-yellow-500 flex items-center justify-center">
-                        <svg
-                          className="w-16 h-16 text-white/50"
-                          fill="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-                        </svg>
-                      </div>
-                    )}
+              {viewMode === "grid" ? (
+                /* Grid View */
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {data.data.map((post) => (
+                    <Link
+                      key={post.id}
+                      href={`/community/posts/${post.id}`}
+                      className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all hover:-translate-y-1 border border-gray-100"
+                    >
+                      {/* Thumbnail */}
+                      {post.image_urls && post.image_urls.length > 0 ? (
+                        <div className="relative overflow-hidden bg-gray-100">
+                          <img
+                            src={post.image_urls[0]}
+                            alt={post.title}
+                            className="w-full aspect-[16/9] object-cover"
+                          />
+                        </div>
+                      ) : (
+                        <div className="w-full aspect-[16/9] bg-gradient-to-br from-yellow-400 to-yellow-500 flex items-center justify-center">
+                          <svg
+                            className="w-16 h-16 text-white/50"
+                            fill="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+                          </svg>
+                        </div>
+                      )}
 
-                    {/* Content */}
-                    <div className="p-5">
+                      {/* Content */}
+                      <div className="p-5">
+                        {/* Title */}
+                        <h3 className="text-[18px] font-bold text-gray-900 mb-2 line-clamp-2">
+                          {post.title}
+                        </h3>
+
+                        {/* Content Preview */}
+                        <p className="text-[14px] text-gray-500 mb-4 line-clamp-3">
+                          {post.content}
+                        </p>
+
+                        {/* Meta Info */}
+                        <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+                          <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-full flex items-center justify-center">
+                              <span className="text-[11px] font-bold text-white">
+                                {(() => {
+                                  const authorName =
+                                    post.user.role === "admin"
+                                      ? post.store?.name || post.user.nickname
+                                      : post.user.nickname;
+                                  return authorName.charAt(0);
+                                })()}
+                              </span>
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="text-[12px] font-medium text-gray-900">
+                                {post.user.role === "admin"
+                                  ? post.store?.name || post.user.nickname
+                                  : post.user.nickname}
+                              </span>
+                              <span className="text-[11px] text-gray-400">
+                                {new Date(post.created_at).toLocaleDateString()}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Stats */}
+                          <div className="flex items-center gap-3 text-[12px] text-gray-400">
+                            <span className="flex items-center gap-1">
+                              <svg
+                                className="w-4 h-4"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"
+                                />
+                              </svg>
+                              {post.like_count}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <svg
+                                className="w-4 h-4"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z"
+                                />
+                              </svg>
+                              {post.comment_count}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              ) : (
+                /* List View */
+                <div className="space-y-3">
+                  {data.data.map((post) => (
+                    <Link
+                      key={post.id}
+                      href={`/community/posts/${post.id}`}
+                      className="block bg-white rounded-xl shadow-sm hover:shadow-md transition-all border border-gray-100 p-4"
+                    >
                       {/* Title */}
-                      <h3 className="text-[18px] font-bold text-gray-900 mb-2 line-clamp-2">
+                      <h3 className="text-[18px] font-bold text-gray-900 mb-2 line-clamp-1">
                         {post.title}
                       </h3>
 
                       {/* Content Preview */}
-                      <p className="text-[14px] text-gray-500 mb-4 line-clamp-3">
+                      <p className="text-[15px] text-gray-500 mb-4 line-clamp-2">
                         {post.content}
                       </p>
 
                       {/* Meta Info */}
-                      <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+                      <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-full flex items-center justify-center">
+                          <div className="w-7 h-7 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-full flex items-center justify-center">
                             <span className="text-[11px] font-bold text-white">
                               {(() => {
                                 const authorName =
@@ -486,20 +675,18 @@ function CommunityPageContent() {
                               })()}
                             </span>
                           </div>
-                          <div className="flex flex-col">
-                            <span className="text-[12px] font-medium text-gray-900">
-                              {post.user.role === "admin"
-                                ? post.store?.name || post.user.nickname
-                                : post.user.nickname}
-                            </span>
-                            <span className="text-[11px] text-gray-400">
-                              {new Date(post.created_at).toLocaleDateString()}
-                            </span>
-                          </div>
+                          <span className="text-[13px] font-medium text-gray-700">
+                            {post.user.role === "admin"
+                              ? post.store?.name || post.user.nickname
+                              : post.user.nickname}
+                          </span>
+                          <span className="text-[13px] text-gray-400">
+                            {new Date(post.created_at).toLocaleDateString()}
+                          </span>
                         </div>
 
                         {/* Stats */}
-                        <div className="flex items-center gap-3 text-[12px] text-gray-400">
+                        <div className="flex items-center gap-3 text-[13px] text-gray-400">
                           <span className="flex items-center gap-1">
                             <svg
                               className="w-4 h-4"
@@ -534,23 +721,19 @@ function CommunityPageContent() {
                           </span>
                         </div>
                       </div>
-                    </div>
-                  </Link>
-                ))}
-              </div>
+                    </Link>
+                  ))}
+                </div>
+              )}
 
-              {/* Load More Button */}
-              {data.total > data.page_size &&
-                currentPage < Math.ceil(data.total / data.page_size) && (
-                  <div className="text-center mt-12">
-                    <button
-                      onClick={() => setCurrentPage((p) => p + 1)}
-                      className="px-8 py-3.5 bg-white border-2 border-gray-200 hover:border-gray-300 text-gray-700 text-[15px] font-semibold rounded-xl transition-all"
-                    >
-                      더보기
-                    </button>
-                  </div>
-                )}
+              {/* Infinite Scroll Observer Target */}
+              {hasMore && (
+                <div ref={observerTarget} className="text-center py-8">
+                  {isLoadingMore && (
+                    <div className="inline-block w-8 h-8 border-4 border-gray-200 border-t-gray-900 rounded-full animate-spin"></div>
+                  )}
+                </div>
+              )}
             </>
           )}
         </div>

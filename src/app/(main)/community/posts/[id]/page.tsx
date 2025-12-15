@@ -31,6 +31,11 @@ export default function CommunityDetailPage() {
 
   const postId = Number(params?.id);
 
+  // 페이지 진입 시 스크롤 맨 위로
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [postId]);
+
   // 게시글 데이터 로드
   useEffect(() => {
     const fetchPost = async () => {
@@ -278,7 +283,7 @@ export default function CommunityDetailPage() {
             )}
 
             {/* Content */}
-            <div className="prose max-w-none my-8">
+            <div className="prose max-w-none my-8 mb-40">
               <p className="whitespace-pre-wrap text-gray-700">
                 {postData.content}
               </p>
