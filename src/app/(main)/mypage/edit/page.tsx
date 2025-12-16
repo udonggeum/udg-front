@@ -2,7 +2,8 @@
 
 import { useState, useEffect, type FormEvent, type ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
-import { User as UserIcon, ArrowLeft, Save, Lock, Edit3, Shield, Mail, Phone, Key } from "lucide-react";
+import { User as UserIcon, ArrowLeft, Save, Lock, Edit3, Shield, Mail, Phone, Key, MapPin } from "lucide-react";
+import AddressSearchInput from "@/components/AddressSearchInput";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { updateProfileAction } from "@/actions/auth";
 import { UpdateProfileRequestSchema } from "@/schemas/auth";
@@ -30,7 +31,13 @@ export default function ProfileEditPage() {
   const [formData, setFormData] = useState<UpdateProfileRequest>({
     name: user?.name || "",
     phone: user?.phone || "",
+    address: user?.address || "",
   });
+
+  // 주소 검색용 분리 필드
+  const [zipCode, setZipCode] = useState("");
+  const [baseAddress, setBaseAddress] = useState("");
+  const [detailAddress, setDetailAddress] = useState("");
 
   const [formErrors, setFormErrors] = useState<FormErrors>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
@@ -41,6 +48,36 @@ export default function ProfileEditPage() {
       router.push("/login");
     }
   }, [isAuthenticated, router]);
+
+  // 기존 주소 파싱 (초기 로드 시)
+  useEffect(() => {
+    if (user?.address && !baseAddress && !zipCode && !detailAddress) {
+      // 간단한 파싱: "[우편번호] 기본주소 상세주소" 형식 가정
+      const match = user.address.match(/^\[(\d+)\]\s*(.+)$/);
+      if (match) {
+        setZipCode(match[1]);
+        setBaseAddress(match[2]);
+      } else {
+        // 우편번호 없이 주소만 있는 경우
+        setBaseAddress(user.address);
+      }
+    }
+  }, [user?.address]);
+
+  // 주소 필드 합치기 (우편번호 + 기본주소 + 상세주소)
+  useEffect(() => {
+    const fullAddress = [
+      zipCode && `[${zipCode}]`,
+      baseAddress,
+      detailAddress,
+    ]
+      .filter(Boolean)
+      .join(" ");
+
+    if (fullAddress !== formData.address) {
+      setFormData((prev) => ({ ...prev, address: fullAddress }));
+    }
+  }, [zipCode, baseAddress, detailAddress]);
 
   // 성공 시 마이페이지로 이동
   useEffect(() => {
@@ -137,7 +174,7 @@ export default function ProfileEditPage() {
     e.preventDefault();
 
     // 모든 필드를 터치 상태로 설정
-    setTouched({ name: true, phone: true });
+    setTouched({ name: true, phone: true, address: true });
 
     // 폼 검증
     if (!validateForm()) {
@@ -291,6 +328,36 @@ export default function ProfileEditPage() {
                     )}
                     <p className="text-xs text-gray-500 mt-1">
                       형식: 010-1234-5678 또는 01012345678
+                    </p>
+                  </div>
+
+                  {/* Address */}
+                  <div>
+                    <Label className="flex items-center gap-2 mb-4">
+                      <MapPin className="w-4 h-4" />
+                      주소지
+                    </Label>
+                    <AddressSearchInput
+                      zipCode={zipCode}
+                      address={baseAddress}
+                      detailAddress={detailAddress}
+                      onZipCodeChange={setZipCode}
+                      onAddressChange={setBaseAddress}
+                      onDetailAddressChange={setDetailAddress}
+                      labels={{
+                        zipCode: "우편번호 (선택)",
+                        address: "기본 주소",
+                        detailAddress: "상세 주소 (선택)",
+                      }}
+                      placeholders={{
+                        zipCode: "우편번호",
+                        address: "주소 검색 버튼을 클릭하세요",
+                        detailAddress: "동/호수, 건물명 등",
+                      }}
+                      required={{ address: false }}
+                    />
+                    <p className="text-xs text-gray-500 mt-2">
+                      거주지 또는 사업장 주소를 입력하세요
                     </p>
                   </div>
                 </div>

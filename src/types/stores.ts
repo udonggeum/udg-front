@@ -14,6 +14,18 @@ export interface StoreCategoryCounter {
 export type StoreCategoryCounts = Record<string, number> | StoreCategoryCounter[];
 
 /**
+ * Tag type
+ * 매장 태그
+ */
+export interface Tag {
+  id: number;
+  name: string;
+  category: string;
+  created_at: string;
+  updated_at: string;
+}
+
+/**
  * Store detail type
  * 매장 상세 정보
  */
@@ -23,12 +35,15 @@ export interface StoreDetail {
   region?: string;
   district?: string;
   address?: string;
+  latitude?: number;
+  longitude?: number;
   phone?: string;
   phone_number?: string;
   open_time?: string;
   close_time?: string;
   business_hours?: string;
   description?: string;
+  tags?: Tag[];
   product_count?: number;
   total_products?: number;
   image_url?: string;

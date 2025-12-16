@@ -2,18 +2,35 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/stores/useAuthStore";
+import { useLocationStore } from "@/stores/useLocationStore";
 import { logoutUserAction } from "@/actions/auth";
 import { toast } from "sonner";
-import { User, Settings, LogOut, ChevronDown } from "lucide-react";
+import { User, Settings, LogOut, ChevronDown, MapPin } from "lucide-react";
+import LocationSettingModal from "@/components/LocationSettingModal";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export function Header() {
   const router = useRouter();
   const { isAuthenticated, user, tokens, clearAuth } = useAuthStore();
+  const { currentLocation, initializeFromUserAddress } = useLocationStore();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
+
+  // user.address로 초기화 (currentLocation이 없을 때만)
+  useEffect(() => {
+    if (user?.address && !currentLocation) {
+      initializeFromUserAddress(user.address);
+    }
+  }, [user?.address, currentLocation, initializeFromUserAddress]);
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
@@ -104,19 +121,40 @@ export function Header() {
               </Link>
             </div>
           ) : (
-            // 로그인 상태 - 드롭다운 메뉴
-            <div className="relative">
-              <Button
-                variant="ghost"
-                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                className="flex items-center gap-2 text-[14px] font-semibold text-gray-700 hover:bg-gray-100"
-              >
-                <User className="w-4 h-4" />
-                <span className="hidden sm:inline">{user?.name || "사용자"}</span>
-                <ChevronDown className="w-4 h-4" />
-              </Button>
+            // 로그인 상태 - 위치 버튼 + 드롭다운 메뉴
+            <div className="flex items-center gap-1">
+              {/* 위치 설정 버튼 */}
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setIsLocationModalOpen(true)}
+                      className="text-gray-500 hover:text-blue-600 hover:bg-gray-100"
+                    >
+                      <MapPin className="w-4 h-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{currentLocation || "위치 설정"}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
 
-              {isDropdownOpen && (
+              {/* 사용자 드롭다운 메뉴 */}
+              <div className="relative">
+                <Button
+                  variant="ghost"
+                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                  className="flex items-center gap-2 text-[14px] font-semibold text-gray-700 hover:bg-gray-100"
+                >
+                  <User className="w-4 h-4" />
+                  <span className="hidden sm:inline">{user?.name || "사용자"}</span>
+                  <ChevronDown className="w-4 h-4" />
+                </Button>
+
+                {isDropdownOpen && (
                 <>
                   {/* 배경 오버레이 */}
                   <div
@@ -166,10 +204,17 @@ export function Header() {
                   </div>
                 </>
               )}
+              </div>
             </div>
           )}
         </div>
       </div>
+
+      {/* 위치 설정 모달 */}
+      <LocationSettingModal
+        isOpen={isLocationModalOpen}
+        onClose={() => setIsLocationModalOpen(false)}
+      />
     </header>
   );
 }

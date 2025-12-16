@@ -7,6 +7,8 @@ export interface User {
   email: string;
   name: string;
   phone?: string;
+  address?: string;
+  profile_image?: string;
   role: 'user' | 'admin';
   created_at?: string;
   updated_at?: string;
@@ -83,6 +85,8 @@ export interface ResetPasswordRequest {
 export interface UpdateProfileRequest {
   name: string;
   phone?: string;
+  address?: string;
+  profile_image?: string;
 }
 
 /**

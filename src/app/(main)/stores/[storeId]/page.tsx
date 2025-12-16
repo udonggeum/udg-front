@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter, useParams } from "next/navigation";
 import {
   MapPin,
@@ -19,10 +19,9 @@ import ProductCard from "@/components/product-card";
 
 type TabType = "products" | "info";
 
-export default function StoreDetailPage() {
+function StoreDetailContent({ storeId }: { storeId: number | null }) {
   const router = useRouter();
-  const params = useParams();
-  const storeId = params.storeId ? Number(params.storeId) : null;
+  const isMountedRef = useRef(true);
 
   const [store, setStore] = useState<StoreDetail | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
@@ -32,6 +31,21 @@ export default function StoreDetailPage() {
   const [productsError, setProductsError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabType>("products");
   const [imageError, setImageError] = useState(false);
+
+  // store가 변경되면 imageError 초기화
+  useEffect(() => {
+    if (store) {
+      setImageError(false);
+    }
+  }, [store?.id]);
+
+  // 컴포넌트 마운트 상태 추적
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   // 매장 정보 로드
   useEffect(() => {
@@ -181,16 +195,28 @@ export default function StoreDetailPage() {
         <div className="bg-white rounded-2xl p-6 shadow-lg mb-5">
           <div className="flex flex-col md:flex-row gap-4">
             {/* 매장 이미지 */}
-            <div className="w-32 h-32 bg-gray-100 border border-gray-200 rounded-2xl flex items-center justify-center flex-shrink-0 overflow-hidden">
-              {store.image_url && !imageError ? (
+            <div className="w-32 h-32 bg-gray-100 border border-gray-200 rounded-2xl flex items-center justify-center flex-shrink-0 overflow-hidden relative">
+              {/* 기본 아이콘 (항상 렌더링) */}
+              <StoreIcon className={`w-16 h-16 text-gray-300 absolute inset-0 m-auto ${!imageError && store.image_url && (store.image_url.startsWith('http://') || store.image_url.startsWith('https://')) ? 'opacity-0' : 'opacity-100'} transition-opacity`} />
+
+              {/* 이미지 (유효한 URL인 경우에만 렌더링, 에러 시 숨김) */}
+              {store.image_url && (store.image_url.startsWith('http://') || store.image_url.startsWith('https://')) && (
                 <img
+                  key={`${store.id}-${store.image_url}`}
                   src={store.image_url}
                   alt={store.name}
-                  onError={() => setImageError(true)}
-                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.currentTarget.style.opacity = '0';
+                    if (isMountedRef.current) {
+                      setImageError(true);
+                    }
+                  }}
+                  onLoad={(e) => {
+                    e.currentTarget.style.opacity = '1';
+                  }}
+                  className="w-full h-full object-cover transition-opacity"
+                  style={{ opacity: 0 }}
                 />
-              ) : (
-                <StoreIcon className="w-16 h-16 text-gray-300" />
               )}
             </div>
 
@@ -398,4 +424,12 @@ export default function StoreDetailPage() {
       </div>
     </div>
   );
+}
+
+export default function StoreDetailPage() {
+  const params = useParams();
+  const storeId = params.storeId ? Number(params.storeId) : null;
+
+  // storeId가 변경되면 컴포넌트를 완전히 재마운트
+  return <StoreDetailContent key={storeId} storeId={storeId} />;
 }

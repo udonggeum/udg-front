@@ -27,6 +27,7 @@ export const UserSchema = z.object({
       AUTH_ERRORS.PHONE_INVALID
     )
     .optional(),
+  address: z.string().optional(),
   role: z.enum(['user', 'admin']),
   created_at: z.string().optional(),
   updated_at: z.string().optional(),
@@ -103,17 +104,23 @@ export type MeResponse = z.infer<typeof MeResponseSchema>;
 /**
  * Update profile request schema
  * 프로필 업데이트 사용자 입력 검증
- * 참고: name과 phone만 업데이트 가능 (이메일과 비밀번호는 별도 플로우)
+ * 참고: name, phone, address만 업데이트 가능 (이메일과 비밀번호는 별도 플로우)
  */
 export const UpdateProfileRequestSchema = z.object({
   name: z.string().min(1, AUTH_ERRORS.NAME_REQUIRED),
   phone: z
     .string()
-    .regex(
-      /^01[0-9]-?[0-9]{3,4}-?[0-9]{4}$/,
-      AUTH_ERRORS.PHONE_INVALID
-    )
-    .optional(),
+    .transform((val) => val === "" ? undefined : val) // 빈 문자열을 undefined로 변환
+    .pipe(
+      z
+        .string()
+        .regex(
+          /^01[0-9]-?[0-9]{3,4}-?[0-9]{4}$/,
+          AUTH_ERRORS.PHONE_INVALID
+        )
+        .optional()
+    ),
+  address: z.string().optional(),
 });
 
 export type UpdateProfileRequest = z.infer<typeof UpdateProfileRequestSchema>;
