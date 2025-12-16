@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import AddressSearchInput from "@/components/AddressSearchInput";
 
 interface FormErrors {
   name?: string;
@@ -277,73 +278,53 @@ export default function AddressFormModal({
             )}
           </div>
 
-          {/* 우편번호 */}
-          <div>
-            <Label htmlFor="zip_code">우편번호 (선택)</Label>
-            <div className="flex gap-2">
-              <Input
-                id="zip_code"
-                name="zip_code"
-                type="text"
-                placeholder="12345"
-                maxLength={5}
-                className={touched.zip_code && formErrors.zip_code ? "border-red-500" : ""}
-                value={formData.zip_code}
-                onChange={handleChange}
-                onBlur={handleBlur}
-                disabled={isPending}
-              />
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => alert("우편번호 검색 기능은 추후 추가될 예정입니다.")}
-                disabled={isPending}
-              >
-                우편번호 검색
-              </Button>
-            </div>
-            {touched.zip_code && formErrors.zip_code && (
-              <p className="text-sm text-red-500 mt-1">{formErrors.zip_code}</p>
-            )}
-          </div>
-
-          {/* 기본 주소 */}
-          <div>
-            <Label htmlFor="address">기본 주소</Label>
-            <Input
-              id="address"
-              name="address"
-              type="text"
-              placeholder="서울시 강남구 테헤란로 123"
-              className={touched.address && formErrors.address ? "border-red-500" : ""}
-              value={formData.address}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              disabled={isPending}
-            />
-            {touched.address && formErrors.address && (
-              <p className="text-sm text-red-500 mt-1">{formErrors.address}</p>
-            )}
-          </div>
-
-          {/* 상세 주소 */}
-          <div>
-            <Label htmlFor="detail_address">상세 주소 (선택)</Label>
-            <Input
-              id="detail_address"
-              name="detail_address"
-              type="text"
-              placeholder="동/호수, 건물명 등"
-              className={touched.detail_address && formErrors.detail_address ? "border-red-500" : ""}
-              value={formData.detail_address}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              disabled={isPending}
-            />
-            {touched.detail_address && formErrors.detail_address && (
-              <p className="text-sm text-red-500 mt-1">{formErrors.detail_address}</p>
-            )}
-          </div>
+          {/* 주소 검색 */}
+          <AddressSearchInput
+            zipCode={formData.zip_code}
+            address={formData.address}
+            detailAddress={formData.detail_address}
+            onZipCodeChange={(value) => {
+              setFormData((prev) => ({ ...prev, zip_code: value }));
+              if (touched.zip_code) {
+                const error = validateField("zip_code", value);
+                setFormErrors((prev) => ({ ...prev, zip_code: error }));
+              }
+            }}
+            onAddressChange={(value) => {
+              setFormData((prev) => ({ ...prev, address: value }));
+              if (touched.address) {
+                const error = validateField("address", value);
+                setFormErrors((prev) => ({ ...prev, address: error }));
+              }
+            }}
+            onDetailAddressChange={(value) => {
+              setFormData((prev) => ({ ...prev, detail_address: value }));
+              if (touched.detail_address) {
+                const error = validateField("detail_address", value);
+                setFormErrors((prev) => ({ ...prev, detail_address: error }));
+              }
+            }}
+            errors={{
+              zipCode: touched.zip_code ? formErrors.zip_code : undefined,
+              address: touched.address ? formErrors.address : undefined,
+              detailAddress: touched.detail_address ? formErrors.detail_address : undefined,
+            }}
+            labels={{
+              zipCode: "우편번호 (선택)",
+              address: "기본 주소",
+              detailAddress: "상세 주소 (선택)",
+            }}
+            placeholders={{
+              zipCode: "12345",
+              address: "서울시 강남구 테헤란로 123",
+              detailAddress: "동/호수, 건물명 등",
+            }}
+            required={{
+              zipCode: false,
+              address: true,
+              detailAddress: false,
+            }}
+          />
 
           {/* 기본 배송지 설정 */}
           <div className="flex items-center space-x-2">

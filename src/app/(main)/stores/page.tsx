@@ -14,17 +14,97 @@ import {
   Star,
 } from "lucide-react";
 import { getStoresAction } from "@/actions/stores";
-import type { StoreDetail } from "@/types/stores";
+import type { StoreDetail, Tag } from "@/types/stores";
 import StoreMap from "@/components/StoreMap";
 import useKakaoLoader from "@/hooks/useKakaoLoader";
+import { getDistanceText } from "@/utils/distance";
+
+/**
+ * 매장 이미지 컴포넌트 - 로딩 실패 시 폴백 UI 표시
+ */
+function StoreImage({
+  imageUrl,
+  storeName,
+  iconBg,
+  iconColor,
+  size = "md",
+}: {
+  imageUrl?: string;
+  storeName: string;
+  iconBg?: string;
+  iconColor?: string;
+  size?: "sm" | "md" | "lg";
+}) {
+  const [imageError, setImageError] = useState(false);
+
+  const sizeClasses = {
+    sm: "w-20 h-20",
+    md: "w-full h-48",
+    lg: "w-full h-full",
+  };
+
+  const iconSizes = {
+    sm: "w-10 h-10",
+    md: "w-16 h-16",
+    lg: "w-20 h-20",
+  };
+
+  // URL 유효성 검사 - http:// 또는 https://로 시작하는지 확인
+  const isValidUrl = imageUrl && (imageUrl.startsWith("http://") || imageUrl.startsWith("https://"));
+
+  // 이미지가 없거나, 유효하지 않은 URL이거나, 로딩 실패 시 폴백 UI
+  if (!imageUrl || !isValidUrl || imageError) {
+    return (
+      <div
+        className={`${sizeClasses[size]} ${iconBg || "bg-gray-100"} flex items-center justify-center`}
+      >
+        <StoreIcon className={`${iconSizes[size]} ${iconColor || "text-gray-400"}`} strokeWidth={1.5} />
+      </div>
+    );
+  }
+
+  // 정상 이미지 표시
+  return (
+    <img
+      src={imageUrl}
+      alt={storeName}
+      className={`${sizeClasses[size]} object-cover`}
+      onError={() => setImageError(true)}
+    />
+  );
+}
 
 const PAGE_SIZE = 50;
 
 type FilterTag = "all" | "open" | "24k" | "diamond" | "repair";
 
+/**
+ * 현재 시간이 영업 시간 내인지 확인
+ */
+function checkIfOpen(openTime?: string, closeTime?: string): boolean {
+  if (!openTime || !closeTime) {
+    return true; // 영업 시간 정보가 없으면 기본적으로 영업중으로 표시
+  }
+
+  const now = new Date();
+  const currentHour = now.getHours();
+  const currentMinute = now.getMinutes();
+  const currentTime = currentHour * 60 + currentMinute;
+
+  // "09:00" 형식을 분으로 변환
+  const parseTime = (time: string): number => {
+    const [hour, minute] = time.split(":").map(Number);
+    return hour * 60 + minute;
+  };
+
+  const openMinutes = parseTime(openTime);
+  const closeMinutes = parseTime(closeTime);
+
+  return currentTime >= openMinutes && currentTime < closeMinutes;
+}
+
 interface StoreWithExtras extends StoreDetail {
   distance?: string;
-  tags?: string[];
   iconBg?: string;
   iconColor?: string;
   rating?: number;
@@ -53,6 +133,8 @@ export default function StoresPage() {
   const [selectedFilter, setSelectedFilter] = useState<FilterTag>("all");
   const [selectedStore, setSelectedStore] = useState<StoreWithExtras | null>(null);
   const [isDetailPanelOpen, setIsDetailPanelOpen] = useState(false);
+  const [isMobileMapOpen, setIsMobileMapOpen] = useState(false);
+  const [sortBy, setSortBy] = useState<"distance" | "rating" | "reviews">("distance");
   const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number }>({
     lat: 37.5665,
     lng: 126.978,
@@ -61,6 +143,41 @@ export default function StoresPage() {
   const [stores, setStores] = useState<StoreWithExtras[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // 초기 로드 시 사용자 위치 자동 획득 (비침입적)
+  useEffect(() => {
+    if (navigator.geolocation) {
+      console.log("🔄 Requesting user location...");
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          const location = { lat: latitude, lng: longitude };
+          console.log("✅ User location obtained:", location);
+          setUserLocation(location);
+          setMapCenter(location);
+        },
+        (error) => {
+          console.log("❌ Failed to get user location:", error.message);
+          console.log("ℹ️ Use '현재 위치로 검색' button to retry");
+          // 실패 시 조용히 무시 (사용자에게 알림 X)
+          // 전체 매장 bounds fit으로 fallback
+        },
+        {
+          enableHighAccuracy: false, // 빠른 응답 우선
+          timeout: 10000, // 10초로 늘림
+          maximumAge: 300000, // 5분간 캐시 허용
+        }
+      );
+    }
+  }, []);
+
+  // 페이지 스크롤 방지 (매장찾기는 고정 레이아웃)
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, []);
 
   // 매장 목록 로드
   useEffect(() => {
@@ -88,25 +205,40 @@ export default function StoresPage() {
           const transformedStores = result.data.stores.map((store, index) => {
             const colorSet = iconColors[index % iconColors.length];
 
-            // 백엔드에서 받은 위도/경도 사용 (없으면 기본값: 서울시청)
-            const lat = (store as any).latitude || 37.5665;
-            const lng = (store as any).longitude || 126.978;
+            // 백엔드에서 받은 위도/경도 사용
+            const lat = store.latitude || 37.5665;
+            const lng = store.longitude || 126.978;
+
+            // 사용자 위치가 있으면 실제 거리 계산
+            const distance = userLocation
+              ? getDistanceText(userLocation.lat, userLocation.lng, lat, lng)
+              : null;
+
+            if (index === 0) {
+              console.log("🔍 Distance calculation for first store:");
+              console.log("  - User location:", userLocation);
+              console.log("  - Store coords:", { lat, lng });
+              console.log("  - Calculated distance:", distance);
+            }
 
             // 이미지 URL 검증 (http:// 또는 https://로 시작하지 않으면 null 처리)
             const isValidImageUrl =
               store.image_url &&
               (store.image_url.startsWith("http://") || store.image_url.startsWith("https://"));
 
+            // 영업 시간 확인
+            const isOpen = checkIfOpen(store.open_time, store.close_time);
+
             return {
               ...store,
               image_url: isValidImageUrl ? store.image_url : undefined,
-              distance: `${(Math.random() * 2 + 0.3).toFixed(1)}km`, // TODO: 실제 거리 계산
-              tags: ["24K", "18K", "수리"].slice(0, Math.floor(Math.random() * 3) + 1),
+              distance: distance || undefined,
+              tags: store.tags || [],
               iconBg: colorSet.bg,
               iconColor: colorSet.color,
-              rating: 4.5 + Math.random() * 0.5,
-              reviewCount: Math.floor(Math.random() * 300) + 50,
-              isOpen: Math.random() > 0.3,
+              rating: 0, // 실제 리뷰 평점 없음
+              reviewCount: 0, // 실제 리뷰 수 없음
+              isOpen,
               lat,
               lng,
             };
@@ -131,25 +263,98 @@ export default function StoresPage() {
     loadStores();
   }, []);
 
+  // 사용자 위치 변경 시 거리 재계산
+  useEffect(() => {
+    if (userLocation && stores.length > 0) {
+      console.log("🔄 Recalculating distances for user location:", userLocation);
+      setStores((prevStores) =>
+        prevStores.map((store, idx) => {
+          const distance = getDistanceText(
+            userLocation.lat,
+            userLocation.lng,
+            store.lat || 37.5665,
+            store.lng || 126.978
+          );
+          if (idx === 0) {
+            console.log("  - First store distance:", distance);
+          }
+          return {
+            ...store,
+            distance: distance || undefined,
+          };
+        })
+      );
+      console.log("✅ Distance recalculation complete");
+    }
+  }, [userLocation, stores.length]);
+
   const filteredStores = useMemo(() => {
-    return stores.filter((store) => {
-      // 검색어 필터
+    // 1. 필터링
+    const filtered = stores.filter((store) => {
+      // 검색어 필터 (매장명 + 주소 + 지역)
       if (searchQuery) {
         const query = searchQuery.toLowerCase();
-        if (!store.name.toLowerCase().includes(query)) {
+        const searchableText = [
+          store.name,
+          store.address,
+          store.region,
+          store.district,
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+
+        if (!searchableText.includes(query)) {
           return false;
         }
       }
 
-      // 태그 필터 (실제로는 API에서 필터링)
+      // 태그 필터
       if (selectedFilter !== "all") {
-        // Mock 로직 - 실제로는 store.tags나 store.services에서 확인
-        return true;
+        switch (selectedFilter) {
+          case "open":
+            return store.isOpen === true;
+          case "24k":
+            return store.tags?.some((tag) => tag.name.includes("24K") || tag.name.includes("24k"));
+          case "diamond":
+            return store.tags?.some((tag) => tag.name.includes("다이아") || tag.name.includes("diamond"));
+          case "repair":
+            return store.tags?.some((tag) => tag.name.includes("수리") || tag.name.includes("리폼"));
+          default:
+            return true;
+        }
       }
 
       return true;
     });
-  }, [stores, searchQuery, selectedFilter]);
+
+    // 2. 정렬
+    const sorted = [...filtered].sort((a, b) => {
+      switch (sortBy) {
+        case "distance":
+          // 거리 없는 매장은 맨 뒤로
+          if (!a.distance && !b.distance) return 0;
+          if (!a.distance) return 1;
+          if (!b.distance) return -1;
+
+          // "1.2km" -> 1.2로 변환
+          const distA = parseFloat(a.distance.replace("km", "").replace("m", "")) / (a.distance.includes("m") && !a.distance.includes("km") ? 1000 : 1);
+          const distB = parseFloat(b.distance.replace("km", "").replace("m", "")) / (b.distance.includes("m") && !b.distance.includes("km") ? 1000 : 1);
+          return distA - distB;
+
+        case "rating":
+          return (b.rating || 0) - (a.rating || 0);
+
+        case "reviews":
+          return (b.reviewCount || 0) - (a.reviewCount || 0);
+
+        default:
+          return 0;
+      }
+    });
+
+    return sorted;
+  }, [stores, searchQuery, selectedFilter, sortBy]);
 
   const filterTags: Array<{ id: FilterTag; label: string }> = [
     { id: "all", label: "전체" },
@@ -171,6 +376,18 @@ export default function StoresPage() {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
+
+    // 검색 결과가 있으면 첫 번째 매장으로 지도 이동
+    if (filteredStores.length > 0) {
+      const firstStore = filteredStores[0];
+      if (firstStore.lat && firstStore.lng) {
+        setMapCenter({ lat: firstStore.lat, lng: firstStore.lng });
+        handleStoreClick(firstStore);
+        console.log("🔍 Search: Moving to first result -", firstStore.name);
+      }
+    } else {
+      console.log("🔍 Search: No results found");
+    }
   };
 
   // 현재 위치 가져오기 (Geolocation API)
@@ -219,8 +436,8 @@ export default function StoresPage() {
 
   return (
     <>
-      {/* Main Content */}
-      <div className="flex h-screen">
+      {/* Main Content - 고정 레이아웃 (푸터 숨김) */}
+      <div className="fixed inset-0 top-[60px] flex">
         {/* 좌측 패널 - 검색 및 리스트 */}
         <div className="w-full md:w-[420px] lg:w-[480px] flex-shrink-0 border-r border-gray-100 flex flex-col bg-white">
           {/* 검색 영역 */}
@@ -232,7 +449,7 @@ export default function StoresPage() {
                   <Search className="w-5 h-5 text-gray-400" />
                   <input
                     type="text"
-                    placeholder="매장명, 지역으로 검색"
+                    placeholder="매장명, 지역, 주소로 검색 (예: 강남, 종로)"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="flex-1 py-2.5 text-[15px] text-gray-900 placeholder-gray-400 bg-transparent outline-none"
@@ -292,10 +509,14 @@ export default function StoresPage() {
               <span className="text-[14px] font-bold text-gray-900">{filteredStores.length}</span>
             </div>
             <div className="relative">
-              <select className="appearance-none text-[13px] font-medium text-gray-600 pr-5 cursor-pointer bg-transparent focus:outline-none">
-                <option>거리순</option>
-                <option>별점순</option>
-                <option>리뷰많은순</option>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+                className="appearance-none text-[13px] font-medium text-gray-600 pr-5 cursor-pointer bg-transparent focus:outline-none"
+              >
+                <option value="distance">거리순</option>
+                <option value="rating">별점순</option>
+                <option value="reviews">리뷰많은순</option>
               </select>
               <svg
                 className="w-4 h-4 absolute right-0 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
@@ -347,38 +568,14 @@ export default function StoresPage() {
                   }`}
                 >
                   <div className="flex gap-4">
-                    <div className="w-20 h-20 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0">
-                      {store.image_url ? (
-                        <img
-                          src={store.image_url}
-                          alt={store.name}
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            const target = e.target as HTMLImageElement;
-                            target.style.display = "none";
-                            const parent = target.parentElement;
-                            if (parent) {
-                              parent.classList.add(store.iconBg || "bg-gray-100");
-                              parent.innerHTML = `
-                                <div class="w-full h-full flex items-center justify-center">
-                                  <svg class="w-10 h-10 ${store.iconColor}" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 21v-7.5a.75.75 0 01.75-.75h3a.75.75 0 01.75.75V21m-4.5 0H2.36m11.14 0H18m0 0h3.64m-1.39 0V9.349m-16.5 11.65V9.35m0 0a3.001 3.001 0 003.75-.615A2.993 2.993 0 009.75 9.75c.896 0 1.7-.393 2.25-1.016a2.993 2.993 0 002.25 1.016c.896 0 1.7-.393 2.25-1.016a3.001 3.001 0 003.75.614m-16.5 0a3.004 3.004 0 01-.621-4.72L4.318 3.44A1.5 1.5 0 015.378 3h13.243a1.5 1.5 0 011.06.44l1.19 1.189a3 3 0 01-.621 4.72m-13.5 8.65h3.75a.75.75 0 00.75-.75V13.5a.75.75 0 00-.75-.75H6.75a.75.75 0 00-.75.75v3.75c0 .415.336.75.75.75z"></path>
-                                  </svg>
-                                </div>
-                              `;
-                            }
-                          }}
-                        />
-                      ) : (
-                        <div
-                          className={`w-full h-full ${store.iconBg} flex items-center justify-center`}
-                        >
-                          <StoreIcon
-                            className={`w-10 h-10 ${store.iconColor}`}
-                            strokeWidth={1.5}
-                          />
-                        </div>
-                      )}
+                    <div className="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0">
+                      <StoreImage
+                        imageUrl={store.image_url}
+                        storeName={store.name}
+                        iconBg={store.iconBg}
+                        iconColor={store.iconColor}
+                        size="sm"
+                      />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
@@ -401,22 +598,24 @@ export default function StoresPage() {
                       </p>
                       {store.tags && store.tags.length > 0 && (
                         <div className="flex items-center gap-2">
-                          {store.tags.map((tag) => (
+                          {store.tags.slice(0, 3).map((tag) => (
                             <span
-                              key={tag}
+                              key={tag.id}
                               className="px-2 py-1 bg-gray-100 text-gray-600 text-[11px] font-medium rounded"
                             >
-                              {tag}
+                              {tag.name}
                             </span>
                           ))}
                         </div>
                       )}
                     </div>
-                    <div className="flex items-start">
-                      <span className="text-[13px] font-semibold text-blue-600">
-                        {store.distance}
-                      </span>
-                    </div>
+                    {store.distance && (
+                      <div className="flex items-start">
+                        <span className="text-[13px] font-semibold text-blue-600">
+                          {store.distance}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))
@@ -433,6 +632,9 @@ export default function StoresPage() {
               lat: store.lat || 37.5665,
               lng: store.lng || 126.978,
               isOpen: store.isOpen,
+              tags: store.tags,
+              distance: store.distance,
+              address: store.address,
             }))}
             selectedStoreId={selectedStore?.id}
             onStoreClick={handleMapStoreClick}
@@ -465,35 +667,14 @@ export default function StoresPage() {
 
               {/* 사진 갤러리 */}
               <div className="flex gap-1 overflow-x-auto scrollbar-hide">
-                <div className="w-full h-48 overflow-hidden bg-gray-100 flex-shrink-0">
-                  {selectedStore.image_url ? (
-                    <img
-                      src={selectedStore.image_url}
-                      alt={selectedStore.name}
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.style.display = "none";
-                        const parent = target.parentElement;
-                        if (parent) {
-                          parent.classList.add(selectedStore.iconBg || "bg-gray-100");
-                          parent.innerHTML = `
-                            <div class="w-full h-full flex items-center justify-center">
-                              <svg class="w-16 h-16 ${selectedStore.iconColor}" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 21v-7.5a.75.75 0 01.75-.75h3a.75.75 0 01.75.75V21m-4.5 0H2.36m11.14 0H18m0 0h3.64m-1.39 0V9.349m-16.5 11.65V9.35m0 0a3.001 3.001 0 003.75-.615A2.993 2.993 0 009.75 9.75c.896 0 1.7-.393 2.25-1.016a2.993 2.993 0 002.25 1.016c.896 0 1.7-.393 2.25-1.016a3.001 3.001 0 003.75.614m-16.5 0a3.004 3.004 0 01-.621-4.72L4.318 3.44A1.5 1.5 0 015.378 3h13.243a1.5 1.5 0 011.06.44l1.19 1.189a3 3 0 01-.621 4.72m-13.5 8.65h3.75a.75.75 0 00.75-.75V13.5a.75.75 0 00-.75-.75H6.75a.75.75 0 00-.75.75v3.75c0 .415.336.75.75.75z"></path>
-                              </svg>
-                            </div>
-                          `;
-                        }
-                      }}
-                    />
-                  ) : (
-                    <div
-                      className={`w-full h-full ${selectedStore.iconBg} flex items-center justify-center`}
-                    >
-                      <StoreIcon className={`w-16 h-16 ${selectedStore.iconColor}`} strokeWidth={1.5} />
-                    </div>
-                  )}
+                <div className="w-full h-48 overflow-hidden flex-shrink-0">
+                  <StoreImage
+                    imageUrl={selectedStore.image_url}
+                    storeName={selectedStore.name}
+                    iconBg={selectedStore.iconBg}
+                    iconColor={selectedStore.iconColor}
+                    size="md"
+                  />
                 </div>
               </div>
 
@@ -543,27 +724,20 @@ export default function StoresPage() {
                   <h4 className="text-[13px] font-medium text-gray-500 mb-2">전문분야</h4>
                   <div className="flex flex-wrap gap-2">
                     {selectedStore.tags && selectedStore.tags.length > 0 ? (
-                      selectedStore.tags.map((tag, idx) => (
+                      selectedStore.tags.slice(0, 5).map((tag, idx) => (
                         <span
-                          key={tag}
+                          key={tag.id}
                           className={`px-3 py-1.5 text-[13px] font-medium rounded-full ${
                             idx === 0
                               ? "bg-gray-900 text-white"
                               : "bg-gray-100 text-gray-700"
                           }`}
                         >
-                          {tag}
+                          {tag.name}
                         </span>
                       ))
                     ) : (
-                      <>
-                        <span className="px-3 py-1.5 bg-gray-900 text-white text-[13px] font-medium rounded-full">
-                          수리/리폼
-                        </span>
-                        <span className="px-3 py-1.5 bg-gray-100 text-gray-700 text-[13px] font-medium rounded-full">
-                          시세 매입
-                        </span>
-                      </>
+                      <span className="text-[13px] text-gray-500">태그 없음</span>
                     )}
                   </div>
                 </div>
@@ -577,9 +751,11 @@ export default function StoresPage() {
                         <p className="text-[14px] text-gray-900">
                           {selectedStore.address || "주소 정보 없음"}
                         </p>
-                        <p className="text-[13px] text-blue-600 font-medium">
-                          {selectedStore.distance}
-                        </p>
+                        {selectedStore.distance && (
+                          <p className="text-[13px] text-blue-600 font-medium">
+                            {selectedStore.distance}
+                          </p>
+                        )}
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
@@ -608,7 +784,59 @@ export default function StoresPage() {
           )}
         </div>
 
-        {/* 모바일 바텀시트 (추후 구현) */}
+        {/* 모바일 "지도로 보기" 플로팅 버튼 */}
+        <button
+          onClick={() => setIsMobileMapOpen(true)}
+          className="md:hidden fixed bottom-6 right-6 w-14 h-14 bg-gray-900 hover:bg-gray-800 text-white rounded-full shadow-xl flex items-center justify-center z-50 transition-all duration-200 hover:scale-110"
+        >
+          <MapPin className="w-6 h-6" />
+        </button>
+
+        {/* 모바일 풀스크린 지도 모달 */}
+        {isMobileMapOpen && (
+          <div className="md:hidden fixed inset-0 top-[60px] bg-white z-50">
+            {/* 헤더 */}
+            <div className="absolute top-0 left-0 right-0 bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between z-10 shadow-sm">
+              <h3 className="text-[16px] font-semibold text-gray-900">
+                지도에서 매장 찾기
+              </h3>
+              <button
+                onClick={() => setIsMobileMapOpen(false)}
+                className="w-8 h-8 flex items-center justify-center text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* 지도 */}
+            <div className="w-full h-full pt-14">
+              <StoreMap
+                stores={filteredStores.map((store) => ({
+                  id: store.id,
+                  name: store.name,
+                  lat: store.lat || 37.5665,
+                  lng: store.lng || 126.978,
+                  isOpen: store.isOpen,
+                  tags: store.tags,
+                  distance: store.distance,
+                  address: store.address,
+                }))}
+                selectedStoreId={selectedStore?.id}
+                onStoreClick={handleMapStoreClick}
+                center={userLocation || mapCenter}
+                onCenterChange={setMapCenter}
+              />
+            </div>
+
+            {/* 현재 위치 버튼 (모바일용) */}
+            <button
+              onClick={getCurrentLocation}
+              className="absolute bottom-24 right-6 w-12 h-12 bg-white border-2 border-gray-200 rounded-full shadow-lg flex items-center justify-center hover:bg-gray-50 transition-colors"
+            >
+              <MapPin className="w-5 h-5 text-blue-500" />
+            </button>
+          </div>
+        )}
       </div>
     </>
   );
