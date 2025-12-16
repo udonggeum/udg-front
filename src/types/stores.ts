@@ -31,6 +31,7 @@ export interface Tag {
  */
 export interface StoreDetail {
   id: number;
+  user_id?: number;
   name: string;
   region?: string;
   district?: string;
