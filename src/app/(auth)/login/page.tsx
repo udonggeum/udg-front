@@ -165,8 +165,42 @@ function LoginForm() {
   };
 
   const handleSocialLogin = (provider: string) => {
-    // TODO: 소셜 로그인 구현
-    toast.info(`${provider} 로그인 준비 중입니다.`);
+    const clientId =
+      provider === "카카오"
+        ? process.env.NEXT_PUBLIC_KAKAO_CLIENT_ID
+        : provider === "Google"
+        ? process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID
+        : null;
+
+    const redirectUri =
+      provider === "카카오"
+        ? process.env.NEXT_PUBLIC_KAKAO_REDIRECT_URI
+        : provider === "Google"
+        ? process.env.NEXT_PUBLIC_GOOGLE_REDIRECT_URI
+        : null;
+
+    if (!clientId || !redirectUri) {
+      toast.error(`${provider} 로그인 설정이 완료되지 않았습니다.`);
+      console.error(`Missing env variables for ${provider}`);
+      return;
+    }
+
+    let authUrl = "";
+
+    if (provider === "카카오") {
+      // 카카오 OAuth 인증 URL
+      authUrl = `https://kauth.kakao.com/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code`;
+    } else if (provider === "Google") {
+      // 구글 OAuth 인증 URL
+      const scope = encodeURIComponent("openid profile email");
+      authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${scope}`;
+    } else {
+      toast.info(`${provider} 로그인 준비 중입니다.`);
+      return;
+    }
+
+    // OAuth 인증 페이지로 리다이렉트
+    window.location.href = authUrl;
   };
 
   return (
@@ -268,15 +302,7 @@ function LoginForm() {
         <div className="flex-1 flex items-center justify-center px-5 py-12 bg-gray-50">
           <div className="w-full max-w-[400px]">
             {/* 타이틀 */}
-            <div className="text-center mb-10">
-              {/* 데스크탑 로고 */}
-              <Link href="/" className="hidden lg:inline-flex items-center gap-2 mb-8">
-                <div className="w-10 h-10 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-xl flex items-center justify-center">
-                  <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
-                  </svg>
-                </div>
-              </Link>
+            <div className="text-center mb-8">
               <h1 className="text-[26px] font-bold text-gray-900 mb-2">로그인</h1>
               <p className="text-[15px] text-gray-500">우리동네금은방에 오신 것을 환영합니다</p>
             </div>

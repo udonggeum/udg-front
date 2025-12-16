@@ -93,3 +93,17 @@ export interface UpdateProfileResponse {
   message: string;
   user: User;
 }
+
+/**
+ * OAuth callback request type
+ * OAuth 콜백 요청 (authorization code 전달)
+ */
+export interface OAuthCallbackRequest {
+  code: string;
+}
+
+/**
+ * OAuth provider type
+ * 지원하는 OAuth 제공자
+ */
+export type OAuthProvider = 'kakao' | 'google' | 'naver' | 'apple';
