@@ -110,11 +110,16 @@ export const UpdateProfileRequestSchema = z.object({
   name: z.string().min(1, AUTH_ERRORS.NAME_REQUIRED),
   phone: z
     .string()
-    .regex(
-      /^01[0-9]-?[0-9]{3,4}-?[0-9]{4}$/,
-      AUTH_ERRORS.PHONE_INVALID
-    )
-    .optional(),
+    .transform((val) => val === "" ? undefined : val) // 빈 문자열을 undefined로 변환
+    .pipe(
+      z
+        .string()
+        .regex(
+          /^01[0-9]-?[0-9]{3,4}-?[0-9]{4}$/,
+          AUTH_ERRORS.PHONE_INVALID
+        )
+        .optional()
+    ),
   address: z.string().optional(),
 });
 

@@ -188,6 +188,9 @@ export async function updateProfileAction(
   accessToken: string
 ): Promise<{ success: boolean; data?: UpdateProfileResponse; error?: string }> {
   try {
+    console.log("Updating profile with data:", data);
+    console.log("Access token (first 20 chars):", accessToken.substring(0, 20) + "...");
+
     const response = await apiClient.put<UpdateProfileResponse>("/auth/me", data, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
@@ -202,10 +205,21 @@ export async function updateProfileAction(
     console.error("Update profile error:", error);
 
     if (axios.isAxiosError(error)) {
-      const axiosError = error as AxiosError<{ message?: string }>;
+      const axiosError = error as AxiosError<{ error?: string; message?: string }>;
+
+      // 백엔드의 실제 에러 메시지 로깅
+      console.error("Backend error response:", {
+        status: axiosError.response?.status,
+        data: axiosError.response?.data,
+        headers: axiosError.response?.headers,
+      });
+
+      // 백엔드 에러 메시지 추출 (error 또는 message 필드)
+      const backendError = axiosError.response?.data?.error || axiosError.response?.data?.message;
+
       return {
         success: false,
-        error: axiosError.response?.data?.message || "프로필 업데이트에 실패했습니다.",
+        error: backendError || "프로필 업데이트에 실패했습니다.",
       };
     }
 
