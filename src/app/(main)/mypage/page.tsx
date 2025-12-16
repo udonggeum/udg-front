@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { User, ShoppingBag, Heart, MapPin, Mail, Calendar, LogOut } from "lucide-react";
+import { User, ShoppingBag, Heart, MapPin, Mail, Calendar, LogOut, Phone } from "lucide-react";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -100,8 +100,8 @@ export default function MyPage() {
                   <MapPin className="w-6 h-6 text-gray-900" />
                 </div>
                 <div>
-                  <p className="text-xs text-gray-600 mb-1">배송지</p>
-                  <p className="text-2xl font-bold text-gray-900">0개</p>
+                  <p className="text-xs text-gray-600 mb-1">주소지</p>
+                  <p className="text-2xl font-bold text-gray-900">{user?.address ? "등록됨" : "미등록"}</p>
                 </div>
               </div>
             </CardContent>
@@ -155,10 +155,17 @@ export default function MyPage() {
                   </div>
                 </div>
                 <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
-                  <MapPin className="w-5 h-5 text-gray-500 flex-shrink-0" />
+                  <Phone className="w-5 h-5 text-gray-500 flex-shrink-0" />
                   <div className="flex items-center gap-3 flex-1 min-w-0">
                     <span className="text-sm font-medium text-gray-600 w-20 flex-shrink-0">전화번호</span>
                     <span className="text-sm font-semibold text-gray-900 truncate">{user?.phone || "-"}</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
+                  <MapPin className="w-5 h-5 text-gray-500 flex-shrink-0" />
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <span className="text-sm font-medium text-gray-600 w-20 flex-shrink-0">주소지</span>
+                    <span className="text-sm font-semibold text-gray-900 truncate">{user?.address || "-"}</span>
                   </div>
                 </div>
                 <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
@@ -176,16 +183,6 @@ export default function MyPage() {
                     </span>
                   </div>
                 </div>
-              </div>
-              <div className="mt-4">
-                <Button
-                  variant="outline"
-                  onClick={() => router.push("/mypage/addresses")}
-                  className="w-full gap-2"
-                >
-                  <MapPin className="w-4 h-4" />
-                  배송지 관리
-                </Button>
               </div>
             </CardContent>
           </Card>
