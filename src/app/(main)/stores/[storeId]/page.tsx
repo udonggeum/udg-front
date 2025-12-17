@@ -17,7 +17,7 @@ import {
   X,
   Check,
 } from "lucide-react";
-import { getStoreDetailAction } from "@/actions/stores";
+import { getStoreDetailAction, toggleStoreLikeAction } from "@/actions/stores";
 import { getStoreProductsAction } from "@/actions/products";
 import { getTagsAction } from "@/actions/tags";
 import type { StoreDetail } from "@/types/stores";
@@ -28,13 +28,16 @@ import TagEditModal from "@/components/tag-edit-modal";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { getPresignedUrlAction, uploadToS3 } from "@/actions/upload";
 import { toast } from "sonner";
+import { useAuthenticatedAction } from "@/hooks/useAuthenticatedAction";
 
 type TabType = "products" | "info";
 
 function StoreDetailContent({ storeId }: { storeId: number | null }) {
   const router = useRouter();
   const isMountedRef = useRef(true);
-  const { user } = useAuthStore();
+  const { user, tokens } = useAuthStore();
+  const accessToken = tokens?.access_token;
+  const { checkAndHandleUnauthorized } = useAuthenticatedAction();
 
   const [store, setStore] = useState<StoreDetail | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
@@ -103,10 +106,14 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
       setStoreError(null);
 
       try {
-        const result = await getStoreDetailAction(storeId, false);
+        const result = await getStoreDetailAction(storeId, false, accessToken);
 
         if (result.success && result.data) {
           setStore(result.data.store);
+          // 좋아요 상태 동기화
+          if (result.data.is_liked !== undefined) {
+            setIsWishlisted(result.data.is_liked);
+          }
         } else {
           setStoreError(result.error || "매장 정보를 불러올 수 없습니다.");
         }
@@ -118,7 +125,7 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
     };
 
     loadStore();
-  }, [storeId]);
+  }, [storeId, accessToken]);
 
   // 상품 목록 로드
   useEffect(() => {
@@ -213,9 +220,38 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
   const isAnyEditing = Object.values(editSections).some(Boolean);
 
   // 찜하기 토글 핸들러
-  const handleWishlistToggle = () => {
-    // TODO: 실제 API 연동 필요
-    setIsWishlisted(!isWishlisted);
+  const handleWishlistToggle = async () => {
+    if (!user) {
+      toast.error("로그인이 필요합니다");
+      router.push("/login");
+      return;
+    }
+
+    if (!accessToken) {
+      toast.error("로그인이 필요합니다");
+      router.push("/login");
+      return;
+    }
+
+    try {
+      const result = await toggleStoreLikeAction(Number(storeId), accessToken);
+
+      if (result.success && result.data) {
+        setIsWishlisted(result.data.is_liked);
+        toast.success(result.data.is_liked ? "찜 목록에 추가되었습니다" : "찜 목록에서 제거되었습니다");
+      } else {
+        // 401 Unauthorized 체크 및 자동 로그아웃
+        if (checkAndHandleUnauthorized(result)) {
+          toast.error(result.error || "로그인이 만료되었습니다");
+          return;
+        }
+
+        toast.error(result.error || "좋아요 처리에 실패했습니다");
+      }
+    } catch (error) {
+      console.error("Toggle store like error:", error);
+      toast.error("좋아요 처리 중 오류가 발생했습니다");
+    }
   };
 
   // 전체 편집 모드 토글

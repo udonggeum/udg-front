@@ -29,7 +29,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { logoutUserAction, updateProfileAction } from "@/actions/auth";
 import { getPostsAction } from "@/actions/community";
 import { getPresignedUrlAction, uploadToS3 } from "@/actions/upload";
+import { getUserLikedStoresAction } from "@/actions/stores";
 import type { CommunityPost } from "@/types/community";
+import type { StoreDetail } from "@/types/stores";
 import { toast } from "sonner";
 
 export default function MyPage() {
@@ -46,9 +48,10 @@ export default function MyPage() {
   // 프로필 이미지 업로드 상태
   const [isUploadingImage, setIsUploadingImage] = useState(false);
 
-  // 좋아요한 매장 상태 (API 없음 - 추후 구현)
-  const [likedStores] = useState([]);
-  const totalLikedStores = 0;
+  // 좋아요한 매장 상태
+  const [likedStores, setLikedStores] = useState<StoreDetail[]>([]);
+  const [totalLikedStores, setTotalLikedStores] = useState(0);
+  const [isLoadingStores, setIsLoadingStores] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -87,6 +90,31 @@ export default function MyPage() {
       fetchMyPosts();
     }
   }, [isAuthenticated, user, selectedCategory]);
+
+  // 좋아요한 매장 불러오기
+  useEffect(() => {
+    const fetchLikedStores = async () => {
+      if (!tokens?.access_token) return;
+
+      setIsLoadingStores(true);
+      try {
+        const result = await getUserLikedStoresAction(tokens.access_token);
+
+        if (result.success && result.data) {
+          setLikedStores(result.data.stores);
+          setTotalLikedStores(result.data.count || result.data.stores.length);
+        }
+      } catch (error) {
+        console.error("Failed to fetch liked stores:", error);
+      } finally {
+        setIsLoadingStores(false);
+      }
+    };
+
+    if (isAuthenticated && tokens?.access_token) {
+      fetchLikedStores();
+    }
+  }, [isAuthenticated, tokens?.access_token]);
 
   const handleLogout = async () => {
     try {
@@ -257,7 +285,7 @@ export default function MyPage() {
                   <div className="flex items-center gap-2">
                     <Heart className="w-4 h-4 text-gray-600" />
                     <span className="text-sm text-gray-600">
-                      좋아요 매장 <span className="font-bold text-gray-900">{totalLikedStores}</span>
+                      관심 매장 <span className="font-bold text-gray-900">{totalLikedStores}</span>
                     </span>
                   </div>
                 </div>
@@ -290,7 +318,7 @@ export default function MyPage() {
         <Tabs defaultValue="info" className="w-full">
           <TabsList className="grid w-full grid-cols-3 mb-6">
             <TabsTrigger value="info">회원정보</TabsTrigger>
-            <TabsTrigger value="stores">좋아요한 매장</TabsTrigger>
+            <TabsTrigger value="stores">관심 매장</TabsTrigger>
             <TabsTrigger value="posts">작성한 글</TabsTrigger>
           </TabsList>
 
@@ -339,7 +367,12 @@ export default function MyPage() {
           <TabsContent value="stores">
             <Card className="border-0 shadow-sm">
               <CardContent className="p-6">
-                {likedStores.length === 0 ? (
+                {isLoadingStores ? (
+                  <div className="text-center py-12">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto mb-4"></div>
+                    <p className="text-sm text-gray-500">매장 목록을 불러오는 중...</p>
+                  </div>
+                ) : likedStores.length === 0 ? (
                   <div className="text-center py-12">
                     <Store className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                     <h3 className="text-lg font-semibold text-gray-900 mb-2">
@@ -356,7 +389,41 @@ export default function MyPage() {
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* 좋아요한 매장 목록 - 추후 API 연동 */}
+                    {likedStores.map((store) => (
+                      <Link key={store.id} href={`/stores/${store.id}`}>
+                        <div className="p-4 border rounded-lg hover:shadow-md transition-shadow cursor-pointer">
+                          <div className="flex items-start gap-3">
+                            <Store className="w-10 h-10 text-gray-400 flex-shrink-0" />
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-semibold text-gray-900 mb-1 truncate">{store.name}</h4>
+                              <div className="flex items-center gap-1 text-sm text-gray-600 mb-2">
+                                <MapPin className="w-3 h-3 flex-shrink-0" />
+                                <span className="truncate">
+                                  {store.region && store.district
+                                    ? `${store.region} ${store.district}`
+                                    : store.address || "주소 정보 없음"}
+                                </span>
+                              </div>
+                              {store.tags && store.tags.length > 0 && (
+                                <div className="flex flex-wrap gap-1">
+                                  {store.tags.slice(0, 3).map((tag) => (
+                                    <Badge key={tag.id} variant="secondary" className="text-xs">
+                                      {tag.name}
+                                    </Badge>
+                                  ))}
+                                  {store.tags.length > 3 && (
+                                    <Badge variant="secondary" className="text-xs">
+                                      +{store.tags.length - 3}
+                                    </Badge>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                            <Heart className="w-5 h-5 text-red-500 fill-red-500 flex-shrink-0" />
+                          </div>
+                        </div>
+                      </Link>
+                    ))}
                   </div>
                 )}
               </CardContent>

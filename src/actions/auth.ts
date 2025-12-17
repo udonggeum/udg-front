@@ -1,6 +1,5 @@
 "use server";
 
-import axios, { AxiosError } from "axios";
 import type {
   LoginRequest,
   RegisterRequest,
@@ -11,15 +10,7 @@ import type {
   UpdateProfileRequest,
   UpdateProfileResponse,
 } from "@/types/auth";
-import { getApiBaseUrl } from "@/lib/api";
-
-const apiClient = axios.create({
-  baseURL: `${getApiBaseUrl()}/api/v1`,
-  timeout: 10000,
-  headers: {
-    "Content-Type": "application/json",
-  },
-});
+import { apiClient, handleApiError, type ApiResponse } from "@/lib/axios";
 
 /**
  * 회원가입 Server Action
@@ -27,7 +18,7 @@ const apiClient = axios.create({
  */
 export async function registerUserAction(
   data: RegisterRequest
-): Promise<{ success: boolean; data?: AuthResponse; error?: string }> {
+): Promise<ApiResponse<AuthResponse>> {
   try {
     const response = await apiClient.post<AuthResponse>("/auth/register", data);
 
@@ -36,20 +27,7 @@ export async function registerUserAction(
       data: response.data,
     };
   } catch (error) {
-    console.error("Register error:", error);
-
-    if (axios.isAxiosError(error)) {
-      const axiosError = error as AxiosError<{ message?: string }>;
-      return {
-        success: false,
-        error: axiosError.response?.data?.message || "회원가입에 실패했습니다.",
-      };
-    }
-
-    return {
-      success: false,
-      error: "서버에 연결할 수 없습니다. 네트워크를 확인해주세요.",
-    };
+    return handleApiError(error, "회원가입에 실패했습니다.");
   }
 }
 
@@ -58,7 +36,7 @@ export async function registerUserAction(
  */
 export async function loginUserAction(
   data: LoginRequest
-): Promise<{ success: boolean; data?: AuthResponse; error?: string }> {
+): Promise<ApiResponse<AuthResponse>> {
   try {
     const response = await apiClient.post<AuthResponse>("/auth/login", data);
 
@@ -67,20 +45,7 @@ export async function loginUserAction(
       data: response.data,
     };
   } catch (error) {
-    console.error("Login error:", error);
-
-    if (axios.isAxiosError(error)) {
-      const axiosError = error as AxiosError<{ message?: string }>;
-      return {
-        success: false,
-        error: axiosError.response?.data?.message || "로그인에 실패했습니다.",
-      };
-    }
-
-    return {
-      success: false,
-      error: "서버에 연결할 수 없습니다. 네트워크를 확인해주세요.",
-    };
+    return handleApiError(error, "로그인에 실패했습니다.");
   }
 }
 
@@ -89,7 +54,7 @@ export async function loginUserAction(
  */
 export async function forgotPasswordAction(
   data: ForgotPasswordRequest
-): Promise<{ success: boolean; data?: MessageResponse; error?: string }> {
+): Promise<ApiResponse<MessageResponse>> {
   try {
     const response = await apiClient.post<MessageResponse>("/auth/forgot-password", data);
 
@@ -98,20 +63,7 @@ export async function forgotPasswordAction(
       data: response.data,
     };
   } catch (error) {
-    console.error("Forgot password error:", error);
-
-    if (axios.isAxiosError(error)) {
-      const axiosError = error as AxiosError<{ message?: string }>;
-      return {
-        success: false,
-        error: axiosError.response?.data?.message || "비밀번호 찾기에 실패했습니다.",
-      };
-    }
-
-    return {
-      success: false,
-      error: "서버에 연결할 수 없습니다. 네트워크를 확인해주세요.",
-    };
+    return handleApiError(error, "비밀번호 찾기에 실패했습니다.");
   }
 }
 
@@ -120,7 +72,7 @@ export async function forgotPasswordAction(
  */
 export async function resetPasswordAction(
   data: ResetPasswordRequest
-): Promise<{ success: boolean; data?: MessageResponse; error?: string }> {
+): Promise<ApiResponse<MessageResponse>> {
   try {
     const response = await apiClient.post<MessageResponse>("/auth/reset-password", data);
 
@@ -129,20 +81,7 @@ export async function resetPasswordAction(
       data: response.data,
     };
   } catch (error) {
-    console.error("Reset password error:", error);
-
-    if (axios.isAxiosError(error)) {
-      const axiosError = error as AxiosError<{ message?: string }>;
-      return {
-        success: false,
-        error: axiosError.response?.data?.message || "비밀번호 재설정에 실패했습니다.",
-      };
-    }
-
-    return {
-      success: false,
-      error: "서버에 연결할 수 없습니다. 네트워크를 확인해주세요.",
-    };
+    return handleApiError(error, "비밀번호 재설정에 실패했습니다.");
   }
 }
 
@@ -152,7 +91,7 @@ export async function resetPasswordAction(
  */
 export async function logoutUserAction(
   refreshToken: string
-): Promise<{ success: boolean; error?: string }> {
+): Promise<ApiResponse> {
   try {
     await apiClient.post("/auth/logout", {
       refresh_token: refreshToken,
@@ -162,21 +101,8 @@ export async function logoutUserAction(
       success: true,
     };
   } catch (error) {
-    console.error("Logout error:", error);
-
     // 로그아웃은 서버 호출이 실패해도 클라이언트 측 정리는 진행해야 함
-    if (axios.isAxiosError(error)) {
-      const axiosError = error as AxiosError<{ message?: string }>;
-      return {
-        success: false,
-        error: axiosError.response?.data?.message || "로그아웃 API 호출에 실패했습니다.",
-      };
-    }
-
-    return {
-      success: false,
-      error: "서버에 연결할 수 없습니다.",
-    };
+    return handleApiError(error, "로그아웃 API 호출에 실패했습니다.");
   }
 }
 
@@ -187,7 +113,7 @@ export async function logoutUserAction(
 export async function updateProfileAction(
   data: UpdateProfileRequest,
   accessToken: string
-): Promise<{ success: boolean; data?: UpdateProfileResponse; error?: string }> {
+): Promise<ApiResponse<UpdateProfileResponse>> {
   try {
     console.log("Updating profile with data:", data);
     console.log("Access token (first 20 chars):", accessToken.substring(0, 20) + "...");
@@ -203,30 +129,6 @@ export async function updateProfileAction(
       data: response.data,
     };
   } catch (error) {
-    console.error("Update profile error:", error);
-
-    if (axios.isAxiosError(error)) {
-      const axiosError = error as AxiosError<{ error?: string; message?: string }>;
-
-      // 백엔드의 실제 에러 메시지 로깅
-      console.error("Backend error response:", {
-        status: axiosError.response?.status,
-        data: axiosError.response?.data,
-        headers: axiosError.response?.headers,
-      });
-
-      // 백엔드 에러 메시지 추출 (error 또는 message 필드)
-      const backendError = axiosError.response?.data?.error || axiosError.response?.data?.message;
-
-      return {
-        success: false,
-        error: backendError || "프로필 업데이트에 실패했습니다.",
-      };
-    }
-
-    return {
-      success: false,
-      error: "서버에 연결할 수 없습니다. 네트워크를 확인해주세요.",
-    };
+    return handleApiError(error, "프로필 업데이트에 실패했습니다.");
   }
 }

@@ -52,6 +52,7 @@ export interface StoreDetail {
   thumbnail_url?: string;
   category_counts?: StoreCategoryCounts;
   products?: unknown[];
+  is_liked?: boolean;
 }
 
 /**
@@ -113,4 +114,13 @@ export interface StoresRequest {
  */
 export interface StoreDetailResponse {
   store: StoreDetail;
+  is_liked?: boolean;
+}
+
+/**
+ * Store like response type
+ * 매장 좋아요 응답
+ */
+export interface StoreLikeResponse {
+  is_liked: boolean;
 }

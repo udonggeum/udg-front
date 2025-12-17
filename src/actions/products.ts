@@ -1,15 +1,7 @@
 "use server";
 
-import axios, { AxiosError } from "axios";
 import type { ProductsResponse } from "@/types/products";
-
-const apiClient = axios.create({
-  baseURL: `${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://43.200.249.22:8080'}/api/v1`,
-  timeout: 10000,
-  headers: {
-    "Content-Type": "application/json",
-  },
-});
+import { apiClient, handleApiError, type ApiResponse } from "@/lib/axios";
 
 export interface GetProductsParams {
   store_id?: number;
@@ -25,7 +17,7 @@ export interface GetProductsParams {
  */
 export async function getProductsAction(
   params?: GetProductsParams
-): Promise<{ success: boolean; data?: ProductsResponse; error?: string }> {
+): Promise<ApiResponse<ProductsResponse>> {
   try {
     const response = await apiClient.get<ProductsResponse>("/products", { params });
 
@@ -34,20 +26,7 @@ export async function getProductsAction(
       data: response.data,
     };
   } catch (error) {
-    console.error("Get products error:", error);
-
-    if (axios.isAxiosError(error)) {
-      const axiosError = error as AxiosError<{ message?: string }>;
-      return {
-        success: false,
-        error: axiosError.response?.data?.message || "상품 목록 조회에 실패했습니다.",
-      };
-    }
-
-    return {
-      success: false,
-      error: "서버에 연결할 수 없습니다. 네트워크를 확인해주세요.",
-    };
+    return handleApiError(error, "상품 목록 조회에 실패했습니다.");
   }
 }
 
@@ -57,6 +36,6 @@ export async function getProductsAction(
 export async function getStoreProductsAction(
   storeId: number,
   params?: Omit<GetProductsParams, "store_id">
-): Promise<{ success: boolean; data?: ProductsResponse; error?: string }> {
+): Promise<ApiResponse<ProductsResponse>> {
   return getProductsAction({ ...params, store_id: storeId });
 }

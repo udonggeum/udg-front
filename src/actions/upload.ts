@@ -1,15 +1,8 @@
 "use server";
 
-import axios, { AxiosError } from "axios";
+import axios from "axios";
 import type { PresignedUrlRequest, PresignedUrlResponse } from "@/types/upload";
-
-const apiClient = axios.create({
-  baseURL: `${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://43.200.249.22:8080'}/api/v1`,
-  timeout: 10000,
-  headers: {
-    "Content-Type": "application/json",
-  },
-});
+import { apiClient, handleApiError, type ApiResponse } from "@/lib/axios";
 
 /**
  * S3 업로드용 Presigned URL 생성
@@ -17,7 +10,7 @@ const apiClient = axios.create({
 export async function getPresignedUrlAction(
   data: PresignedUrlRequest,
   accessToken: string
-): Promise<{ success: boolean; data?: PresignedUrlResponse; error?: string }> {
+): Promise<ApiResponse<PresignedUrlResponse>> {
   try {
     const response = await apiClient.post<PresignedUrlResponse>(
       "/upload/presigned-url",
@@ -34,20 +27,7 @@ export async function getPresignedUrlAction(
       data: response.data,
     };
   } catch (error) {
-    console.error("Get presigned URL error:", error);
-
-    if (axios.isAxiosError(error)) {
-      const axiosError = error as AxiosError<{ message?: string }>;
-      return {
-        success: false,
-        error: axiosError.response?.data?.message || "Presigned URL 생성에 실패했습니다.",
-      };
-    }
-
-    return {
-      success: false,
-      error: "서버에 연결할 수 없습니다. 네트워크를 확인해주세요.",
-    };
+    return handleApiError(error, "Presigned URL 생성에 실패했습니다.");
   }
 }
 
