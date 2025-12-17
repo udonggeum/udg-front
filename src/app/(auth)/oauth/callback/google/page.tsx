@@ -32,9 +32,11 @@ function GoogleCallbackContent() {
 
   const handleGoogleCallback = async (code: string) => {
     try {
+      const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://43.200.249.22:8080';
+
       // 백엔드에 authorization code 전달 (GET 방식)
       const response = await fetch(
-        `http://43.200.249.22:8080/api/v1/auth/google/callback?code=${encodeURIComponent(code)}`,
+        `${API_BASE_URL}/api/v1/auth/google/callback?code=${encodeURIComponent(code)}`,
         {
           method: "GET",
           headers: {

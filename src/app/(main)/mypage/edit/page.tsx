@@ -1,20 +1,19 @@
 "use client";
 
-import { useState, useEffect, type FormEvent, type ChangeEvent } from "react";
+import { useState, useEffect, useRef, type FormEvent, type ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
-import { User as UserIcon, ArrowLeft, Save, Lock, Edit3, Shield, Mail, Phone, Key, MapPin } from "lucide-react";
+import { User as UserIcon, ArrowLeft, Save, Mail, Phone, MapPin, Camera } from "lucide-react";
 import AddressSearchInput from "@/components/AddressSearchInput";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { updateProfileAction } from "@/actions/auth";
+import { getPresignedUrlAction, uploadToS3 } from "@/actions/upload";
 import { UpdateProfileRequestSchema } from "@/schemas/auth";
 import type { UpdateProfileRequest } from "@/types/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Separator } from "@/components/ui/separator";
+import { Card, CardContent } from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
 
 interface FormErrors {
@@ -25,8 +24,10 @@ interface FormErrors {
 export default function ProfileEditPage() {
   const router = useRouter();
   const { user, isAuthenticated, tokens, updateUser } = useAuthStore();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [isPending, setIsPending] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
 
   const [formData, setFormData] = useState<UpdateProfileRequest>({
     name: user?.name || "",
@@ -168,6 +169,86 @@ export default function ProfileEditPage() {
   };
 
   /**
+   * 프로필 이미지 업로드 핸들러
+   */
+  const handleProfileImageClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleProfileImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !tokens?.access_token) return;
+
+    // 파일 크기 제한 (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("파일 크기는 5MB 이하여야 합니다.");
+      return;
+    }
+
+    // 이미지 파일 타입 체크
+    if (!file.type.startsWith("image/")) {
+      toast.error("이미지 파일만 업로드 가능합니다.");
+      return;
+    }
+
+    setIsUploadingImage(true);
+    const loadingToast = toast.loading("프로필 이미지 업로드 중...");
+
+    try {
+      // 1. Presigned URL 가져오기
+      const presignedResult = await getPresignedUrlAction(
+        {
+          filename: file.name,
+          content_type: file.type,
+          file_size: file.size,
+        },
+        tokens.access_token
+      );
+
+      if (!presignedResult.success || !presignedResult.data) {
+        throw new Error(presignedResult.error || "Presigned URL 생성 실패");
+      }
+
+      const { upload_url, file_url } = presignedResult.data;
+
+      // 2. S3에 파일 업로드
+      const uploadResult = await uploadToS3(upload_url, file);
+
+      if (!uploadResult.success) {
+        throw new Error(uploadResult.error || "파일 업로드 실패");
+      }
+
+      // 3. 프로필 업데이트
+      const updateResult = await updateProfileAction(
+        {
+          ...formData,
+          profile_image: file_url,
+        },
+        tokens.access_token
+      );
+
+      if (!updateResult.success || !updateResult.data) {
+        throw new Error(updateResult.error || "프로필 업데이트 실패");
+      }
+
+      // 4. 상태 업데이트
+      updateUser(updateResult.data.user);
+      toast.success("프로필 이미지가 변경되었습니다.", { id: loadingToast });
+    } catch (error) {
+      console.error("Profile image upload error:", error);
+      toast.error(error instanceof Error ? error.message : "이미지 업로드에 실패했습니다.", {
+        id: loadingToast,
+      });
+    } finally {
+      setIsUploadingImage(false);
+      // input 값 초기화 (같은 파일 재선택 가능하도록)
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
+  };
+
+  /**
    * 폼 제출 핸들러
    */
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
@@ -213,10 +294,10 @@ export default function ProfileEditPage() {
   }
 
   return (
-    <main className="flex-grow py-8">
+    <main className="flex-grow py-8 bg-gray-50">
       <section className="container mx-auto px-4 max-w-3xl">
         {/* Page Header */}
-        <div className="mb-8">
+        <div className="mb-6">
           <Button
             onClick={() => router.push("/mypage")}
             variant="outline"
@@ -226,59 +307,72 @@ export default function ProfileEditPage() {
             <ArrowLeft className="w-4 h-4" />
             마이페이지로 돌아가기
           </Button>
-          <h1 className="text-3xl font-bold text-gray-900">프로필 수정</h1>
-          <p className="mt-2 text-gray-600">회원 정보를 수정하세요</p>
+          <h1 className="text-2xl font-bold text-gray-900">프로필 수정</h1>
+          <p className="mt-1 text-sm text-gray-600">회원 정보를 수정하세요</p>
         </div>
 
+        {/* 프로필 이미지 카드 */}
+        <Card className="mb-6 border-0 shadow-sm">
+          <CardContent className="p-6">
+            <div className="flex flex-col items-center">
+              <div className="relative group mb-4">
+                <Avatar
+                  className="w-32 h-32 border-4 border-gray-100 cursor-pointer transition-opacity hover:opacity-80"
+                  onClick={handleProfileImageClick}
+                >
+                  {user?.profile_image ? (
+                    <AvatarImage src={user.profile_image} alt={user.name} />
+                  ) : null}
+                  <AvatarFallback className="bg-gradient-to-br from-yellow-400 to-yellow-600 text-white text-4xl">
+                    {user?.name?.charAt(0) || "U"}
+                  </AvatarFallback>
+                </Avatar>
+                {/* 카메라 아이콘 오버레이 */}
+                <div
+                  className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                  onClick={handleProfileImageClick}
+                >
+                  {isUploadingImage ? (
+                    <div className="w-8 h-8 border-4 border-white border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <Camera className="w-10 h-10 text-white" />
+                  )}
+                </div>
+                {/* Hidden file input */}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleProfileImageChange}
+                  disabled={isUploadingImage}
+                />
+              </div>
+              <p className="text-sm text-gray-600">프로필 이미지를 클릭하여 변경</p>
+              <p className="text-xs text-gray-500 mt-1">JPG, PNG (최대 5MB)</p>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Form Card */}
-        <Card className="border-2 border-gray-200">
-          <CardContent className="pt-6">
-            {/* Success Message */}
-            {isSuccess && (
-              <Alert className="mb-6 border-green-500 bg-green-50">
-                <AlertTitle className="text-green-800">성공!</AlertTitle>
-                <AlertDescription className="text-green-700">
-                  프로필이 성공적으로 업데이트되었습니다!
-                </AlertDescription>
-              </Alert>
-            )}
+        <Card className="border-0 shadow-sm">
+          <CardContent className="p-6">
 
             {/* Form */}
-            <form onSubmit={handleSubmit} className="space-y-8">
-              {/* 계정 정보 (변경 불가) */}
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* 이메일 (읽기 전용) */}
               <div>
-                <div className="flex items-center gap-2 mb-4">
-                  <Lock className="w-5 h-5 text-gray-600" />
-                  <h3 className="text-lg font-bold text-gray-900">계정 정보</h3>
-                  <Badge variant="secondary" className="text-xs">
-                    변경 불가
-                  </Badge>
-                </div>
-
-                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                  <div className="flex items-center gap-3">
-                    <Mail className="w-5 h-5 text-gray-500" />
-                    <div className="flex-1">
-                      <p className="text-xs text-gray-600 mb-1">이메일</p>
-                      <p className="text-sm font-semibold text-gray-900">{user?.email || "-"}</p>
-                    </div>
-                    <Lock className="w-4 h-4 text-gray-400" />
-                  </div>
-                  <p className="text-xs text-gray-500 mt-3 ml-8">
-                    이메일은 계정 식별에 사용되어 변경할 수 없습니다
-                  </p>
+                <Label htmlFor="email" className="flex items-center gap-2 mb-2">
+                  <Mail className="w-4 h-4" />
+                  이메일
+                </Label>
+                <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                  <span className="text-sm text-gray-900 flex-1">{user?.email || "-"}</span>
+                  <span className="text-xs text-gray-500 px-2 py-1 bg-gray-100 rounded">변경 불가</span>
                 </div>
               </div>
 
-              {/* 개인 정보 */}
-              <div>
-                <div className="flex items-center gap-2 mb-4">
-                  <Edit3 className="w-5 h-5 text-gray-900" />
-                  <h3 className="text-lg font-bold text-gray-900">개인 정보</h3>
-                  <Badge className="text-xs bg-gray-900">수정 가능</Badge>
-                </div>
-
-                <div className="space-y-4">
+              <div className="space-y-4">
                   {/* Name */}
                   <div>
                     <Label htmlFor="name" className="flex items-center gap-2 mb-2">
@@ -361,45 +455,9 @@ export default function ProfileEditPage() {
                     </p>
                   </div>
                 </div>
-              </div>
-
-              {/* 보안 설정 */}
-              <div>
-                <div className="flex items-center gap-2 mb-4">
-                  <Shield className="w-5 h-5 text-gray-600" />
-                  <h3 className="text-lg font-bold text-gray-900">보안 설정</h3>
-                </div>
-
-                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <Key className="w-5 h-5 text-gray-500" />
-                      <div>
-                        <p className="text-sm font-semibold text-gray-900">비밀번호</p>
-                        <p className="text-xs text-gray-600 mt-1">
-                          계정 보안을 위해 정기적으로 변경하세요
-                        </p>
-                      </div>
-                    </div>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        // TODO: 비밀번호 변경 페이지로 이동
-                        toast.info("비밀번호 변경 기능은 곧 제공될 예정입니다");
-                      }}
-                    >
-                      변경하기
-                    </Button>
-                  </div>
-                </div>
-              </div>
-
-              <Separator />
 
               {/* Submit Button */}
-              <div className="flex justify-end gap-3 pt-2">
+              <div className="flex justify-end gap-3 pt-6 border-t">
                 <Button
                   type="button"
                   onClick={() => router.push("/mypage")}

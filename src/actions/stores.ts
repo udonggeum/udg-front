@@ -1,50 +1,38 @@
 "use server";
 
-import axios, { AxiosError } from "axios";
 import type {
   StoresResponse,
   StoresRequest,
   LocationsResponse,
   RegionsData,
   StoreDetailResponse,
+  StoreLikeResponse,
 } from "@/types/stores";
-
-const apiClient = axios.create({
-  baseURL: "http://43.200.249.22:8080/api/v1",
-  timeout: 10000,
-  headers: {
-    "Content-Type": "application/json",
-  },
-});
+import { apiClient, handleApiError, type ApiResponse } from "@/lib/axios";
 
 /**
  * 매장 목록 조회 Server Action
  */
 export async function getStoresAction(
-  params?: StoresRequest
-): Promise<{ success: boolean; data?: StoresResponse; error?: string }> {
+  params?: StoresRequest,
+  accessToken?: string
+): Promise<ApiResponse<StoresResponse>> {
   try {
-    const response = await apiClient.get<StoresResponse>("/stores", { params });
+    const headers = accessToken
+      ? { Authorization: `Bearer ${accessToken}` }
+      : {};
+
+    const response = await apiClient.get<StoresResponse>("/stores", {
+      params,
+      headers,
+    });
 
     return {
       success: true,
       data: response.data,
     };
   } catch (error) {
-    console.error("Get stores error:", error);
-
-    if (axios.isAxiosError(error)) {
-      const axiosError = error as AxiosError<{ message?: string }>;
-      return {
-        success: false,
-        error: axiosError.response?.data?.message || "매장 목록 조회에 실패했습니다.",
-      };
-    }
-
-    return {
-      success: false,
-      error: "서버에 연결할 수 없습니다. 네트워크를 확인해주세요.",
-    };
+    return handleApiError(error, "매장 목록 조회에 실패했습니다.");
   }
 }
 
@@ -52,11 +40,7 @@ export async function getStoresAction(
  * 매장 위치 정보 조회 Server Action
  * 지역(region)과 구/군(district) 목록 반환
  */
-export async function getStoreLocationsAction(): Promise<{
-  success: boolean;
-  data?: RegionsData;
-  error?: string;
-}> {
+export async function getStoreLocationsAction(): Promise<ApiResponse<RegionsData>> {
   try {
     const response = await apiClient.get<LocationsResponse>("/stores/locations");
 
@@ -81,20 +65,7 @@ export async function getStoreLocationsAction(): Promise<{
       data: { regions },
     };
   } catch (error) {
-    console.error("Get store locations error:", error);
-
-    if (axios.isAxiosError(error)) {
-      const axiosError = error as AxiosError<{ message?: string }>;
-      return {
-        success: false,
-        error: axiosError.response?.data?.message || "위치 정보 조회에 실패했습니다.",
-      };
-    }
-
-    return {
-      success: false,
-      error: "서버에 연결할 수 없습니다. 네트워크를 확인해주세요.",
-    };
+    return handleApiError(error, "위치 정보 조회에 실패했습니다.");
   }
 }
 
@@ -103,11 +74,17 @@ export async function getStoreLocationsAction(): Promise<{
  */
 export async function getStoreDetailAction(
   id: number,
-  includeProducts?: boolean
-): Promise<{ success: boolean; data?: StoreDetailResponse; error?: string }> {
+  includeProducts?: boolean,
+  accessToken?: string
+): Promise<ApiResponse<StoreDetailResponse>> {
   try {
+    const headers = accessToken
+      ? { Authorization: `Bearer ${accessToken}` }
+      : {};
+
     const response = await apiClient.get<StoreDetailResponse>(`/stores/${id}`, {
       params: { include_products: includeProducts },
+      headers,
     });
 
     return {
@@ -115,19 +92,55 @@ export async function getStoreDetailAction(
       data: response.data,
     };
   } catch (error) {
-    console.error("Get store detail error:", error);
+    return handleApiError(error, "매장 상세 조회에 실패했습니다.");
+  }
+}
 
-    if (axios.isAxiosError(error)) {
-      const axiosError = error as AxiosError<{ message?: string }>;
-      return {
-        success: false,
-        error: axiosError.response?.data?.message || "매장 상세 조회에 실패했습니다.",
-      };
-    }
+/**
+ * 매장 좋아요 토글 Server Action
+ */
+export async function toggleStoreLikeAction(
+  storeId: number,
+  accessToken: string
+): Promise<ApiResponse<StoreLikeResponse>> {
+  try {
+    const response = await apiClient.post<StoreLikeResponse>(
+      `/stores/${storeId}/like`,
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
 
     return {
-      success: false,
-      error: "서버에 연결할 수 없습니다. 네트워크를 확인해주세요.",
+      success: true,
+      data: response.data,
     };
+  } catch (error) {
+    return handleApiError(error, "좋아요 처리에 실패했습니다.");
+  }
+}
+
+/**
+ * 사용자가 좋아요한 매장 목록 조회 Server Action
+ */
+export async function getUserLikedStoresAction(
+  accessToken: string
+): Promise<ApiResponse<StoresResponse>> {
+  try {
+    const response = await apiClient.get<StoresResponse>("/users/me/liked-stores", {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+
+    return {
+      success: true,
+      data: response.data,
+    };
+  } catch (error) {
+    return handleApiError(error, "관심 매장 목록 조회에 실패했습니다.");
   }
 }

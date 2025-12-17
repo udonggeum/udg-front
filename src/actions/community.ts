@@ -1,6 +1,5 @@
 "use server";
 
-import axios, { AxiosError } from "axios";
 import type {
   PostListResponse,
   PostListQuery,
@@ -18,21 +17,14 @@ import type {
   GenerateContentRequest,
   GenerateContentResponse,
 } from "@/types/community";
-
-const apiClient = axios.create({
-  baseURL: "http://43.200.249.22:8080/api/v1",
-  timeout: 10000,
-  headers: {
-    "Content-Type": "application/json",
-  },
-});
+import { apiClient, handleApiError, type ApiResponse } from "@/lib/axios";
 
 /**
  * 게시글 목록 조회
  */
 export async function getPostsAction(
   params?: PostListQuery
-): Promise<{ success: boolean; data?: PostListResponse; error?: string }> {
+): Promise<ApiResponse<PostListResponse>> {
   try {
     const response = await apiClient.get<PostListResponse>("/community/posts", {
       params,
@@ -43,20 +35,7 @@ export async function getPostsAction(
       data: response.data,
     };
   } catch (error) {
-    console.error("Get posts error:", error);
-
-    if (axios.isAxiosError(error)) {
-      const axiosError = error as AxiosError<{ message?: string }>;
-      return {
-        success: false,
-        error: axiosError.response?.data?.message || "게시글 목록 조회에 실패했습니다.",
-      };
-    }
-
-    return {
-      success: false,
-      error: "서버에 연결할 수 없습니다. 네트워크를 확인해주세요.",
-    };
+    return handleApiError(error, "게시글 목록 조회에 실패했습니다.");
   }
 }
 
@@ -66,7 +45,7 @@ export async function getPostsAction(
 export async function getPostDetailAction(
   postId: number,
   accessToken?: string
-): Promise<{ success: boolean; data?: PostDetailResponse; error?: string }> {
+): Promise<ApiResponse<PostDetailResponse>> {
   try {
     const headers = accessToken
       ? { Authorization: `Bearer ${accessToken}` }
@@ -82,20 +61,7 @@ export async function getPostDetailAction(
       data: response.data,
     };
   } catch (error) {
-    console.error("Get post detail error:", error);
-
-    if (axios.isAxiosError(error)) {
-      const axiosError = error as AxiosError<{ message?: string }>;
-      return {
-        success: false,
-        error: axiosError.response?.data?.message || "게시글 조회에 실패했습니다.",
-      };
-    }
-
-    return {
-      success: false,
-      error: "서버에 연결할 수 없습니다. 네트워크를 확인해주세요.",
-    };
+    return handleApiError(error, "게시글 조회에 실패했습니다.");
   }
 }
 
@@ -105,7 +71,7 @@ export async function getPostDetailAction(
 export async function createPostAction(
   data: CreatePostRequest,
   accessToken: string
-): Promise<{ success: boolean; data?: CommunityPost; error?: string }> {
+): Promise<ApiResponse<CommunityPost>> {
   try {
     const response = await apiClient.post<CommunityPost | { post: CommunityPost; message: string }>(
       "/community/posts",
@@ -127,20 +93,7 @@ export async function createPostAction(
       data: postData,
     };
   } catch (error) {
-    console.error("Create post error:", error);
-
-    if (axios.isAxiosError(error)) {
-      const axiosError = error as AxiosError<{ message?: string }>;
-      return {
-        success: false,
-        error: axiosError.response?.data?.message || "게시글 작성에 실패했습니다.",
-      };
-    }
-
-    return {
-      success: false,
-      error: "서버에 연결할 수 없습니다. 네트워크를 확인해주세요.",
-    };
+    return handleApiError(error, "게시글 작성에 실패했습니다.");
   }
 }
 
@@ -151,7 +104,7 @@ export async function updatePostAction(
   postId: number,
   data: UpdatePostRequest,
   accessToken: string
-): Promise<{ success: boolean; data?: CommunityPost; error?: string }> {
+): Promise<ApiResponse<CommunityPost>> {
   try {
     const response = await apiClient.put<{ post: CommunityPost; message: string }>(
       `/community/posts/${postId}`,
@@ -168,20 +121,7 @@ export async function updatePostAction(
       data: response.data.post,
     };
   } catch (error) {
-    console.error("Update post error:", error);
-
-    if (axios.isAxiosError(error)) {
-      const axiosError = error as AxiosError<{ message?: string }>;
-      return {
-        success: false,
-        error: axiosError.response?.data?.message || "게시글 수정에 실패했습니다.",
-      };
-    }
-
-    return {
-      success: false,
-      error: "서버에 연결할 수 없습니다. 네트워크를 확인해주세요.",
-    };
+    return handleApiError(error, "게시글 수정에 실패했습니다.");
   }
 }
 
@@ -191,7 +131,7 @@ export async function updatePostAction(
 export async function deletePostAction(
   postId: number,
   accessToken: string
-): Promise<{ success: boolean; error?: string }> {
+): Promise<ApiResponse> {
   try {
     await apiClient.delete(`/community/posts/${postId}`, {
       headers: {
@@ -203,20 +143,7 @@ export async function deletePostAction(
       success: true,
     };
   } catch (error) {
-    console.error("Delete post error:", error);
-
-    if (axios.isAxiosError(error)) {
-      const axiosError = error as AxiosError<{ message?: string }>;
-      return {
-        success: false,
-        error: axiosError.response?.data?.message || "게시글 삭제에 실패했습니다.",
-      };
-    }
-
-    return {
-      success: false,
-      error: "서버에 연결할 수 없습니다. 네트워크를 확인해주세요.",
-    };
+    return handleApiError(error, "게시글 삭제에 실패했습니다.");
   }
 }
 
@@ -226,7 +153,7 @@ export async function deletePostAction(
 export async function togglePostLikeAction(
   postId: number,
   accessToken: string
-): Promise<{ success: boolean; data?: LikeResponse; error?: string }> {
+): Promise<ApiResponse<LikeResponse>> {
   try {
     const response = await apiClient.post<LikeResponse>(
       `/community/posts/${postId}/like`,
@@ -243,20 +170,7 @@ export async function togglePostLikeAction(
       data: response.data,
     };
   } catch (error) {
-    console.error("Toggle post like error:", error);
-
-    if (axios.isAxiosError(error)) {
-      const axiosError = error as AxiosError<{ message?: string }>;
-      return {
-        success: false,
-        error: axiosError.response?.data?.message || "좋아요 처리에 실패했습니다.",
-      };
-    }
-
-    return {
-      success: false,
-      error: "서버에 연결할 수 없습니다. 네트워크를 확인해주세요.",
-    };
+    return handleApiError(error, "좋아요 처리에 실패했습니다.");
   }
 }
 
@@ -265,7 +179,7 @@ export async function togglePostLikeAction(
  */
 export async function getCommentsAction(
   params: CommentListQuery
-): Promise<{ success: boolean; data?: CommentListResponse; error?: string }> {
+): Promise<ApiResponse<CommentListResponse>> {
   try {
     const response = await apiClient.get<CommentListResponse>("/community/comments", {
       params,
@@ -276,20 +190,7 @@ export async function getCommentsAction(
       data: response.data,
     };
   } catch (error) {
-    console.error("Get comments error:", error);
-
-    if (axios.isAxiosError(error)) {
-      const axiosError = error as AxiosError<{ message?: string }>;
-      return {
-        success: false,
-        error: axiosError.response?.data?.message || "댓글 목록 조회에 실패했습니다.",
-      };
-    }
-
-    return {
-      success: false,
-      error: "서버에 연결할 수 없습니다. 네트워크를 확인해주세요.",
-    };
+    return handleApiError(error, "댓글 목록 조회에 실패했습니다.");
   }
 }
 
@@ -299,7 +200,7 @@ export async function getCommentsAction(
 export async function createCommentAction(
   data: CreateCommentRequest,
   accessToken: string
-): Promise<{ success: boolean; data?: CommunityComment; error?: string }> {
+): Promise<ApiResponse<CommunityComment>> {
   try {
     const response = await apiClient.post<{ comment: CommunityComment; message: string }>(
       "/community/comments",
@@ -316,20 +217,7 @@ export async function createCommentAction(
       data: response.data.comment,
     };
   } catch (error) {
-    console.error("Create comment error:", error);
-
-    if (axios.isAxiosError(error)) {
-      const axiosError = error as AxiosError<{ message?: string }>;
-      return {
-        success: false,
-        error: axiosError.response?.data?.message || "댓글 작성에 실패했습니다.",
-      };
-    }
-
-    return {
-      success: false,
-      error: "서버에 연결할 수 없습니다. 네트워크를 확인해주세요.",
-    };
+    return handleApiError(error, "댓글 작성에 실패했습니다.");
   }
 }
 
@@ -340,7 +228,7 @@ export async function updateCommentAction(
   commentId: number,
   data: UpdateCommentRequest,
   accessToken: string
-): Promise<{ success: boolean; data?: CommunityComment; error?: string }> {
+): Promise<ApiResponse<CommunityComment>> {
   try {
     const response = await apiClient.put<{ comment: CommunityComment; message: string }>(
       `/community/comments/${commentId}`,
@@ -357,20 +245,7 @@ export async function updateCommentAction(
       data: response.data.comment,
     };
   } catch (error) {
-    console.error("Update comment error:", error);
-
-    if (axios.isAxiosError(error)) {
-      const axiosError = error as AxiosError<{ message?: string }>;
-      return {
-        success: false,
-        error: axiosError.response?.data?.message || "댓글 수정에 실패했습니다.",
-      };
-    }
-
-    return {
-      success: false,
-      error: "서버에 연결할 수 없습니다. 네트워크를 확인해주세요.",
-    };
+    return handleApiError(error, "댓글 수정에 실패했습니다.");
   }
 }
 
@@ -380,7 +255,7 @@ export async function updateCommentAction(
 export async function deleteCommentAction(
   commentId: number,
   accessToken: string
-): Promise<{ success: boolean; error?: string }> {
+): Promise<ApiResponse> {
   try {
     await apiClient.delete(`/community/comments/${commentId}`, {
       headers: {
@@ -392,20 +267,7 @@ export async function deleteCommentAction(
       success: true,
     };
   } catch (error) {
-    console.error("Delete comment error:", error);
-
-    if (axios.isAxiosError(error)) {
-      const axiosError = error as AxiosError<{ message?: string }>;
-      return {
-        success: false,
-        error: axiosError.response?.data?.message || "댓글 삭제에 실패했습니다.",
-      };
-    }
-
-    return {
-      success: false,
-      error: "서버에 연결할 수 없습니다. 네트워크를 확인해주세요.",
-    };
+    return handleApiError(error, "댓글 삭제에 실패했습니다.");
   }
 }
 
@@ -415,7 +277,7 @@ export async function deleteCommentAction(
 export async function toggleCommentLikeAction(
   commentId: number,
   accessToken: string
-): Promise<{ success: boolean; data?: LikeResponse; error?: string }> {
+): Promise<ApiResponse<LikeResponse>> {
   try {
     const response = await apiClient.post<LikeResponse>(
       `/community/comments/${commentId}/like`,
@@ -432,20 +294,7 @@ export async function toggleCommentLikeAction(
       data: response.data,
     };
   } catch (error) {
-    console.error("Toggle comment like error:", error);
-
-    if (axios.isAxiosError(error)) {
-      const axiosError = error as AxiosError<{ message?: string }>;
-      return {
-        success: false,
-        error: axiosError.response?.data?.message || "좋아요 처리에 실패했습니다.",
-      };
-    }
-
-    return {
-      success: false,
-      error: "서버에 연결할 수 없습니다. 네트워크를 확인해주세요.",
-    };
+    return handleApiError(error, "좋아요 처리에 실패했습니다.");
   }
 }
 
@@ -456,7 +305,7 @@ export async function acceptAnswerAction(
   postId: number,
   commentId: number,
   accessToken: string
-): Promise<{ success: boolean; data?: AcceptAnswerResponse; error?: string }> {
+): Promise<ApiResponse<AcceptAnswerResponse>> {
   try {
     const response = await apiClient.post<AcceptAnswerResponse>(
       `/community/posts/${postId}/accept/${commentId}`,
@@ -473,20 +322,7 @@ export async function acceptAnswerAction(
       data: response.data,
     };
   } catch (error) {
-    console.error("Accept answer error:", error);
-
-    if (axios.isAxiosError(error)) {
-      const axiosError = error as AxiosError<{ message?: string }>;
-      return {
-        success: false,
-        error: axiosError.response?.data?.message || "답변 채택에 실패했습니다.",
-      };
-    }
-
-    return {
-      success: false,
-      error: "서버에 연결할 수 없습니다. 네트워크를 확인해주세요.",
-    };
+    return handleApiError(error, "답변 채택에 실패했습니다.");
   }
 }
 
@@ -496,7 +332,7 @@ export async function acceptAnswerAction(
 export async function generateContentAction(
   data: GenerateContentRequest,
   accessToken: string
-): Promise<{ success: boolean; data?: GenerateContentResponse; error?: string }> {
+): Promise<ApiResponse<GenerateContentResponse>> {
   try {
     const response = await apiClient.post<GenerateContentResponse>(
       "/community/generate-content",
@@ -513,19 +349,6 @@ export async function generateContentAction(
       data: response.data,
     };
   } catch (error) {
-    console.error("Generate content error:", error);
-
-    if (axios.isAxiosError(error)) {
-      const axiosError = error as AxiosError<{ message?: string }>;
-      return {
-        success: false,
-        error: axiosError.response?.data?.message || "컨텐츠 생성에 실패했습니다.",
-      };
-    }
-
-    return {
-      success: false,
-      error: "서버에 연결할 수 없습니다. 네트워크를 확인해주세요.",
-    };
+    return handleApiError(error, "컨텐츠 생성에 실패했습니다.");
   }
 }

@@ -13,11 +13,14 @@ import {
   Clock,
   Star,
 } from "lucide-react";
-import { getStoresAction } from "@/actions/stores";
+import { getStoresAction, toggleStoreLikeAction } from "@/actions/stores";
 import type { StoreDetail, Tag } from "@/types/stores";
 import StoreMap from "@/components/StoreMap";
 import useKakaoLoader from "@/hooks/useKakaoLoader";
 import { getDistanceText } from "@/utils/distance";
+import { useAuthStore } from "@/stores/useAuthStore";
+import { toast } from "sonner";
+import { useAuthenticatedAction } from "@/hooks/useAuthenticatedAction";
 
 /**
  * 매장 이미지 컴포넌트 - 로딩 실패 시 폴백 UI 표시
@@ -112,6 +115,7 @@ interface StoreWithExtras extends StoreDetail {
   isOpen?: boolean;
   lat?: number;
   lng?: number;
+  isLiked?: boolean;
 }
 
 /**
@@ -129,6 +133,9 @@ export default function StoresPage() {
   useKakaoLoader();
 
   const router = useRouter();
+  const { user, tokens } = useAuthStore();
+  const accessToken = tokens?.access_token;
+  const { checkAndHandleUnauthorized } = useAuthenticatedAction();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFilter, setSelectedFilter] = useState<FilterTag>("all");
   const [selectedStore, setSelectedStore] = useState<StoreWithExtras | null>(null);
@@ -186,10 +193,13 @@ export default function StoresPage() {
       setError(null);
 
       try {
-        const result = await getStoresAction({
-          page: 1,
-          page_size: PAGE_SIZE,
-        });
+        const result = await getStoresAction(
+          {
+            page: 1,
+            page_size: PAGE_SIZE,
+          },
+          accessToken
+        );
 
         if (result.success && result.data) {
           // 백엔드 데이터에 UI용 추가 정보 추가
@@ -241,6 +251,7 @@ export default function StoresPage() {
               isOpen,
               lat,
               lng,
+              isLiked: store.is_liked || false, // API에서 받은 좋아요 상태 사용
             };
           });
 
@@ -261,7 +272,7 @@ export default function StoresPage() {
     };
 
     loadStores();
-  }, []);
+  }, [accessToken]);
 
   // 사용자 위치 변경 시 거리 재계산
   useEffect(() => {
@@ -287,6 +298,54 @@ export default function StoresPage() {
       console.log("✅ Distance recalculation complete");
     }
   }, [userLocation, stores.length]);
+
+  // 좋아요 토글 핸들러
+  const handleStoreLike = async (storeId: number, e: React.MouseEvent) => {
+    e.stopPropagation(); // 부모 클릭 이벤트 방지
+
+    if (!user) {
+      toast.error("로그인이 필요합니다");
+      router.push("/login");
+      return;
+    }
+
+    if (!accessToken) {
+      toast.error("로그인이 필요합니다");
+      router.push("/login");
+      return;
+    }
+
+    try {
+      const result = await toggleStoreLikeAction(storeId, accessToken);
+
+      if (result.success && result.data) {
+        // 매장 목록의 좋아요 상태 업데이트
+        setStores((prevStores) =>
+          prevStores.map((store) =>
+            store.id === storeId ? { ...store, isLiked: result.data!.is_liked } : store
+          )
+        );
+
+        // 선택된 매장이 있으면 해당 매장의 좋아요 상태도 업데이트
+        if (selectedStore && selectedStore.id === storeId) {
+          setSelectedStore({ ...selectedStore, isLiked: result.data.is_liked });
+        }
+
+        toast.success(result.data.is_liked ? "찜 목록에 추가되었습니다" : "찜 목록에서 제거되었습니다");
+      } else {
+        // 401 Unauthorized 체크 및 자동 로그아웃
+        if (checkAndHandleUnauthorized(result)) {
+          toast.error(result.error || "로그인이 만료되었습니다");
+          return;
+        }
+
+        toast.error(result.error || "좋아요 처리에 실패했습니다");
+      }
+    } catch (error) {
+      console.error("Toggle store like error:", error);
+      toast.error("좋아요 처리 중 오류가 발생했습니다");
+    }
+  };
 
   const filteredStores = useMemo(() => {
     // 1. 필터링
@@ -579,12 +638,23 @@ export default function StoresPage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        <h3 className="text-[16px] font-semibold text-gray-900 truncate">
+                        <h3 className="text-[16px] font-semibold text-gray-900 truncate flex-1">
                           {store.name}
                         </h3>
                         <span className="px-1.5 py-0.5 bg-green-100 text-green-700 text-[11px] font-medium rounded flex-shrink-0">
                           {store.isOpen ? "영업중" : "준비중"}
                         </span>
+                        <button
+                          type="button"
+                          onClick={(e) => handleStoreLike(store.id, e)}
+                          className="flex-shrink-0 p-1 hover:bg-gray-100 rounded-lg transition-colors"
+                        >
+                          <Heart
+                            className={`w-4 h-4 transition-colors ${
+                              store.isLiked ? "fill-red-500 text-red-500" : "text-gray-400"
+                            }`}
+                          />
+                        </button>
                       </div>
                       <div className="flex items-center gap-1.5 text-[13px] mb-2">
                         <span className="text-yellow-500 font-semibold">
@@ -704,9 +774,14 @@ export default function StoresPage() {
                     </div>
                     <button
                       type="button"
+                      onClick={(e) => handleStoreLike(selectedStore.id, e)}
                       className="w-10 h-10 border border-gray-200 rounded-lg flex items-center justify-center hover:bg-gray-50 transition-colors"
                     >
-                      <Heart className="w-5 h-5 text-gray-400" />
+                      <Heart
+                        className={`w-5 h-5 transition-colors ${
+                          selectedStore.isLiked ? "fill-red-500 text-red-500" : "text-gray-400"
+                        }`}
+                      />
                     </button>
                   </div>
                   {/* 영업 상태 */}
