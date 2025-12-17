@@ -4,7 +4,7 @@ import axios, { AxiosError } from "axios";
 import type { ProductsResponse } from "@/types/products";
 
 const apiClient = axios.create({
-  baseURL: "http://43.200.249.22:8080/api/v1",
+  baseURL: `${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://43.200.249.22:8080'}/api/v1`,
   timeout: 10000,
   headers: {
     "Content-Type": "application/json",

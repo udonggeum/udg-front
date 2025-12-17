@@ -11,9 +11,10 @@ import type {
   UpdateProfileRequest,
   UpdateProfileResponse,
 } from "@/types/auth";
+import { getApiBaseUrl } from "@/lib/api";
 
 const apiClient = axios.create({
-  baseURL: "http://43.200.249.22:8080/api/v1",
+  baseURL: `${getApiBaseUrl()}/api/v1`,
   timeout: 10000,
   headers: {
     "Content-Type": "application/json",

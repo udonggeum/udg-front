@@ -373,8 +373,10 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
     const { tokens } = useAuthStore.getState();
     if (!tokens?.access_token || !store) return;
 
+    const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://43.200.249.22:8080';
+
     try {
-      const response = await fetch(`http://43.200.249.22:8080/api/v1/stores/${store.id}`, {
+      const response = await fetch(`${API_BASE_URL}/api/v1/stores/${store.id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -414,8 +416,10 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
     const { tokens } = useAuthStore.getState();
     if (!tokens?.access_token || !store) return;
 
+    const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://43.200.249.22:8080';
+
     try {
-      const response = await fetch(`http://43.200.249.22:8080/api/v1/stores/${store.id}`, {
+      const response = await fetch(`${API_BASE_URL}/api/v1/stores/${store.id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
