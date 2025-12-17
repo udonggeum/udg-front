@@ -18,7 +18,10 @@
       "Bash(findstr:*)",
       "Bash(taskkill:*)",
       "Bash(go build:*)",
-      "Bash(timeout 15 npm run dev:*)"
+      "Bash(timeout 15 npm run dev:*)",
+      "Bash(find:*)",
+      "Bash(grep:*)",
+      "Bash(wc:*)"
     ],
     "deny": [],
     "ask": []

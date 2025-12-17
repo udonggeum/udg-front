@@ -193,7 +193,7 @@ export default function MyPage() {
       <div className="container mx-auto px-4 max-w-5xl">
         {/* 프로필 헤더 + 활동 통계 */}
         <Card className="mb-6 border-0 shadow-sm">
-          <CardContent className="p-6 md:p-8">
+          <CardContent className="p-6 md:p-6">
             <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
               {/* 프로필 이미지 */}
               <div className="relative group">
@@ -233,23 +233,6 @@ export default function MyPage() {
               {/* 프로필 정보 + 활동 통계 */}
               <div className="flex-1 text-center md:text-left">
                 <h1 className="text-2xl font-bold text-gray-900 mb-3">{user?.name || "사용자"}</h1>
-
-                {/* 활동 통계 */}
-                <div className="flex items-center justify-center md:justify-start gap-6 mb-3">
-                  <div className="flex items-center gap-2">
-                    <FileText className="w-4 h-4 text-gray-600" />
-                    <span className="text-sm text-gray-600">
-                      작성한 글 <span className="font-bold text-gray-900">{totalPosts}</span>
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Heart className="w-4 h-4 text-gray-600" />
-                    <span className="text-sm text-gray-600">
-                      좋아요 매장 <span className="font-bold text-gray-900">{totalLikedStores}</span>
-                    </span>
-                  </div>
-                </div>
-
                 {/* 연락처 정보 */}
                 <div className="space-y-1 text-sm text-gray-600">
                   <div className="flex items-center justify-center md:justify-start gap-2">
@@ -262,6 +245,21 @@ export default function MyPage() {
                       <span>{user.phone}</span>
                     </div>
                   )}
+                </div>
+                {/* 활동 통계 */}
+                <div className="flex items-center justify-center md:justify-start gap-6 mb-3">
+                  <div className="flex items-center gap-2">
+                    <FileText className="w-4 h-8 text-gray-600" />
+                    <span className="text-sm text-gray-600">
+                      작성한 글 <span className="font-bold text-gray-900">{totalPosts}</span>
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Heart className="w-4 h-4 text-gray-600" />
+                    <span className="text-sm text-gray-600">
+                      좋아요 매장 <span className="font-bold text-gray-900">{totalLikedStores}</span>
+                    </span>
+                  </div>
                 </div>
               </div>
 
