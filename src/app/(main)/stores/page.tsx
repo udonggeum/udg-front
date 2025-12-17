@@ -836,7 +836,7 @@ export default function StoresPage() {
                     <div className="flex items-center gap-3">
                       <Phone className="w-5 h-5 text-gray-400 flex-shrink-0" />
                       <p className="text-[14px] text-gray-900">
-                        {selectedStore.phone || "02-1234-5678"}
+                        {selectedStore.phone_number || "02-1234-5678"}
                       </p>
                     </div>
                     <div className="flex items-center gap-3">

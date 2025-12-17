@@ -60,7 +60,7 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
     name: "",
     description: "",
     address: "",
-    phone: "",
+    phone_number: "",
     open_time: "",
     close_time: "",
   });
@@ -78,7 +78,7 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
         name: store.name || "",
         description: store.description || "",
         address: store.address || "",
-        phone: store.phone || "",
+        phone_number: store.phone_number || "",
         open_time: store.open_time || "",
         close_time: store.close_time || "",
       });
@@ -262,7 +262,7 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
         name: store.name || "",
         description: store.description || "",
         address: store.address || "",
-        phone: store.phone || "",
+        phone_number: store.phone_number || "",
         open_time: store.open_time || "",
         close_time: store.close_time || "",
       });
@@ -299,7 +299,7 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
     if (section === "name") setFormData((prev) => ({ ...prev, name: store.name || "" }));
     if (section === "description") setFormData((prev) => ({ ...prev, description: store.description || "" }));
     if (section === "address") setFormData((prev) => ({ ...prev, address: store.address || "" }));
-    if (section === "phone") setFormData((prev) => ({ ...prev, phone: store.phone || "" }));
+    if (section === "phone") setFormData((prev) => ({ ...prev, phone_number: store.phone_number || "" }));
     if (section === "hours")
       setFormData((prev) => ({
         ...prev,
@@ -423,7 +423,7 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
           region: store.region || "",
           district: store.district || "",
           address: store.address,
-          phone_number: store.phone || store.phone_number,
+          phone_number: store.phone_number,
           image_url: store.image_url,
           description: store.description,
           open_time: store.open_time,
@@ -466,7 +466,7 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
           region: store.region || "",
           district: store.district || "",
           address: data.address !== undefined ? data.address : store.address,
-          phone_number: data.phone !== undefined ? data.phone : store.phone,
+          phone_number: data.phone_number !== undefined ? data.phone_number : store.phone_number,
           image_url: data.image_url !== undefined ? data.image_url : store.image_url,
           description: data.description !== undefined ? data.description : store.description,
           open_time: data.open_time !== undefined ? data.open_time : store.open_time,
@@ -495,7 +495,7 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
     if (section === "name") dataToSave = { name: formData.name };
     else if (section === "description") dataToSave = { description: formData.description };
     else if (section === "address") dataToSave = { address: formData.address };
-    else if (section === "phone") dataToSave = { phone: formData.phone };
+    else if (section === "phone") dataToSave = { phone_number: formData.phone_number };
     else if (section === "hours")
       dataToSave = { open_time: formData.open_time, close_time: formData.close_time };
 
@@ -798,9 +798,9 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
 
               {/* 빠른 액션 버튼 */}
               <div className="flex gap-3">
-                {store.phone && (
+                {store.phone_number && (
                   <a
-                    href={`tel:${store.phone.replace(/[^0-9]/g, '')}`}
+                    href={`tel:${store.phone_number.replace(/[^0-9]/g, '')}`}
                     className="flex-1 flex items-center justify-center gap-2 py-3 bg-gray-900 hover:bg-gray-800 text-white text-[15px] font-semibold rounded-xl transition-colors"
                   >
                     <Phone className="w-5 h-5" />
@@ -972,7 +972,7 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
                   )}
 
                   {/* 전화번호 */}
-                  {(store.phone || isMyStore) && (
+                  {(store.phone_number || isMyStore) && (
                     <div
                       className={`p-3 rounded-lg transition-all ${
                         isMyStore && editSections.phone
@@ -988,14 +988,14 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
                           {isMyStore && editSections.phone ? (
                             <input
                               type="tel"
-                              value={formData.phone}
-                              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                              value={formData.phone_number}
+                              onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
                               className="w-full text-[14px] text-gray-600 bg-transparent border-none outline-none"
                               placeholder="전화번호"
                             />
-                          ) : store.phone ? (
-                            <a href={`tel:${store.phone}`} className="text-blue-600 hover:underline">
-                              {store.phone}
+                          ) : store.phone_number ? (
+                            <a href={`tel:${store.phone_number}`} className="text-blue-600 hover:underline">
+                              {store.phone_number}
                             </a>
                           ) : (
                             <div className="text-gray-400 italic">전화번호를 입력해주세요</div>

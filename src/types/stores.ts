@@ -38,7 +38,6 @@ export interface StoreDetail {
   address?: string;
   latitude?: number;
   longitude?: number;
-  phone?: string;
   phone_number?: string;
   open_time?: string;
   close_time?: string;

@@ -414,9 +414,9 @@ export default function Home() {
                     </div>
                     <div className="text-[13px] text-gray-500 mb-2">{store.address || `${store.region || ""} ${store.district || ""}`.trim()}</div>
                     <div className="flex items-center gap-2 text-[13px]">
-                      {store.phone && (
+                      {store.phone_number && (
                         <>
-                          <span className="text-gray-500">{store.phone}</span>
+                          <span className="text-gray-500">{store.phone_number}</span>
                         </>
                       )}
                     </div>
