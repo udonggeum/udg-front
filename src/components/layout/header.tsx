@@ -8,7 +8,7 @@ import { useAuthStore } from "@/stores/useAuthStore";
 import { useLocationStore } from "@/stores/useLocationStore";
 import { logoutUserAction } from "@/actions/auth";
 import { toast } from "sonner";
-import { User, Settings, LogOut, ChevronDown, MapPin } from "lucide-react";
+import { User, Settings, LogOut, ChevronDown, MapPin, MessageCircle } from "lucide-react";
 import LocationSettingModal from "@/components/LocationSettingModal";
 import {
   Tooltip,
@@ -99,6 +99,15 @@ export function Header() {
           >
             커뮤니티
           </Link>
+          {isAuthenticated && (
+            <Link
+              href="/chats"
+              className="nav-link text-[15px] font-medium text-gray-600 hover:text-gray-900 smooth-transition flex items-center gap-1"
+            >
+              <MessageCircle className="w-4 h-4" />
+              채팅
+            </Link>
+          )}
         </nav>
 
         {/* 우측 영역 */}

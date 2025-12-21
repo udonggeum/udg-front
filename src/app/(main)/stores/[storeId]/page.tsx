@@ -16,10 +16,12 @@ import {
   Settings,
   X,
   Check,
+  MessageCircle,
 } from "lucide-react";
 import { getStoreDetailAction, toggleStoreLikeAction } from "@/actions/stores";
 import { getStoreProductsAction } from "@/actions/products";
 import { getTagsAction } from "@/actions/tags";
+import { createChatRoomAction } from "@/actions/chat";
 import type { StoreDetail } from "@/types/stores";
 import type { Product } from "@/types/products";
 import type { Tag } from "@/types/tags";
@@ -405,6 +407,54 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
   };
 
   // 태그 저장
+  // 문의하기 핸들러
+  const handleInquiry = async () => {
+    const { user, tokens } = useAuthStore.getState();
+
+    if (!user || !tokens?.access_token) {
+      toast.error("로그인이 필요합니다.");
+      router.push("/login");
+      return;
+    }
+
+    if (!store || !store.user_id) {
+      toast.error("매장 정보를 불러올 수 없습니다.");
+      return;
+    }
+
+    // 자기 매장에는 문의 불가
+    if (user.id === store.user_id) {
+      toast.error("자신의 매장에는 문의할 수 없습니다.");
+      return;
+    }
+
+    const loadingToast = toast.loading("채팅방을 생성하는 중...");
+
+    try {
+      const result = await createChatRoomAction(
+        {
+          target_user_id: store.user_id,
+          type: "STORE",
+          store_id: store.id,
+        },
+        tokens.access_token
+      );
+
+      if (result.success && result.data) {
+        toast.success(
+          result.data.is_new ? "새 채팅방이 생성되었습니다." : "채팅방으로 이동합니다.",
+          { id: loadingToast }
+        );
+        router.push(`/chats/${result.data.room.id}`);
+      } else {
+        toast.error(result.error || "채팅방 생성에 실패했습니다.", { id: loadingToast });
+      }
+    } catch (error) {
+      console.error("Create chat room error:", error);
+      toast.error("채팅방 생성 중 오류가 발생했습니다.", { id: loadingToast });
+    }
+  };
+
   const handleSaveTags = async (tagIds: number[]) => {
     const { tokens } = useAuthStore.getState();
     if (!tokens?.access_token || !store) return;
@@ -798,13 +848,23 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
 
               {/* 빠른 액션 버튼 */}
               <div className="flex gap-3">
+                {/* 자기 매장이 아닐 때만 문의하기 버튼 표시 */}
+                {!isMyStore && (
+                  <button
+                    onClick={handleInquiry}
+                    className="flex-1 flex items-center justify-center gap-2 py-3 bg-yellow-400 hover:bg-yellow-500 text-gray-900 text-[15px] font-semibold rounded-xl transition-colors shadow-md hover:shadow-lg"
+                  >
+                    <MessageCircle className="w-5 h-5" />
+                    문의하기
+                  </button>
+                )}
                 {store.phone_number && (
                   <a
                     href={`tel:${store.phone_number.replace(/[^0-9]/g, '')}`}
                     className="flex-1 flex items-center justify-center gap-2 py-3 bg-gray-900 hover:bg-gray-800 text-white text-[15px] font-semibold rounded-xl transition-colors"
                   >
                     <Phone className="w-5 h-5" />
-                    문의하기
+                    전화하기
                   </a>
                 )}
                 {store.address && (
@@ -812,15 +872,15 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
                     href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(store.address)}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex-1 flex items-center justify-center gap-2 py-3 bg-white border-2 border-gray-200 hover:border-gray-900 text-gray-900 text-[15px] font-semibold rounded-xl transition-colors"
+                    className={`${!isMyStore && !store.phone_number ? "flex-1" : "flex-shrink-0"} flex items-center justify-center gap-2 ${!isMyStore && !store.phone_number ? "py-3" : "px-5 py-3"} bg-white border-2 border-gray-200 hover:border-gray-900 text-gray-900 text-[15px] font-semibold rounded-xl transition-colors`}
                   >
                     <MapPin className="w-5 h-5" />
-                    길찾기
+                    {!isMyStore && !store.phone_number ? "길찾기" : <span className="sr-only">길찾기</span>}
                   </a>
                 )}
                 <button className="flex items-center justify-center gap-2 px-5 py-3 bg-white border-2 border-gray-200 hover:border-gray-900 text-gray-900 text-[15px] font-semibold rounded-xl transition-colors">
                   <Share2 className="w-5 h-5" />
-                  공유
+                  <span className="sr-only">공유</span>
                 </button>
               </div>
             </div>

@@ -22,7 +22,8 @@
       "Bash(find:*)",
       "Bash(grep:*)",
       "Bash(wc:*)",
-      "Bash(pkill:*)"
+      "Bash(pkill:*)",
+      "Bash(go get:*)"
     ],
     "deny": [],
     "ask": []
