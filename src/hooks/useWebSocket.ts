@@ -17,6 +17,12 @@ export function useWebSocket({
   const [isConnected, setIsConnected] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const onMessageRef = useRef(onMessage);
+
+  // onMessage 최신 상태 유지
+  useEffect(() => {
+    onMessageRef.current = onMessage;
+  }, [onMessage]);
 
   useEffect(() => {
     if (!token) return;
@@ -27,14 +33,13 @@ export function useWebSocket({
         wsRef.current = ws;
 
         ws.onopen = () => {
-          console.log("WebSocket connected");
           setIsConnected(true);
         };
 
         ws.onmessage = (event) => {
           try {
             const data = JSON.parse(event.data) as WebSocketMessage;
-            onMessage?.(data);
+            onMessageRef.current?.(data);
           } catch (error) {
             console.error("Failed to parse WebSocket message:", error);
           }
@@ -45,13 +50,11 @@ export function useWebSocket({
         };
 
         ws.onclose = () => {
-          console.log("WebSocket disconnected");
           setIsConnected(false);
 
           // Auto reconnect after 3 seconds
           if (autoReconnect) {
             reconnectTimeoutRef.current = setTimeout(() => {
-              console.log("Reconnecting WebSocket...");
               connect();
             }, 3000) as NodeJS.Timeout;
           }
@@ -71,12 +74,14 @@ export function useWebSocket({
         wsRef.current.close();
       }
     };
-  }, [url, token, autoReconnect, onMessage]);
+  }, [url, token, autoReconnect]);
 
   const sendMessage = (message: any) => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify(message));
+      return true;
     }
+    return false;
   };
 
   return {

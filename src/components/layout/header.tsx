@@ -2,13 +2,16 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useLocationStore } from "@/stores/useLocationStore";
+import { useApiErrorHandler } from "@/hooks/useApiCall";
 import { logoutUserAction } from "@/actions/auth";
+import { getChatRoomsAction } from "@/actions/chat";
+import { useWebSocket } from "@/hooks/useWebSocket";
 import { toast } from "sonner";
-import { User, Settings, LogOut, ChevronDown, MapPin, MessageCircle } from "lucide-react";
+import { User, Settings, LogOut, ChevronDown, MapPin } from "lucide-react";
 import LocationSettingModal from "@/components/LocationSettingModal";
 import {
   Tooltip,
@@ -21,9 +24,11 @@ export function Header() {
   const router = useRouter();
   const { isAuthenticated, user, tokens, clearAuth } = useAuthStore();
   const { currentLocation, initializeFromUserAddress } = useLocationStore();
+  const { handleApiError } = useApiErrorHandler();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
+  const [unreadChatCount, setUnreadChatCount] = useState(0);
 
   // user.address로 초기화 (currentLocation이 없을 때만)
   useEffect(() => {
@@ -31,6 +36,57 @@ export function Header() {
       initializeFromUserAddress(user.address);
     }
   }, [user?.address, currentLocation, initializeFromUserAddress]);
+
+  // 안읽은 채팅 개수 가져오기
+  const fetchUnreadCount = useCallback(async () => {
+    if (!isAuthenticated || !tokens?.access_token) {
+      setUnreadChatCount(0);
+      return;
+    }
+
+    try {
+      const result = await getChatRoomsAction(tokens.access_token);
+      if (result.success && result.data) {
+        // 모든 방의 unread_count 합산
+        const totalUnread = result.data.rooms.reduce((sum, room) => {
+          return sum + room.unread_count;
+        }, 0);
+        setUnreadChatCount(totalUnread);
+      } else {
+        // 401 에러 체크 및 자동 로그아웃
+        handleApiError(result.error);
+      }
+    } catch (error) {
+      console.error("Failed to fetch unread chat count:", error);
+    }
+  }, [isAuthenticated, tokens, handleApiError]);
+
+  // WebSocket 메시지 핸들러 (안정화된 콜백)
+  const handleWebSocketMessage = useCallback((data: any) => {
+    // 새 메시지가 왔을 때 (내가 보낸 메시지가 아닌 경우)
+    if (data.type === "new_message" && data.message) {
+      if (data.message.sender_id !== user?.id) {
+        // 실시간으로 안읽은 개수 증가
+        setUnreadChatCount((prev) => prev + 1);
+      }
+    }
+    // 메시지를 읽었을 때는 정확한 개수를 다시 가져오기
+    if (data.type === "read") {
+      fetchUnreadCount();
+    }
+  }, [user?.id, fetchUnreadCount]);
+
+  // 초기 로드
+  useEffect(() => {
+    fetchUnreadCount();
+  }, [fetchUnreadCount]);
+
+  // WebSocket으로 실시간 메시지 수신
+  useWebSocket({
+    url: `ws://43.200.249.22:8080/api/v1/chats/ws`,
+    token: tokens?.access_token || "",
+    onMessage: handleWebSocketMessage,
+  });
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
@@ -97,15 +153,19 @@ export function Header() {
             href="/community"
             className="nav-link text-[15px] font-medium text-gray-600 hover:text-gray-900 smooth-transition"
           >
-            커뮤니티
+            금광산
           </Link>
           {isAuthenticated && (
             <Link
               href="/chats"
-              className="nav-link text-[15px] font-medium text-gray-600 hover:text-gray-900 smooth-transition flex items-center gap-1"
+              className="nav-link text-[15px] font-medium text-gray-600 hover:text-gray-900 smooth-transition relative"
             >
-              <MessageCircle className="w-4 h-4" />
               채팅
+              {unreadChatCount > 0 && (
+                <span className="absolute -top-1 -right-3 bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
+                  {unreadChatCount > 99 ? "99+" : unreadChatCount}
+                </span>
+              )}
             </Link>
           )}
         </nav>

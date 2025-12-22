@@ -2,7 +2,7 @@
  * 채팅 타입
  */
 
-export type ChatRoomType = "SALE" | "STORE";
+export type ChatRoomType = "STORE" | "GOLD_TRADE" | "PERSONAL";
 
 export type MessageType = "TEXT" | "IMAGE" | "FILE";
 
@@ -14,6 +14,8 @@ export interface ChatUser {
   email: string;
   name: string;
   profile_image_url?: string;
+  role?: "user" | "admin";
+  store_name?: string;
 }
 
 /**
@@ -112,8 +114,9 @@ export interface MessagesResponse {
  * WebSocket 메시지
  */
 export interface WebSocketMessage {
-  type: "new_message" | "read" | "typing" | "online" | "offline";
+  type: "new_message" | "read" | "typing_start" | "typing_stop" | "online" | "offline";
   message?: Message;
   room_id?: number;
+  chat_room_id?: number;
   user_id?: number;
 }
