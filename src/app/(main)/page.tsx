@@ -307,7 +307,7 @@ export default function Home() {
               <h2 className="text-[22px] font-bold text-gray-900 mb-1">오늘의 금 시세</h2>
               <p className="text-[14px] text-gray-500">금 시세는 매일 아침 9시에 업데이트 됩니다.</p>
             </div>
-            <Link href="/price" className="text-[14px] font-medium text-gray-500 hover:text-gray-900 smooth-transition flex items-center gap-1">
+            <Link href="/prices" className="text-[14px] font-medium text-gray-500 hover:text-gray-900 smooth-transition flex items-center gap-1">
               전체보기
               <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"></path>

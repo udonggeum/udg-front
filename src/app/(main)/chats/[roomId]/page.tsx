@@ -12,10 +12,10 @@ import {
   joinChatRoomAction,
   leaveChatRoomAction,
   generateChatFilePresignedURLAction,
-  uploadFileToS3Action,
   updateMessageAction,
   deleteMessageAction,
 } from "@/actions/chat";
+import { uploadToS3 } from "@/actions/upload";
 import type { ChatRoom, Message } from "@/types/chat";
 import { Send, ArrowLeft, User, AlertCircle, RotateCw, X, Search, Paperclip, Image as ImageIcon, FileText, Download, Edit2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
@@ -408,9 +408,9 @@ export default function ChatRoomPage() {
         }
 
         // S3에 파일 업로드
-        const uploadResult = await uploadFileToS3Action(
-          selectedFile,
-          presignedResult.data.upload_url
+        const uploadResult = await uploadToS3(
+          presignedResult.data.upload_url,
+          selectedFile
         );
 
         if (!uploadResult.success) {

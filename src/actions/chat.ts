@@ -288,30 +288,6 @@ export async function generateChatFilePresignedURLAction(
 }
 
 /**
- * S3에 파일 업로드
- */
-export async function uploadFileToS3Action(
-  file: File,
-  uploadUrl: string
-): Promise<ApiResponse> {
-  try {
-    await fetch(uploadUrl, {
-      method: "PUT",
-      body: file,
-      headers: {
-        "Content-Type": file.type,
-      },
-    });
-
-    return {
-      success: true,
-    };
-  } catch (error) {
-    return handleApiError(error, "파일 업로드에 실패했습니다.");
-  }
-}
-
-/**
  * 메시지 수정
  */
 export async function updateMessageAction(
