@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/stores/useAuthStore";
-import { getChatRoomsAction, deleteChatRoomAction } from "@/actions/chat";
+import { getChatRoomsAction, leaveChatRoomAction } from "@/actions/chat";
 import { useApiErrorHandler } from "@/hooks/useApiCall";
 import type { ChatRoomWithUnread } from "@/types/chat";
 import { MessageCircle, User, Store, Trash2 } from "lucide-react";
@@ -105,16 +105,16 @@ export default function ChatsPage() {
     if (!deleteRoomId || !tokens?.access_token) return;
 
     setIsDeleting(true);
-    const result = await deleteChatRoomAction(deleteRoomId, tokens.access_token);
+    const result = await leaveChatRoomAction(deleteRoomId, tokens.access_token);
 
     if (result.success) {
-      toast.success("채팅방이 삭제되었습니다.");
+      toast.success("채팅방을 나갔습니다.");
       // 목록에서 제거
       setRooms((prev) => prev.filter((room) => room.id !== deleteRoomId));
     } else {
       // 401 에러 체크 및 자동 로그아웃
       handleApiError(result.error);
-      toast.error(result.error || "채팅방 삭제에 실패했습니다.");
+      toast.error(result.error || "채팅방 나가기에 실패했습니다.");
     }
 
     setIsDeleting(false);
@@ -230,12 +230,12 @@ export default function ChatsPage() {
       <AlertDialog open={deleteRoomId !== null} onOpenChange={(open: boolean) => !open && setDeleteRoomId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>채팅방을 삭제하시겠습니까?</AlertDialogTitle>
+            <AlertDialogTitle>채팅방을 나가시겠습니까?</AlertDialogTitle>
             <AlertDialogDescription>
-              이 작업은 되돌릴 수 없습니다. 채팅방과 모든 메시지가 영구적으로 삭제됩니다.
+              채팅방 목록에서 숨겨지며, 상대방은 계속 메시지를 보낼 수 있습니다.
               <br />
-              <span className="text-red-600 font-semibold mt-2 block">
-                삭제 후 복구가 어렵습니다.
+              <span className="text-gray-600 mt-2 block">
+                새 메시지가 오면 채팅방이 다시 나타납니다.
               </span>
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -246,7 +246,7 @@ export default function ChatsPage() {
               disabled={isDeleting}
               className="bg-red-600 hover:bg-red-700"
             >
-              {isDeleting ? "삭제 중..." : "삭제"}
+              {isDeleting ? "나가는 중..." : "나가기"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

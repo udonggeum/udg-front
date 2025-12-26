@@ -8,6 +8,7 @@ import type {
   MessagesResponse,
   SendMessageRequest,
   ChatRoom,
+  Message,
 } from "@/types/chat";
 
 /**
@@ -224,14 +225,21 @@ export async function leaveChatRoomAction(
 }
 
 /**
- * 채팅방 삭제
+ * 메시지 검색
  */
-export async function deleteChatRoomAction(
-  roomId: number,
-  token: string
-): Promise<ApiResponse> {
+export async function searchMessagesAction(
+  keyword: string,
+  token: string,
+  page: number = 1,
+  pageSize: number = 20
+): Promise<ApiResponse<MessagesResponse>> {
   try {
-    await apiClient.delete(`/chats/rooms/${roomId}`, {
+    const response = await apiClient.get<MessagesResponse>(`/chats/search`, {
+      params: {
+        q: keyword,
+        page,
+        page_size: pageSize,
+      },
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -239,8 +247,121 @@ export async function deleteChatRoomAction(
 
     return {
       success: true,
+      data: response.data,
     };
   } catch (error) {
-    return handleApiError(error, "채팅방 삭제에 실패했습니다.");
+    return handleApiError(error, "메시지 검색에 실패했습니다.");
+  }
+}
+
+/**
+ * 채팅 파일 업로드용 Presigned URL 생성
+ */
+export async function generateChatFilePresignedURLAction(
+  filename: string,
+  contentType: string,
+  token: string,
+  folder?: string
+): Promise<ApiResponse<{ upload_url: string; file_url: string; key: string; max_size?: number }>> {
+  try {
+    const response = await apiClient.post(
+      `/upload/chat/presigned-url`,
+      {
+        filename,
+        content_type: contentType,
+        folder,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    return {
+      success: true,
+      data: response.data,
+    };
+  } catch (error) {
+    return handleApiError(error, "파일 업로드 URL 생성에 실패했습니다.");
+  }
+}
+
+/**
+ * S3에 파일 업로드
+ */
+export async function uploadFileToS3Action(
+  file: File,
+  uploadUrl: string
+): Promise<ApiResponse> {
+  try {
+    await fetch(uploadUrl, {
+      method: "PUT",
+      body: file,
+      headers: {
+        "Content-Type": file.type,
+      },
+    });
+
+    return {
+      success: true,
+    };
+  } catch (error) {
+    return handleApiError(error, "파일 업로드에 실패했습니다.");
+  }
+}
+
+/**
+ * 메시지 수정
+ */
+export async function updateMessageAction(
+  roomId: number,
+  messageId: number,
+  content: string,
+  token: string
+): Promise<ApiResponse<{ message: Message }>> {
+  try {
+    const response = await apiClient.patch<{ message: Message }>(
+      `/chats/rooms/${roomId}/messages/${messageId}`,
+      { content },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    return {
+      success: true,
+      data: response.data,
+    };
+  } catch (error) {
+    return handleApiError(error, "메시지 수정에 실패했습니다.");
+  }
+}
+
+/**
+ * 메시지 삭제
+ */
+export async function deleteMessageAction(
+  roomId: number,
+  messageId: number,
+  token: string
+): Promise<ApiResponse> {
+  try {
+    await apiClient.delete(
+      `/chats/rooms/${roomId}/messages/${messageId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    return {
+      success: true,
+    };
+  } catch (error) {
+    return handleApiError(error, "메시지 삭제에 실패했습니다.");
   }
 }

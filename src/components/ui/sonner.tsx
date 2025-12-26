@@ -17,7 +17,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
     <Sonner
       theme={theme as ToasterProps["theme"]}
       className="toaster group"
-      position="top-center"
+      position="top-right"
       closeButton={true}
       icons={{
         success: <CircleCheckIcon className="size-4" />,
@@ -25,6 +25,16 @@ const Toaster = ({ ...props }: ToasterProps) => {
         warning: <TriangleAlertIcon className="size-4" />,
         error: <OctagonXIcon className="size-4" />,
         loading: <Loader2Icon className="size-4 animate-spin" />,
+      }}
+      toastOptions={{
+        classNames: {
+          toast: "toast-custom",
+          closeButton: "toast-close-button",
+          success: "toast-success",
+          error: "toast-error",
+          warning: "toast-warning",
+          info: "toast-info",
+        },
       }}
       style={
         {
