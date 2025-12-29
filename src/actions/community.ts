@@ -16,6 +16,7 @@ import type {
   AcceptAnswerResponse,
   GenerateContentRequest,
   GenerateContentResponse,
+  GalleryResponse,
 } from "@/types/community";
 import { apiClient, handleApiError, type ApiResponse } from "@/lib/axios";
 
@@ -350,5 +351,83 @@ export async function generateContentAction(
     };
   } catch (error) {
     return handleApiError(error, "컨텐츠 생성에 실패했습니다.");
+  }
+}
+
+/**
+ * 게시글 고정
+ */
+export async function pinPostAction(
+  postId: number,
+  accessToken: string
+): Promise<ApiResponse> {
+  try {
+    await apiClient.post(
+      `/community/posts/${postId}/pin`,
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+
+    return {
+      success: true,
+    };
+  } catch (error) {
+    return handleApiError(error, "게시글 고정에 실패했습니다.");
+  }
+}
+
+/**
+ * 게시글 고정 해제
+ */
+export async function unpinPostAction(
+  postId: number,
+  accessToken: string
+): Promise<ApiResponse> {
+  try {
+    await apiClient.post(
+      `/community/posts/${postId}/unpin`,
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+
+    return {
+      success: true,
+    };
+  } catch (error) {
+    return handleApiError(error, "게시글 고정 해제에 실패했습니다.");
+  }
+}
+
+/**
+ * 매장 갤러리 조회
+ */
+export async function getStoreGalleryAction(
+  storeId: number,
+  page: number = 1,
+  pageSize: number = 20
+): Promise<ApiResponse<GalleryResponse>> {
+  try {
+    const response = await apiClient.get<GalleryResponse>("/community/gallery", {
+      params: {
+        store_id: storeId,
+        page,
+        page_size: pageSize,
+      },
+    });
+
+    return {
+      success: true,
+      data: response.data,
+    };
+  } catch (error) {
+    return handleApiError(error, "갤러리 조회에 실패했습니다.");
   }
 }

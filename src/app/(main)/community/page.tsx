@@ -11,8 +11,11 @@ import type {
   PostListResponse,
 } from "@/types/community";
 
+type MainCategory = "market" | "community";
+
 function CommunityPageContent() {
   const searchParams = useSearchParams();
+  const [mainCategory, setMainCategory] = useState<MainCategory>("market");
   const [selectedCategory, setSelectedCategory] =
     useState<PostCategory>("gold_trade");
   const [selectedType, setSelectedType] = useState<PostType | undefined>(
@@ -22,7 +25,6 @@ function CommunityPageContent() {
     "latest"
   );
   const [currentPage, setCurrentPage] = useState(1);
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
   const { user } = useAuthStore();
 
@@ -169,6 +171,17 @@ function CommunityPageContent() {
     fetchFAQ();
   }, [selectedCategory, selectedType]);
 
+  const handleMainCategoryChange = (category: MainCategory) => {
+    setMainCategory(category);
+    if (category === "market") {
+      setSelectedCategory("gold_trade");
+    } else {
+      setSelectedCategory("gold_news");
+    }
+    setSelectedType(undefined);
+    setCurrentPage(1);
+  };
+
   const handleCategoryChange = (category: PostCategory) => {
     setSelectedCategory(category);
     setSelectedType(undefined);
@@ -176,20 +189,24 @@ function CommunityPageContent() {
   };
 
   const getWriteButtonText = () => {
-    if (selectedCategory === "gold_trade") return "판매 글 쓰기";
+    if (mainCategory === "market") return "판매 글 쓰기";
     if (selectedCategory === "gold_news") return "글쓰기";
     return "Q&A 작성";
   };
 
+  const getMainTitle = () => {
+    return mainCategory === "market" ? "금시장" : "금소식";
+  };
+
   const getSubtitle = () => {
-    if (selectedCategory === "gold_trade") {
+    if (mainCategory === "market") {
       return "내가 가진 금을 올리면 주변 금은방에서 매입 문의를 보낼 수 있어요.";
     }
-    if (selectedCategory === "gold_news") {
-      return "금 시세, 매입 팁, 세공 후기 등 금 관련 이야기를 나눠보세요.";
-    }
-    return "금에 대해 궁금한 점을 질문하고 답변을 받아보세요.";
+    return "금 시세, 매입 팁, 세공 후기 등 금 관련 이야기를 나눠보세요.";
   };
+
+  // 뷰 모드 결정 (금시장=그리드, 금소식=리스트)
+  const viewMode = mainCategory === "market" ? "grid" : "list";
 
   return (
     <div className="min-h-screen bg-white">
@@ -198,15 +215,15 @@ function CommunityPageContent() {
         <div className="max-w-[1200px] mx-auto">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-6">
             <div>
-              <h1 className="text-[32px] md:text-[40px] font-bold leading-tight tracking-[-0.02em] text-gray-900 mb-2">
+              <h1 className="text-[24px] sm:text-[32px] md:text-[40px] font-bold leading-tight tracking-[-0.02em] text-gray-900 mb-2">
                 금광산
               </h1>
-              <p className="text-[16px] text-gray-500">{getSubtitle()}</p>
+              <p className="text-[16px] text-gray-600">{getSubtitle()}</p>
             </div>
             {user && (
               <Link
                 href="/community/write"
-                className="px-6 py-3.5 bg-gray-900 hover:bg-gray-800 text-white text-[15px] font-semibold rounded-xl transition-all flex items-center gap-2 shadow-sm"
+                className="px-6 py-3.5 bg-gray-900 hover:bg-gray-800 text-white text-[15px] font-semibold rounded-xl transition-colors duration-200 flex items-center gap-2 shadow-sm"
               >
                 <svg
                   className="w-5 h-5"
@@ -226,51 +243,41 @@ function CommunityPageContent() {
             )}
           </div>
 
-          {/* Category Tabs */}
-          <div className="flex gap-3 mb-6">
+          {/* Main Category Toggle - 큰 토글 스위치 */}
+          <div className="mb-6 inline-flex bg-white rounded-2xl p-2 border-2 border-gray-200 shadow-sm">
             <button
-              onClick={() => handleCategoryChange("gold_trade")}
-              className={`px-6 py-3 text-[16px] font-semibold rounded-xl transition-all ${
-                selectedCategory === "gold_trade"
-                  ? "bg-gray-900 text-white shadow-sm"
-                  : "bg-white border-2 border-gray-200 text-gray-700 hover:border-gray-300"
+              onClick={() => handleMainCategoryChange("market")}
+              className={`px-8 py-3 text-[18px] font-bold rounded-xl transition-all duration-200 ${
+                mainCategory === "market"
+                  ? "bg-yellow-400 text-gray-900 shadow-md"
+                  : "text-gray-500 hover:text-gray-700"
               }`}
             >
-              금거래
+              🏪 금시장
             </button>
             <button
-              onClick={() => handleCategoryChange("gold_news")}
-              className={`px-6 py-3 text-[16px] font-semibold rounded-xl transition-all ${
-                selectedCategory === "gold_news"
-                  ? "bg-gray-900 text-white shadow-sm"
-                  : "bg-white border-2 border-gray-200 text-gray-700 hover:border-gray-300"
+              onClick={() => handleMainCategoryChange("community")}
+              className={`px-8 py-3 text-[18px] font-bold rounded-xl transition-all duration-200 ${
+                mainCategory === "community"
+                  ? "bg-yellow-400 text-gray-900 shadow-md"
+                  : "text-gray-500 hover:text-gray-700"
               }`}
             >
-              금소식
-            </button>
-            <button
-              onClick={() => handleCategoryChange("qna")}
-              className={`px-6 py-3 text-[16px] font-semibold rounded-xl transition-all ${
-                selectedCategory === "qna"
-                  ? "bg-gray-900 text-white shadow-sm"
-                  : "bg-white border-2 border-gray-200 text-gray-700 hover:border-gray-300"
-              }`}
-            >
-              QnA
+              💬 금소식
             </button>
           </div>
 
           {/* Filters */}
           <div className="bg-white rounded-xl p-5 border border-gray-200 space-y-4">
-            {/* Sort and View Mode */}
+            {/* Sort */}
             <div className="flex items-center justify-between mb-4 pb-4 border-b border-gray-100">
               <div className="flex items-center gap-2">
-                <span className="text-[13px] text-gray-500 font-medium mr-2">
+                <span className="text-sm text-gray-600 font-medium mr-2">
                   정렬
                 </span>
                 <button
                   onClick={() => setCurrentSort("latest")}
-                  className={`px-4 py-2 text-[14px] font-medium rounded-lg transition-all ${
+                  className={`px-4 py-2 text-[14px] font-medium rounded-lg transition-colors duration-200 ${
                     currentSort === "latest"
                       ? "bg-gray-900 text-white"
                       : "bg-gray-100 text-gray-700 hover:bg-gray-200"
@@ -280,7 +287,7 @@ function CommunityPageContent() {
                 </button>
                 <button
                   onClick={() => setCurrentSort("popular")}
-                  className={`px-4 py-2 text-[14px] font-medium rounded-lg transition-all ${
+                  className={`px-4 py-2 text-[14px] font-medium rounded-lg transition-colors duration-200 ${
                     currentSort === "popular"
                       ? "bg-gray-900 text-white"
                       : "bg-gray-100 text-gray-700 hover:bg-gray-200"
@@ -289,48 +296,18 @@ function CommunityPageContent() {
                   인기순
                 </button>
               </div>
-
-              {/* View Mode Toggle */}
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setViewMode("grid")}
-                  className={`p-2 rounded-lg transition-all ${
-                    viewMode === "grid"
-                      ? "bg-gray-900 text-white"
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                  }`}
-                  title="블럭뷰"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
-                  </svg>
-                </button>
-                <button
-                  onClick={() => setViewMode("list")}
-                  className={`p-2 rounded-lg transition-all ${
-                    viewMode === "list"
-                      ? "bg-gray-900 text-white"
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                  }`}
-                  title="리스트뷰"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 010 3.75H5.625a1.875 1.875 0 010-3.75z" />
-                  </svg>
-                </button>
-              </div>
             </div>
 
-            {/* Type Filters - 금거래 */}
-            {selectedCategory === "gold_trade" && (
+            {/* Type Filters - 금시장 */}
+            {mainCategory === "market" && (
               <div className="flex items-start gap-2">
-                <span className="text-[13px] text-gray-500 font-medium mr-2 pt-2">
+                <span className="text-sm text-gray-600 font-medium mr-2 pt-2">
                   유형
                 </span>
                 <div className="flex flex-wrap gap-2">
                   <button
                     onClick={() => setSelectedType(undefined)}
-                    className={`px-4 py-2 text-[14px] font-medium rounded-lg transition-all ${
+                    className={`px-4 py-2 text-[14px] font-medium rounded-lg transition-colors duration-200 ${
                       !selectedType
                         ? "bg-gray-900 text-white"
                         : "bg-gray-100 text-gray-700 hover:bg-gray-200"
@@ -340,7 +317,7 @@ function CommunityPageContent() {
                   </button>
                   <button
                     onClick={() => setSelectedType("sell_gold")}
-                    className={`px-4 py-2 text-[14px] font-medium rounded-lg transition-all ${
+                    className={`px-4 py-2 text-[14px] font-medium rounded-lg transition-colors duration-200 ${
                       selectedType === "sell_gold"
                         ? "bg-gray-900 text-white"
                         : "bg-gray-100 text-gray-700 hover:bg-gray-200"
@@ -350,7 +327,7 @@ function CommunityPageContent() {
                   </button>
                   <button
                     onClick={() => setSelectedType("buy_gold")}
-                    className={`px-4 py-2 text-[14px] font-medium rounded-lg transition-all ${
+                    className={`px-4 py-2 text-[14px] font-medium rounded-lg transition-colors duration-200 ${
                       selectedType === "buy_gold"
                         ? "bg-gray-900 text-white"
                         : "bg-gray-100 text-gray-700 hover:bg-gray-200"
@@ -362,16 +339,47 @@ function CommunityPageContent() {
               </div>
             )}
 
-            {/* Type Filters - 금소식 */}
+            {/* Type Filters - 금소식 (커뮤니티) */}
+            {mainCategory === "community" && (
+              <div className="flex items-start gap-2">
+                <span className="text-sm text-gray-600 font-medium mr-2 pt-2">
+                  카테고리
+                </span>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={() => handleCategoryChange("gold_news")}
+                    className={`px-4 py-2 text-[14px] font-medium rounded-lg transition-colors duration-200 ${
+                      selectedCategory === "gold_news"
+                        ? "bg-gray-900 text-white"
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    }`}
+                  >
+                    금소식
+                  </button>
+                  <button
+                    onClick={() => handleCategoryChange("qna")}
+                    className={`px-4 py-2 text-[14px] font-medium rounded-lg transition-colors duration-200 ${
+                      selectedCategory === "qna"
+                        ? "bg-gray-900 text-white"
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    }`}
+                  >
+                    Q&A
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Sub Type Filters - 금소식 */}
             {selectedCategory === "gold_news" && (
               <div className="flex items-start gap-2">
-                <span className="text-[13px] text-gray-500 font-medium mr-2 pt-2">
+                <span className="text-sm text-gray-600 font-medium mr-2 pt-2">
                   유형
                 </span>
                 <div className="flex flex-wrap gap-2">
                   <button
                     onClick={() => setSelectedType(undefined)}
-                    className={`px-4 py-2 text-[14px] font-medium rounded-lg transition-all ${
+                    className={`px-4 py-2 text-[14px] font-medium rounded-lg transition-colors duration-200 ${
                       !selectedType
                         ? "bg-gray-900 text-white"
                         : "bg-gray-100 text-gray-700 hover:bg-gray-200"
@@ -381,7 +389,7 @@ function CommunityPageContent() {
                   </button>
                   <button
                     onClick={() => setSelectedType("product_news")}
-                    className={`px-4 py-2 text-[14px] font-medium rounded-lg transition-all ${
+                    className={`px-4 py-2 text-[14px] font-medium rounded-lg transition-colors duration-200 ${
                       selectedType === "product_news"
                         ? "bg-gray-900 text-white"
                         : "bg-gray-100 text-gray-700 hover:bg-gray-200"
@@ -391,7 +399,7 @@ function CommunityPageContent() {
                   </button>
                   <button
                     onClick={() => setSelectedType("store_news")}
-                    className={`px-4 py-2 text-[14px] font-medium rounded-lg transition-all ${
+                    className={`px-4 py-2 text-[14px] font-medium rounded-lg transition-colors duration-200 ${
                       selectedType === "store_news"
                         ? "bg-gray-900 text-white"
                         : "bg-gray-100 text-gray-700 hover:bg-gray-200"
@@ -401,7 +409,7 @@ function CommunityPageContent() {
                   </button>
                   <button
                     onClick={() => setSelectedType("other")}
-                    className={`px-4 py-2 text-[14px] font-medium rounded-lg transition-all ${
+                    className={`px-4 py-2 text-[14px] font-medium rounded-lg transition-colors duration-200 ${
                       selectedType === "other"
                         ? "bg-gray-900 text-white"
                         : "bg-gray-100 text-gray-700 hover:bg-gray-200"
@@ -416,13 +424,13 @@ function CommunityPageContent() {
             {/* Type Filters - QnA */}
             {selectedCategory === "qna" && (
               <div className="flex items-start gap-2">
-                <span className="text-[13px] text-gray-500 font-medium mr-2 pt-2">
+                <span className="text-sm text-gray-600 font-medium mr-2 pt-2">
                   유형
                 </span>
                 <div className="flex flex-wrap gap-2">
                   <button
                     onClick={() => setSelectedType(undefined)}
-                    className={`px-4 py-2 text-[14px] font-medium rounded-lg transition-all ${
+                    className={`px-4 py-2 text-[14px] font-medium rounded-lg transition-colors duration-200 ${
                       !selectedType
                         ? "bg-gray-900 text-white"
                         : "bg-gray-100 text-gray-700 hover:bg-gray-200"
@@ -432,7 +440,7 @@ function CommunityPageContent() {
                   </button>
                   <button
                     onClick={() => setSelectedType("question")}
-                    className={`px-4 py-2 text-[14px] font-medium rounded-lg transition-all ${
+                    className={`px-4 py-2 text-[14px] font-medium rounded-lg transition-colors duration-200 ${
                       selectedType === "question"
                         ? "bg-gray-900 text-white"
                         : "bg-gray-100 text-gray-700 hover:bg-gray-200"
@@ -491,7 +499,7 @@ function CommunityPageContent() {
           {isLoading && (
             <div className="text-center py-12">
               <div className="inline-block w-8 h-8 border-4 border-gray-200 border-t-gray-900 rounded-full animate-spin"></div>
-              <p className="text-gray-500 text-[14px] mt-4">불러오는 중...</p>
+              <p className="text-gray-600 text-[14px] mt-4">불러오는 중...</p>
             </div>
           )}
 
@@ -541,7 +549,7 @@ function CommunityPageContent() {
                     <Link
                       key={post.id}
                       href={`/community/posts/${post.id}`}
-                      className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all hover:-translate-y-1 border border-gray-100"
+                      className="bg-white rounded-2xl overflow-hidden shadow-sm md:hover:shadow-md transition-shadow duration-200 border border-gray-100"
                     >
                       {/* Thumbnail */}
                       {post.image_urls && post.image_urls.length > 0 ? (
@@ -580,7 +588,7 @@ function CommunityPageContent() {
                         <div className="flex items-center justify-between pt-4 border-t border-gray-100">
                           <div className="flex items-center gap-2">
                             <div className="w-8 h-8 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-full flex items-center justify-center">
-                              <span className="text-[11px] font-bold text-white">
+                              <span className="text-xs font-bold text-white">
                                 {(() => {
                                   const authorName =
                                     post.user.role === "admin"
@@ -591,19 +599,19 @@ function CommunityPageContent() {
                               </span>
                             </div>
                             <div className="flex flex-col">
-                              <span className="text-[12px] font-medium text-gray-900">
+                              <span className="text-sm font-medium text-gray-900">
                                 {post.user.role === "admin"
                                   ? post.store?.name || post.user.nickname
                                   : post.user.nickname}
                               </span>
-                              <span className="text-[11px] text-gray-400">
+                              <span className="text-xs text-gray-500">
                                 {new Date(post.created_at).toLocaleDateString()}
                               </span>
                             </div>
                           </div>
 
                           {/* Stats */}
-                          <div className="flex items-center gap-3 text-[12px] text-gray-400">
+                          <div className="flex items-center gap-3 text-sm text-gray-500">
                             <span className="flex items-center gap-1">
                               <svg
                                 className="w-4 h-4"
@@ -649,7 +657,7 @@ function CommunityPageContent() {
                     <Link
                       key={post.id}
                       href={`/community/posts/${post.id}`}
-                      className="block bg-white rounded-xl shadow-sm hover:shadow-md transition-all border border-gray-100 p-4"
+                      className="block bg-white rounded-xl shadow-sm md:hover:shadow-md transition-shadow duration-200 border border-gray-100 p-4"
                     >
                       {/* Title */}
                       <h3 className="text-[18px] font-bold text-gray-900 mb-2 line-clamp-1">
@@ -665,7 +673,7 @@ function CommunityPageContent() {
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <div className="w-7 h-7 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-full flex items-center justify-center">
-                            <span className="text-[11px] font-bold text-white">
+                            <span className="text-xs font-bold text-white">
                               {(() => {
                                 const authorName =
                                   post.user.role === "admin"
@@ -675,18 +683,18 @@ function CommunityPageContent() {
                               })()}
                             </span>
                           </div>
-                          <span className="text-[13px] font-medium text-gray-700">
+                          <span className="text-sm font-medium text-gray-700">
                             {post.user.role === "admin"
                               ? post.store?.name || post.user.nickname
                               : post.user.nickname}
                           </span>
-                          <span className="text-[13px] text-gray-400">
+                          <span className="text-sm text-gray-500">
                             {new Date(post.created_at).toLocaleDateString()}
                           </span>
                         </div>
 
                         {/* Stats */}
-                        <div className="flex items-center gap-3 text-[13px] text-gray-400">
+                        <div className="flex items-center gap-3 text-sm text-gray-500">
                           <span className="flex items-center gap-1">
                             <svg
                               className="w-4 h-4"

@@ -11,7 +11,7 @@ import { logoutUserAction } from "@/actions/auth";
 import { getChatRoomsAction } from "@/actions/chat";
 import { useWebSocket } from "@/hooks/useWebSocket";
 import { toast } from "sonner";
-import { User, Settings, LogOut, ChevronDown, MapPin } from "lucide-react";
+import { User, Settings, LogOut, ChevronDown, MapPin, Menu, X } from "lucide-react";
 import LocationSettingModal from "@/components/LocationSettingModal";
 import {
   Tooltip,
@@ -28,6 +28,7 @@ export function Header() {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [unreadChatCount, setUnreadChatCount] = useState(0);
 
   // user.address로 초기화 (currentLocation이 없을 때만)
@@ -82,8 +83,11 @@ export function Header() {
   }, [fetchUnreadCount]);
 
   // WebSocket으로 실시간 메시지 수신
+  const wsProtocol = process.env.NEXT_PUBLIC_API_BASE_URL?.startsWith('https') ? 'wss' : 'ws';
+  const wsBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/^https?:\/\//, '') || '43.200.249.22:8080';
+
   useWebSocket({
-    url: `ws://43.200.249.22:8080/api/v1/chats/ws`,
+    url: `${wsProtocol}://${wsBaseUrl}/api/v1/chats/ws`,
     token: tokens?.access_token || "",
     onMessage: handleWebSocketMessage,
   });
@@ -172,6 +176,16 @@ export function Header() {
 
         {/* 우측 영역 */}
         <div className="flex items-center gap-3">
+          {/* 모바일 햄버거 메뉴 버튼 */}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="md:hidden text-gray-700"
+          >
+            {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </Button>
+
           {!isAuthenticated ? (
             // 비로그인 상태
             <div className="flex items-center gap-3">
@@ -278,6 +292,73 @@ export function Header() {
           )}
         </div>
       </div>
+
+      {/* 모바일 메뉴 */}
+      {isMobileMenuOpen && (
+        <>
+          {/* 배경 오버레이 */}
+          <div
+            className="fixed inset-0 bg-black/50 z-40 md:hidden"
+            onClick={() => setIsMobileMenuOpen(false)}
+          />
+
+          {/* 슬라이드 메뉴 */}
+          <div className="fixed top-[60px] left-0 right-0 bg-white border-b border-gray-200 z-50 md:hidden animate-in slide-in-from-top duration-200">
+            <nav className="px-5 py-4 space-y-1">
+              <Link
+                href="/prices"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="block px-4 py-3.5 text-[15px] font-medium text-gray-700 hover:bg-gray-50 rounded-lg active:bg-gray-100 transition-colors"
+              >
+                금시세
+              </Link>
+              <Link
+                href="/stores"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="block px-4 py-3.5 text-[15px] font-medium text-gray-700 hover:bg-gray-50 rounded-lg active:bg-gray-100 transition-colors"
+              >
+                매장찾기
+              </Link>
+              <Link
+                href="/community"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="block px-4 py-3.5 text-[15px] font-medium text-gray-700 hover:bg-gray-50 rounded-lg active:bg-gray-100 transition-colors"
+              >
+                금광산
+              </Link>
+              {isAuthenticated && (
+                <Link
+                  href="/chats"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="block px-4 py-3.5 text-[15px] font-medium text-gray-700 hover:bg-gray-50 rounded-lg active:bg-gray-100 transition-colors relative"
+                >
+                  <div className="flex items-center justify-between">
+                    <span>채팅</span>
+                    {unreadChatCount > 0 && (
+                      <span className="bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
+                        {unreadChatCount > 99 ? "99+" : unreadChatCount}
+                      </span>
+                    )}
+                  </div>
+                </Link>
+              )}
+
+              {!isAuthenticated && (
+                <>
+                  <div className="border-t border-gray-100 my-2" />
+                  <Link
+                    href="/login"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="block px-4 py-3.5 text-[15px] font-medium text-gray-700 hover:bg-gray-50 rounded-lg active:bg-gray-100 transition-colors"
+                  >
+                    로그인
+                  </Link>
+                </>
+              )}
+            </nav>
+          </div>
+        </>
+      )}
 
       {/* 위치 설정 모달 */}
       <LocationSettingModal

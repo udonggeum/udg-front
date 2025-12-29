@@ -424,8 +424,14 @@ export default function StoresPage() {
   ];
 
   const handleStoreClick = (store: StoreWithExtras) => {
-    setSelectedStore(store);
-    setIsDetailPanelOpen(true);
+    // 모바일에서는 상세 페이지로 바로 이동
+    if (window.innerWidth < 768) {
+      router.push(`/stores/${store.id}`);
+    } else {
+      // PC에서는 우측 패널 열기
+      setSelectedStore(store);
+      setIsDetailPanelOpen(true);
+    }
   };
 
   const closeDetailPanel = () => {
@@ -501,6 +507,30 @@ export default function StoresPage() {
         <div className="w-full md:w-[420px] lg:w-[480px] flex-shrink-0 border-r border-gray-100 flex flex-col bg-white">
           {/* 검색 영역 */}
           <div className="p-5 border-b border-gray-100">
+            {/* 모바일 리스트/지도 탭 */}
+            <div className="md:hidden flex gap-2 mb-4">
+              <button
+                onClick={() => setIsMobileMapOpen(false)}
+                className={`flex-1 py-2.5 text-sm font-semibold rounded-lg transition-colors ${
+                  !isMobileMapOpen
+                    ? "bg-gray-900 text-white"
+                    : "bg-gray-100 text-gray-600"
+                }`}
+              >
+                리스트
+              </button>
+              <button
+                onClick={() => setIsMobileMapOpen(true)}
+                className={`flex-1 py-2.5 text-sm font-semibold rounded-lg transition-colors ${
+                  isMobileMapOpen
+                    ? "bg-gray-900 text-white"
+                    : "bg-gray-100 text-gray-600"
+                }`}
+              >
+                지도
+              </button>
+            </div>
+
             {/* 검색바 */}
             <form onSubmit={handleSearch}>
               <div className="bg-gray-100 rounded-xl p-1 flex items-center transition-all duration-200 mb-4">
@@ -549,10 +579,10 @@ export default function StoresPage() {
                   key={tag.id}
                   type="button"
                   onClick={() => setSelectedFilter(tag.id)}
-                  className={`px-4 py-2 text-[13px] font-medium rounded-full border whitespace-nowrap transition-all duration-200 ${
+                  className={`px-4 py-2.5 min-h-[44px] text-[13px] font-medium rounded-full border whitespace-nowrap transition-all duration-200 ${
                     selectedFilter === tag.id
-                      ? "bg-gray-900 text-white border-gray-900"
-                      : "bg-white text-gray-600 border-gray-200 hover:border-gray-400"
+                      ? "bg-gray-900 text-white border-gray-900 active:bg-gray-800"
+                      : "bg-white text-gray-600 border-gray-200 hover:border-gray-400 active:bg-gray-50"
                   }`}
                 >
                   {tag.label}
@@ -561,8 +591,10 @@ export default function StoresPage() {
             </div>
           </div>
 
-          {/* 결과 헤더 */}
-          <div className="px-5 py-4 flex items-center justify-between border-b border-gray-50">
+          {/* 결과 헤더 - 모바일에서 리스트 탭일 때만 표시 */}
+          <div className={`px-5 py-4 flex items-center justify-between border-b border-gray-50 ${
+            isMobileMapOpen ? "hidden md:flex" : "flex"
+          }`}>
             <div className="flex items-center gap-2">
               <span className="text-[14px] text-gray-500">검색결과</span>
               <span className="text-[14px] font-bold text-gray-900">{filteredStores.length}</span>
@@ -589,8 +621,10 @@ export default function StoresPage() {
             </div>
           </div>
 
-          {/* 매장 리스트 */}
-          <div className="flex-1 overflow-y-auto">
+          {/* 매장 리스트 - 모바일에서 리스트 탭일 때만 표시 */}
+          <div className={`flex-1 overflow-y-auto ${
+            isMobileMapOpen ? "hidden md:block" : "block"
+          }`}>
             {isLoading ? (
               <div className="flex items-center justify-center py-20">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
@@ -602,7 +636,7 @@ export default function StoresPage() {
                 <p className="text-[14px] text-gray-500 mb-4">{error}</p>
                 <button
                   onClick={() => window.location.reload()}
-                  className="px-4 py-2 bg-gray-900 hover:bg-gray-800 text-white text-[14px] font-semibold rounded-lg"
+                  className="px-4 py-3 min-h-[44px] bg-gray-900 hover:bg-gray-800 active:bg-gray-700 text-white text-[14px] font-semibold rounded-lg"
                 >
                   다시 시도
                 </button>
@@ -693,8 +727,10 @@ export default function StoresPage() {
           </div>
         </div>
 
-        {/* 지도 영역 (중앙) - Kakao Map */}
-        <div className="hidden md:flex flex-1 relative">
+        {/* 지도 영역 (중앙) - Kakao Map - 모바일에서 지도 탭일 때 표시 */}
+        <div className={`flex-1 relative ${
+          isMobileMapOpen ? "flex" : "hidden md:flex"
+        }`}>
           <StoreMap
             stores={filteredStores.map((store) => ({
               id: store.id,
@@ -858,60 +894,6 @@ export default function StoresPage() {
             </div>
           )}
         </div>
-
-        {/* 모바일 "지도로 보기" 플로팅 버튼 */}
-        <button
-          onClick={() => setIsMobileMapOpen(true)}
-          className="md:hidden fixed bottom-6 right-6 w-14 h-14 bg-gray-900 hover:bg-gray-800 text-white rounded-full shadow-xl flex items-center justify-center z-50 transition-all duration-200 hover:scale-110"
-        >
-          <MapPin className="w-6 h-6" />
-        </button>
-
-        {/* 모바일 풀스크린 지도 모달 */}
-        {isMobileMapOpen && (
-          <div className="md:hidden fixed inset-0 top-[60px] bg-white z-50">
-            {/* 헤더 */}
-            <div className="absolute top-0 left-0 right-0 bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between z-10 shadow-sm">
-              <h3 className="text-[16px] font-semibold text-gray-900">
-                지도에서 매장 찾기
-              </h3>
-              <button
-                onClick={() => setIsMobileMapOpen(false)}
-                className="w-8 h-8 flex items-center justify-center text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            {/* 지도 */}
-            <div className="w-full h-full pt-14">
-              <StoreMap
-                stores={filteredStores.map((store) => ({
-                  id: store.id,
-                  name: store.name,
-                  lat: store.lat || 37.5665,
-                  lng: store.lng || 126.978,
-                  isOpen: store.isOpen,
-                  tags: store.tags,
-                  distance: store.distance,
-                  address: store.address,
-                }))}
-                selectedStoreId={selectedStore?.id}
-                onStoreClick={handleMapStoreClick}
-                center={userLocation || mapCenter}
-                onCenterChange={setMapCenter}
-              />
-            </div>
-
-            {/* 현재 위치 버튼 (모바일용) */}
-            <button
-              onClick={getCurrentLocation}
-              className="absolute bottom-24 right-6 w-12 h-12 bg-white border-2 border-gray-200 rounded-full shadow-lg flex items-center justify-center hover:bg-gray-50 transition-colors"
-            >
-              <MapPin className="w-5 h-5 text-blue-500" />
-            </button>
-          </div>
-        )}
       </div>
     </>
   );

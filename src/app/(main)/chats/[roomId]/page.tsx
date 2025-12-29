@@ -51,10 +51,9 @@ export default function ChatRoomPage() {
   }, []);
 
   // WebSocket connection
-  const wsUrl = process.env.NEXT_PUBLIC_WS_URL ||
-    (typeof window !== 'undefined' && window.location.protocol === 'https:'
-      ? 'wss://udg.co.kr/api/v1/chats/ws'
-      : 'ws://43.200.249.22:8080/api/v1/chats/ws');
+  const wsProtocol = process.env.NEXT_PUBLIC_API_BASE_URL?.startsWith('https') ? 'wss' : 'ws';
+  const wsBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/^https?:\/\//, '') || '43.200.249.22:8080';
+  const wsUrl = `${wsProtocol}://${wsBaseUrl}/api/v1/chats/ws`;
 
   const { isConnected, sendMessage } = useWebSocket({
     url: wsUrl,
@@ -657,7 +656,7 @@ export default function ChatRoomPage() {
               <h2 className="font-semibold text-gray-900">
                 {getDisplayName(otherUser)}
               </h2>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-gray-600">
                 {room && getChatTypeLabel(room.type)}
               </p>
             </div>
@@ -691,7 +690,7 @@ export default function ChatRoomPage() {
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-yellow-400 text-sm"
             />
             {searchKeyword && (
-              <div className="mt-2 text-xs text-gray-500">
+              <div className="mt-2 text-xs text-gray-600">
                 {filteredMessages.length}개의 메시지 검색됨
               </div>
             )}
@@ -702,7 +701,7 @@ export default function ChatRoomPage() {
       {/* Messages */}
       <div className="flex-1 overflow-y-auto py-4 space-y-3">
         {filteredMessages.length === 0 ? (
-          <div className="text-center py-16 text-gray-500">
+          <div className="text-center py-16 text-gray-600">
             <p>{searchKeyword ? "검색 결과가 없습니다." : "메시지를 입력해 대화를 시작하세요."}</p>
           </div>
         ) : (
@@ -738,7 +737,7 @@ export default function ChatRoomPage() {
                 )}
 
                 <div
-                  className={`group max-w-[70%] rounded-2xl px-4 py-2.5 relative ${
+                  className={`group max-w-[85%] sm:max-w-[70%] rounded-2xl px-4 py-2.5 relative ${
                     isMine
                       ? isFailed
                         ? "bg-red-100 text-gray-900"
@@ -821,7 +820,7 @@ export default function ChatRoomPage() {
                             {highlightText(message.content, searchKeyword)}
                           </p>
                           {message.is_edited && !message.is_deleted && (
-                            <span className="text-xs text-gray-500 ml-1">(수정됨)</span>
+                            <span className="text-xs text-gray-600 ml-1">(수정됨)</span>
                           )}
                         </div>
                       )}
@@ -850,11 +849,11 @@ export default function ChatRoomPage() {
 
                   <div
                     className={`flex items-center gap-1 mt-1 text-xs ${
-                      isMine ? "text-gray-700" : "text-gray-500"
+                      isMine ? "text-gray-700" : "text-gray-600"
                     }`}
                   >
                     {isPending ? (
-                      <span className="text-gray-500">전송 중...</span>
+                      <span className="text-gray-600">전송 중...</span>
                     ) : (
                       <>
                         <span>
@@ -911,7 +910,7 @@ export default function ChatRoomPage() {
               )}
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium truncate">{selectedFile.name}</p>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-gray-600">
                   {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
                 </p>
               </div>

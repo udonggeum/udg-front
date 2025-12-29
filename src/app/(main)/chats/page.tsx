@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { getChatRoomsAction, leaveChatRoomAction } from "@/actions/chat";
 import { useApiErrorHandler } from "@/hooks/useApiCall";
-import type { ChatRoomWithUnread } from "@/types/chat";
+import type { ChatRoomWithUnread, ChatRoomType } from "@/types/chat";
 import { MessageCircle, User, Store, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
@@ -22,6 +22,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 
+type ChatFilter = "all" | "STORE" | "GOLD_TRADE";
+
 export default function ChatsPage() {
   const router = useRouter();
   const { user, tokens, isAuthenticated } = useAuthStore();
@@ -30,6 +32,7 @@ export default function ChatsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [deleteRoomId, setDeleteRoomId] = useState<number | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [selectedFilter, setSelectedFilter] = useState<ChatFilter>("all");
 
   useEffect(() => {
     if (!isAuthenticated || !tokens?.access_token) {
@@ -121,6 +124,19 @@ export default function ChatsPage() {
     setDeleteRoomId(null);
   };
 
+  // 필터링된 채팅방 목록
+  const filteredRooms = rooms.filter((room) => {
+    if (selectedFilter === "all") return true;
+    return room.type === selectedFilter;
+  });
+
+  // 각 타입별 개수 계산
+  const roomCounts = {
+    all: rooms.length,
+    STORE: rooms.filter((r) => r.type === "STORE").length,
+    GOLD_TRADE: rooms.filter((r) => r.type === "GOLD_TRADE").length,
+  };
+
   if (isLoading) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-8">
@@ -145,14 +161,73 @@ export default function ChatsPage() {
         </p>
       </div>
 
+      {/* 필터 탭 */}
+      <div className="mb-6 bg-white rounded-xl border border-gray-200 p-1 inline-flex gap-1">
+        <button
+          onClick={() => setSelectedFilter("all")}
+          className={`px-4 py-2.5 text-sm font-semibold rounded-lg transition-all duration-200 ${
+            selectedFilter === "all"
+              ? "bg-gray-900 text-white shadow-sm"
+              : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+          }`}
+        >
+          전체
+          {roomCounts.all > 0 && (
+            <span className={`ml-2 ${selectedFilter === "all" ? "text-gray-300" : "text-gray-400"}`}>
+              {roomCounts.all}
+            </span>
+          )}
+        </button>
+        <button
+          onClick={() => setSelectedFilter("STORE")}
+          className={`px-4 py-2.5 text-sm font-semibold rounded-lg transition-all duration-200 flex items-center gap-2 ${
+            selectedFilter === "STORE"
+              ? "bg-gray-900 text-white shadow-sm"
+              : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+          }`}
+        >
+          <Store className="w-4 h-4" />
+          매장 문의
+          {roomCounts.STORE > 0 && (
+            <span className={`ml-1 ${selectedFilter === "STORE" ? "text-gray-300" : "text-gray-400"}`}>
+              {roomCounts.STORE}
+            </span>
+          )}
+        </button>
+        <button
+          onClick={() => setSelectedFilter("GOLD_TRADE")}
+          className={`px-4 py-2.5 text-sm font-semibold rounded-lg transition-all duration-200 flex items-center gap-2 ${
+            selectedFilter === "GOLD_TRADE"
+              ? "bg-gray-900 text-white shadow-sm"
+              : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+          }`}
+        >
+          <MessageCircle className="w-4 h-4" />
+          금거래 문의
+          {roomCounts.GOLD_TRADE > 0 && (
+            <span className={`ml-1 ${selectedFilter === "GOLD_TRADE" ? "text-gray-300" : "text-gray-400"}`}>
+              {roomCounts.GOLD_TRADE}
+            </span>
+          )}
+        </button>
+      </div>
+
       {rooms.length === 0 ? (
         <div className="text-center py-16">
           <MessageCircle className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-          <p className="text-gray-500">아직 채팅 내역이 없습니다.</p>
+          <p className="text-gray-600">아직 채팅 내역이 없습니다.</p>
+        </div>
+      ) : filteredRooms.length === 0 ? (
+        <div className="text-center py-16">
+          <MessageCircle className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+          <p className="text-gray-600">
+            {selectedFilter === "STORE" && "매장 문의 채팅이 없습니다."}
+            {selectedFilter === "GOLD_TRADE" && "금거래 문의 채팅이 없습니다."}
+          </p>
         </div>
       ) : (
         <div className="space-y-3">
-          {rooms.map((room) => {
+          {filteredRooms.map((room) => {
             const otherUser = getOtherUser(room);
             const unreadCount =
               user?.id === room.user1_id
@@ -162,7 +237,7 @@ export default function ChatsPage() {
             return (
               <div
                 key={room.id}
-                className="relative w-full bg-white rounded-lg border border-gray-200 hover:border-yellow-400 hover:shadow-md transition-all"
+                className="relative w-full bg-white rounded-lg border border-gray-200 md:hover:border-yellow-400 md:hover:shadow-md transition-shadow duration-200"
               >
                 <button
                   onClick={() => router.push(`/chats/${room.id}`)}
@@ -185,7 +260,7 @@ export default function ChatsPage() {
                           {getDisplayName(otherUser)}
                         </h3>
                         {room.last_message_at && (
-                          <span className="text-xs text-gray-500 flex-shrink-0 ml-2">
+                          <span className="text-xs text-gray-600 flex-shrink-0 ml-2">
                             {formatTime(room.last_message_at)}
                           </span>
                         )}
@@ -203,7 +278,7 @@ export default function ChatsPage() {
                       </div>
 
                       <div className="flex items-center gap-2 mt-1">
-                        <span className="text-xs text-gray-500">
+                        <span className="text-xs text-gray-600">
                           {getChatTypeLabel(room.type)}
                         </span>
                       </div>

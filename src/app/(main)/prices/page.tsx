@@ -143,10 +143,10 @@ export default function PricesPage() {
               <div
                 key={price.type}
                 onClick={() => setSelectedType(price.type)}
-                className={`relative bg-white p-5 rounded-xl cursor-pointer transition-all duration-200 ${
+                className={`relative bg-white p-5 rounded-xl cursor-pointer transition-shadow duration-200 ${
                   isSelected
-                    ? "ring-2 ring-yellow-400 shadow-lg scale-[1.02]"
-                    : "shadow-sm hover:shadow-md hover:scale-[1.01]"
+                    ? "ring-2 ring-yellow-400 shadow-lg"
+                    : "shadow-sm md:hover:shadow-md"
                 }`}
               >
                 {/* 선택 표시 */}

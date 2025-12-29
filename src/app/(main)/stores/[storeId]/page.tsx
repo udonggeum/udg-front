@@ -17,11 +17,19 @@ import {
   X,
   Check,
   MessageCircle,
+  Pin,
+  Image as ImageIcon,
+  Calendar,
+  Eye,
+  ThumbsUp,
+  MessageSquare,
 } from "lucide-react";
 import { getStoreDetailAction, toggleStoreLikeAction } from "@/actions/stores";
 import { getStoreProductsAction } from "@/actions/products";
 import { getTagsAction } from "@/actions/tags";
 import { createChatRoomAction } from "@/actions/chat";
+import { getPostsAction, getStoreGalleryAction, pinPostAction, unpinPostAction } from "@/actions/community";
+import type { CommunityPost, GalleryItem, PostType } from "@/types/community";
 import type { StoreDetail } from "@/types/stores";
 import type { Product } from "@/types/products";
 import type { Tag } from "@/types/tags";
@@ -32,7 +40,119 @@ import { getPresignedUrlAction, uploadToS3 } from "@/actions/upload";
 import { toast } from "sonner";
 import { useAuthenticatedAction } from "@/hooks/useAuthenticatedAction";
 
-type TabType = "products" | "info";
+type TabType = "home" | "news" | "gallery";
+
+// 카카오 지도 컴포넌트
+function KakaoMap({ address, storeName }: { address: string; storeName: string }) {
+  const mapRef = useRef<HTMLDivElement>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    const loadKakaoMap = async () => {
+      try {
+        // 카카오맵 스크립트가 이미 로드되었는지 확인
+        if (window.kakao && window.kakao.maps) {
+          initMap();
+          return;
+        }
+
+        // 카카오맵 스크립트 동적 로드
+        const script = document.createElement('script');
+        script.src = `//dapi.kakao.com/v2/maps/sdk.js?appkey=${process.env.NEXT_PUBLIC_KAKAO_MAP_KEY}&libraries=services&autoload=false`;
+        script.async = true;
+        script.onload = () => {
+          window.kakao.maps.load(() => {
+            initMap();
+          });
+        };
+        script.onerror = () => {
+          setError(true);
+          setIsLoading(false);
+        };
+        document.head.appendChild(script);
+      } catch (err) {
+        setError(true);
+        setIsLoading(false);
+      }
+    };
+
+    const initMap = () => {
+      if (!mapRef.current || !window.kakao || !window.kakao.maps) return;
+
+      const geocoder = new window.kakao.maps.services.Geocoder();
+
+      // 주소로 좌표 검색
+      geocoder.addressSearch(address, (result: any, status: any) => {
+        if (status === window.kakao.maps.services.Status.OK) {
+          const coords = new window.kakao.maps.LatLng(result[0].y, result[0].x);
+
+          // 지도 생성
+          const map = new window.kakao.maps.Map(mapRef.current, {
+            center: coords,
+            level: 3,
+          });
+
+          // 마커 생성
+          const marker = new window.kakao.maps.Marker({
+            map: map,
+            position: coords,
+          });
+
+          // 인포윈도우 생성
+          const infowindow = new window.kakao.maps.InfoWindow({
+            content: `<div style="padding:8px 12px;font-size:13px;font-weight:600;color:#1f2937;">${storeName}</div>`,
+          });
+
+          infowindow.open(map, marker);
+          setIsLoading(false);
+        } else {
+          setError(true);
+          setIsLoading(false);
+        }
+      });
+    };
+
+    loadKakaoMap();
+  }, [address, storeName]);
+
+  if (error) {
+    return (
+      <div className="aspect-square bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
+        <div className="text-center">
+          <MapPin className="w-12 h-12 text-gray-400 mx-auto mb-2" />
+          <a
+            href={`https://map.kakao.com/link/search/${encodeURIComponent(address)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[13px] text-blue-600 hover:underline"
+          >
+            지도에서 보기
+          </a>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative aspect-square">
+      {isLoading && (
+        <div className="absolute inset-0 bg-gray-100 flex items-center justify-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+        </div>
+      )}
+      <div ref={mapRef} className="w-full h-full" />
+      <a
+        href={`https://map.kakao.com/link/map/${encodeURIComponent(storeName)},${address.split(' ')[0]}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="absolute bottom-3 right-3 px-3 py-1.5 bg-white shadow-md rounded-lg text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+      >
+        크게 보기
+      </a>
+    </div>
+  );
+}
 
 function StoreDetailContent({ storeId }: { storeId: number | null }) {
   const router = useRouter();
@@ -43,11 +163,16 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
 
   const [store, setStore] = useState<StoreDetail | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
+  const [posts, setPosts] = useState<CommunityPost[]>([]);
+  const [gallery, setGallery] = useState<GalleryItem[]>([]);
   const [isLoadingStore, setIsLoadingStore] = useState(true);
   const [isLoadingProducts, setIsLoadingProducts] = useState(false);
+  const [isLoadingPosts, setIsLoadingPosts] = useState(false);
+  const [isLoadingGallery, setIsLoadingGallery] = useState(false);
   const [storeError, setStoreError] = useState<string | null>(null);
   const [productsError, setProductsError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<TabType>("products");
+  const [activeTab, setActiveTab] = useState<TabType>("home");
+  const [selectedNewsType, setSelectedNewsType] = useState<PostType | "all">("all");
   const [imageError, setImageError] = useState(false);
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
@@ -160,6 +285,64 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
 
     loadProducts();
   }, [store]);
+
+  // 게시글 목록 로드 (홈 탭과 매장소식 탭에서 사용)
+  useEffect(() => {
+    if (!store || (activeTab !== "home" && activeTab !== "news")) return;
+
+    const loadPosts = async () => {
+      setIsLoadingPosts(true);
+
+      try {
+        const result = await getPostsAction({
+          store_id: store.id,
+          page: 1,
+          page_size: 20,
+          sort_by: "created_at",
+          sort_order: "desc",
+        });
+
+        if (result.success && result.data) {
+          setPosts(result.data.data);
+        } else {
+          setPosts([]);
+        }
+      } catch (err) {
+        console.error("게시글 조회 에러:", err);
+        setPosts([]);
+      } finally {
+        setIsLoadingPosts(false);
+      }
+    };
+
+    loadPosts();
+  }, [store, activeTab]);
+
+  // 갤러리 로드
+  useEffect(() => {
+    if (!store || activeTab !== "gallery") return;
+
+    const loadGallery = async () => {
+      setIsLoadingGallery(true);
+
+      try {
+        const result = await getStoreGalleryAction(store.id, 1, 20);
+
+        if (result.success && result.data) {
+          setGallery(result.data.data);
+        } else {
+          setGallery([]);
+        }
+      } catch (err) {
+        console.error("갤러리 조회 에러:", err);
+        setGallery([]);
+      } finally {
+        setIsLoadingGallery(false);
+      }
+    };
+
+    loadGallery();
+  }, [store, activeTab]);
 
   // 로딩 상태
   if (isLoadingStore) {
@@ -897,71 +1080,478 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
               {/* 탭 네비게이션 */}
               <nav className="border-b border-gray-100 px-6 flex items-center gap-8 overflow-x-auto">
                 <button
-                  onClick={() => setActiveTab("products")}
+                  onClick={() => setActiveTab("home")}
                   className={`relative py-4 text-[15px] font-medium whitespace-nowrap transition-colors ${
-                    activeTab === "products"
+                    activeTab === "home"
                       ? "text-gray-900 font-semibold after:absolute after:bottom-[-1px] after:left-0 after:right-0 after:h-[2px] after:bg-gray-900"
                       : "text-gray-500 hover:text-gray-900"
                   }`}
                 >
-                  상품 목록 {products.length > 0 && `(${products.length})`}
+                  홈
                 </button>
                 <button
-                  onClick={() => setActiveTab("info")}
+                  onClick={() => setActiveTab("news")}
                   className={`relative py-4 text-[15px] font-medium whitespace-nowrap transition-colors ${
-                    activeTab === "info"
+                    activeTab === "news"
                       ? "text-gray-900 font-semibold after:absolute after:bottom-[-1px] after:left-0 after:right-0 after:h-[2px] after:bg-gray-900"
                       : "text-gray-500 hover:text-gray-900"
                   }`}
                 >
-                  매장 정보
+                  매장소식
+                </button>
+                <button
+                  onClick={() => setActiveTab("gallery")}
+                  className={`relative py-4 text-[15px] font-medium whitespace-nowrap transition-colors ${
+                    activeTab === "gallery"
+                      ? "text-gray-900 font-semibold after:absolute after:bottom-[-1px] after:left-0 after:right-0 after:h-[2px] after:bg-gray-900"
+                      : "text-gray-500 hover:text-gray-900"
+                  }`}
+                >
+                  갤러리
                 </button>
               </nav>
 
               {/* 탭 콘텐츠 */}
               <div className="p-6">
-                {activeTab === "products" && (
-                  <div>
-                    {isLoadingProducts ? (
+                {activeTab === "home" && (
+                  <div className="space-y-4">
+                    {isLoadingPosts ? (
                       <div className="flex items-center justify-center py-12">
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
                       </div>
-                    ) : productsError ? (
-                      <div className="p-12 text-center">
-                        <p className="text-gray-500 mb-2">상품을 불러올 수 없습니다</p>
-                        <p className="text-[13px] text-gray-400">{productsError}</p>
-                      </div>
-                    ) : products.length === 0 ? (
-                      <div className="p-12 text-center">
-                        <StoreIcon className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                        <p className="text-gray-500 mb-2">등록된 상품이 없습니다</p>
-                        <p className="text-[13px] text-gray-400">
-                          매장에서 상품을 등록하면 이곳에 표시됩니다
-                        </p>
+                    ) : posts.length === 0 ? (
+                      <div className="text-center py-12">
+                        <p className="text-gray-500">아직 작성된 게시글이 없습니다.</p>
                       </div>
                     ) : (
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                        {products.map((product) => (
-                          <ProductCard key={product.id} product={product} />
+                      <>
+                        {/* 고정된 게시글 */}
+                        {posts.filter(post => post.is_pinned).map((post) => (
+                          <div
+                            key={post.id}
+                            className="group border border-gray-200 rounded-xl p-5 hover:shadow-md transition-shadow cursor-pointer bg-yellow-50 border-yellow-200"
+                            onClick={() => router.push(`/community/${post.id}`)}
+                          >
+                            <div className="flex items-start justify-between gap-3 mb-3">
+                              <div className="flex items-center gap-2">
+                                <Pin className="w-4 h-4 text-yellow-600 fill-yellow-600" />
+                                <span className="text-xs font-medium text-yellow-700">고정됨</span>
+                              </div>
+                              {isMyStore && (
+                                <button
+                                  onClick={async (e) => {
+                                    e.stopPropagation();
+                                    if (!accessToken) return;
+                                    const result = await unpinPostAction(post.id, accessToken);
+                                    if (result.success) {
+                                      setPosts(prev => prev.map(p => p.id === post.id ? { ...p, is_pinned: false } : p));
+                                    }
+                                  }}
+                                  className="opacity-0 group-hover:opacity-100 transition-opacity px-3 py-1.5 text-xs font-medium text-yellow-700 bg-white border border-yellow-300 rounded-lg hover:bg-yellow-50"
+                                >
+                                  고정 해제
+                                </button>
+                              )}
+                            </div>
+
+                            <h3 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-1">
+                              {post.title}
+                            </h3>
+
+                            <p className="text-gray-600 text-sm mb-4 line-clamp-2">
+                              {post.content}
+                            </p>
+
+                            {post.image_urls && post.image_urls.length > 0 && (
+                              <div className="mb-4 rounded-lg overflow-hidden">
+                                <img
+                                  src={post.image_urls[0]}
+                                  alt={post.title}
+                                  className="w-full h-48 object-cover"
+                                />
+                              </div>
+                            )}
+
+                            <div className="flex items-center gap-4 text-xs text-gray-500">
+                              <div className="flex items-center gap-1">
+                                <Calendar className="w-4 h-4" />
+                                {new Date(post.created_at).toLocaleDateString('ko-KR')}
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <Eye className="w-4 h-4" />
+                                {post.view_count}
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <ThumbsUp className="w-4 h-4" />
+                                {post.like_count}
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <MessageSquare className="w-4 h-4" />
+                                {post.comment_count}
+                              </div>
+                            </div>
+                          </div>
                         ))}
-                      </div>
+
+                        {/* 일반 게시글 */}
+                        {posts.filter(post => !post.is_pinned).map((post) => (
+                          <div
+                            key={post.id}
+                            className="group border border-gray-200 rounded-xl p-5 hover:shadow-md transition-shadow cursor-pointer"
+                            onClick={() => router.push(`/community/${post.id}`)}
+                          >
+                            <div className="flex items-start justify-between gap-3 mb-3">
+                              <div className="flex items-center gap-2">
+                                {post.category === 'gold_trade' && (
+                                  <span className="px-2 py-1 text-xs font-medium bg-amber-100 text-amber-700 rounded">
+                                    금거래
+                                  </span>
+                                )}
+                                {post.category === 'gold_news' && (
+                                  <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-700 rounded">
+                                    금소식
+                                  </span>
+                                )}
+                                {post.category === 'qna' && (
+                                  <span className="px-2 py-1 text-xs font-medium bg-green-100 text-green-700 rounded">
+                                    QnA
+                                  </span>
+                                )}
+                              </div>
+                              {isMyStore && (
+                                <button
+                                  onClick={async (e) => {
+                                    e.stopPropagation();
+                                    if (!accessToken) return;
+                                    const result = await pinPostAction(post.id, accessToken);
+                                    if (result.success) {
+                                      setPosts(prev => prev.map(p => p.id === post.id ? { ...p, is_pinned: true } : p));
+                                    }
+                                  }}
+                                  className="opacity-0 group-hover:opacity-100 transition-opacity px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+                                >
+                                  고정
+                                </button>
+                              )}
+                            </div>
+
+                            <h3 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-1">
+                              {post.title}
+                            </h3>
+
+                            <p className="text-gray-600 text-sm mb-4 line-clamp-2">
+                              {post.content}
+                            </p>
+
+                            {post.image_urls && post.image_urls.length > 0 && (
+                              <div className="mb-4 rounded-lg overflow-hidden">
+                                <img
+                                  src={post.image_urls[0]}
+                                  alt={post.title}
+                                  className="w-full h-48 object-cover"
+                                />
+                              </div>
+                            )}
+
+                            <div className="flex items-center gap-4 text-xs text-gray-500">
+                              <div className="flex items-center gap-1">
+                                <Calendar className="w-4 h-4" />
+                                {new Date(post.created_at).toLocaleDateString('ko-KR')}
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <Eye className="w-4 h-4" />
+                                {post.view_count}
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <ThumbsUp className="w-4 h-4" />
+                                {post.like_count}
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <MessageSquare className="w-4 h-4" />
+                                {post.comment_count}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </>
                     )}
                   </div>
                 )}
 
-                {activeTab === "info" && (
+                {activeTab === "news" && (
                   <div className="space-y-4">
-                    <div className="prose prose-sm max-w-none">
-                      {store.description ? (
-                        <p className="text-[15px] text-gray-700 leading-relaxed">
-                          {store.description}
-                        </p>
-                      ) : (
-                        <p className="text-[15px] text-gray-400 italic">
-                          매장 소개가 등록되지 않았습니다
-                        </p>
-                      )}
+                    {/* 카테고리 필터 */}
+                    <div className="flex gap-2 overflow-x-auto pb-2">
+                      <button
+                        onClick={() => setSelectedNewsType("all")}
+                        className={`px-4 py-2 text-sm font-medium rounded-lg whitespace-nowrap transition-colors ${
+                          selectedNewsType === "all"
+                            ? "bg-gray-900 text-white"
+                            : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                        }`}
+                      >
+                        전체
+                      </button>
+                      <button
+                        onClick={() => setSelectedNewsType("product_news")}
+                        className={`px-4 py-2 text-sm font-medium rounded-lg whitespace-nowrap transition-colors ${
+                          selectedNewsType === "product_news"
+                            ? "bg-gray-900 text-white"
+                            : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                        }`}
+                      >
+                        상품
+                      </button>
+                      <button
+                        onClick={() => setSelectedNewsType("store_news")}
+                        className={`px-4 py-2 text-sm font-medium rounded-lg whitespace-nowrap transition-colors ${
+                          selectedNewsType === "store_news"
+                            ? "bg-gray-900 text-white"
+                            : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                        }`}
+                      >
+                        매장
+                      </button>
+                      <button
+                        onClick={() => setSelectedNewsType("buy_gold")}
+                        className={`px-4 py-2 text-sm font-medium rounded-lg whitespace-nowrap transition-colors ${
+                          selectedNewsType === "buy_gold"
+                            ? "bg-gray-900 text-white"
+                            : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                        }`}
+                      >
+                        금 매입
+                      </button>
                     </div>
+
+                    {/* 게시글 목록 */}
+                    {isLoadingPosts ? (
+                      <div className="flex items-center justify-center py-12">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+                      </div>
+                    ) : (() => {
+                      const filteredPosts = selectedNewsType === "all"
+                        ? posts.filter(p => p.category === 'gold_news')
+                        : posts.filter(p => p.type === selectedNewsType);
+
+                      return filteredPosts.length === 0 ? (
+                        <div className="text-center py-12">
+                          <p className="text-gray-500">아직 작성된 매장소식이 없습니다.</p>
+                        </div>
+                      ) : (
+                        <>
+                          {/* 고정된 게시글 */}
+                          {filteredPosts.filter(post => post.is_pinned).map((post) => (
+                            <div
+                              key={post.id}
+                              className="group border border-gray-200 rounded-xl p-5 hover:shadow-md transition-shadow cursor-pointer bg-yellow-50 border-yellow-200"
+                              onClick={() => router.push(`/community/${post.id}`)}
+                            >
+                              <div className="flex items-start justify-between gap-3 mb-3">
+                                <div className="flex items-center gap-2">
+                                  <Pin className="w-4 h-4 text-yellow-600 fill-yellow-600" />
+                                  <span className="text-xs font-medium text-yellow-700">고정됨</span>
+                                  {post.type === 'product_news' && (
+                                    <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-700 rounded">
+                                      상품
+                                    </span>
+                                  )}
+                                  {post.type === 'store_news' && (
+                                    <span className="px-2 py-1 text-xs font-medium bg-purple-100 text-purple-700 rounded">
+                                      매장
+                                    </span>
+                                  )}
+                                  {post.type === 'buy_gold' && (
+                                    <span className="px-2 py-1 text-xs font-medium bg-amber-100 text-amber-700 rounded">
+                                      금 매입
+                                    </span>
+                                  )}
+                                </div>
+                                {isMyStore && (
+                                  <button
+                                    onClick={async (e) => {
+                                      e.stopPropagation();
+                                      if (!accessToken) return;
+                                      const result = await unpinPostAction(post.id, accessToken);
+                                      if (result.success) {
+                                        setPosts(prev => prev.map(p => p.id === post.id ? { ...p, is_pinned: false } : p));
+                                      }
+                                    }}
+                                    className="opacity-0 group-hover:opacity-100 transition-opacity px-3 py-1.5 text-xs font-medium text-yellow-700 bg-white border border-yellow-300 rounded-lg hover:bg-yellow-50"
+                                  >
+                                    고정 해제
+                                  </button>
+                                )}
+                              </div>
+
+                              <h3 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-1">
+                                {post.title}
+                              </h3>
+
+                              <p className="text-gray-600 text-sm mb-4 line-clamp-2">
+                                {post.content}
+                              </p>
+
+                              {post.image_urls && post.image_urls.length > 0 && (
+                                <div className="mb-4 rounded-lg overflow-hidden">
+                                  <img
+                                    src={post.image_urls[0]}
+                                    alt={post.title}
+                                    className="w-full h-48 object-cover"
+                                  />
+                                </div>
+                              )}
+
+                              <div className="flex items-center gap-4 text-xs text-gray-500">
+                                <div className="flex items-center gap-1">
+                                  <Calendar className="w-4 h-4" />
+                                  {new Date(post.created_at).toLocaleDateString('ko-KR')}
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <Eye className="w-4 h-4" />
+                                  {post.view_count}
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <ThumbsUp className="w-4 h-4" />
+                                  {post.like_count}
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <MessageSquare className="w-4 h-4" />
+                                  {post.comment_count}
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+
+                          {/* 일반 게시글 */}
+                          {filteredPosts.filter(post => !post.is_pinned).map((post) => (
+                            <div
+                              key={post.id}
+                              className="group border border-gray-200 rounded-xl p-5 hover:shadow-md transition-shadow cursor-pointer"
+                              onClick={() => router.push(`/community/${post.id}`)}
+                            >
+                              <div className="flex items-start justify-between gap-3 mb-3">
+                                <div className="flex items-center gap-2">
+                                  {post.type === 'product_news' && (
+                                    <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-700 rounded">
+                                      상품
+                                    </span>
+                                  )}
+                                  {post.type === 'store_news' && (
+                                    <span className="px-2 py-1 text-xs font-medium bg-purple-100 text-purple-700 rounded">
+                                      매장
+                                    </span>
+                                  )}
+                                  {post.type === 'buy_gold' && (
+                                    <span className="px-2 py-1 text-xs font-medium bg-amber-100 text-amber-700 rounded">
+                                      금 매입
+                                    </span>
+                                  )}
+                                </div>
+                                {isMyStore && (
+                                  <button
+                                    onClick={async (e) => {
+                                      e.stopPropagation();
+                                      if (!accessToken) return;
+                                      const result = await pinPostAction(post.id, accessToken);
+                                      if (result.success) {
+                                        setPosts(prev => prev.map(p => p.id === post.id ? { ...p, is_pinned: true } : p));
+                                      }
+                                    }}
+                                    className="opacity-0 group-hover:opacity-100 transition-opacity px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+                                  >
+                                    고정
+                                  </button>
+                                )}
+                              </div>
+
+                              <h3 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-1">
+                                {post.title}
+                              </h3>
+
+                              <p className="text-gray-600 text-sm mb-4 line-clamp-2">
+                                {post.content}
+                              </p>
+
+                              {post.image_urls && post.image_urls.length > 0 && (
+                                <div className="mb-4 rounded-lg overflow-hidden">
+                                  <img
+                                    src={post.image_urls[0]}
+                                    alt={post.title}
+                                    className="w-full h-48 object-cover"
+                                  />
+                                </div>
+                              )}
+
+                              <div className="flex items-center gap-4 text-xs text-gray-500">
+                                <div className="flex items-center gap-1">
+                                  <Calendar className="w-4 h-4" />
+                                  {new Date(post.created_at).toLocaleDateString('ko-KR')}
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <Eye className="w-4 h-4" />
+                                  {post.view_count}
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <ThumbsUp className="w-4 h-4" />
+                                  {post.like_count}
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <MessageSquare className="w-4 h-4" />
+                                  {post.comment_count}
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </>
+                      );
+                    })()}
+                  </div>
+                )}
+
+                {activeTab === "gallery" && (
+                  <div>
+                    {isLoadingGallery ? (
+                      <div className="flex items-center justify-center py-12">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+                      </div>
+                    ) : gallery.length === 0 ? (
+                      <div className="text-center py-12">
+                        <p className="text-gray-500">아직 업로드된 이미지가 없습니다.</p>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        {gallery.map((item) => (
+                          <div
+                            key={`${item.post_id}-${item.image_url}`}
+                            className="group relative aspect-square rounded-lg overflow-hidden cursor-pointer"
+                            onClick={() => router.push(`/community/${item.post_id}`)}
+                          >
+                            <img
+                              src={item.image_url}
+                              alt={item.title}
+                              className="w-full h-full object-cover transition-transform duration-300 md:group-hover:scale-110"
+                            />
+
+                            {/* 호버 오버레이 */}
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-0 md:group-hover:opacity-100 transition-opacity duration-300">
+                              <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
+                                <h4 className="font-semibold text-sm mb-1 line-clamp-1">
+                                  {item.title}
+                                </h4>
+                                <p className="text-xs text-gray-200 line-clamp-2 mb-2">
+                                  {item.content}
+                                </p>
+                                <div className="flex items-center gap-2 text-xs text-gray-300">
+                                  <Calendar className="w-3 h-3" />
+                                  {new Date(item.created_at).toLocaleDateString('ko-KR')}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -1155,22 +1745,10 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
                 </div>
               </div>
 
-              {/* 지도 미리보기 */}
+              {/* 지도 */}
               {store.address && (
                 <div className="bg-white rounded-2xl overflow-hidden shadow-sm">
-                  <div className="aspect-square bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
-                    <div className="text-center">
-                      <MapPin className="w-12 h-12 text-gray-400 mx-auto mb-2" />
-                      <a
-                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(store.address)}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-[13px] text-blue-600 hover:underline"
-                      >
-                        지도 보기
-                      </a>
-                    </div>
-                  </div>
+                  <KakaoMap address={store.address} storeName={store.name} />
                 </div>
               )}
             </div>
