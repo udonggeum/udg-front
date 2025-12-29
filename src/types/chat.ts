@@ -1,8 +1,9 @@
 /**
  * 채팅 타입
+ * 백엔드와 일치: SALE (판매글/금거래), STORE (매장 문의)
  */
 
-export type ChatRoomType = "STORE" | "GOLD_TRADE" | "PERSONAL";
+export type ChatRoomType = "SALE" | "STORE";
 
 export type MessageType = "TEXT" | "IMAGE" | "FILE";
 
@@ -17,7 +18,10 @@ export interface ChatUser {
   name: string;
   profile_image_url?: string;
   role?: "user" | "admin";
-  store_name?: string;
+  store?: {
+    id: number;
+    name: string;
+  };
 }
 
 /**
@@ -31,7 +35,18 @@ export interface ChatRoom {
   user1?: ChatUser;
   user2?: ChatUser;
   product_id?: number;
+  product?: {
+    id: number;
+    title: string;
+    gold_type?: string;
+    weight?: number;
+    price?: number;
+  };
   store_id?: number;
+  store?: {
+    id: number;
+    name: string;
+  };
   last_message_id?: number;
   last_message_content?: string;
   last_message_at?: string;

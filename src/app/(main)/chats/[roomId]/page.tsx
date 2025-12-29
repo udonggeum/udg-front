@@ -17,7 +17,7 @@ import {
 } from "@/actions/chat";
 import { uploadToS3 } from "@/actions/upload";
 import type { ChatRoom, Message } from "@/types/chat";
-import { Send, ArrowLeft, User, AlertCircle, RotateCw, X, Search, Paperclip, Image as ImageIcon, FileText, Download, Edit2, Trash2 } from "lucide-react";
+import { Send, ArrowLeft, User, AlertCircle, RotateCw, X, Search, Paperclip, Image as ImageIcon, FileText, Download, Edit2, Trash2, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useWebSocket } from "@/hooks/useWebSocket";
@@ -51,12 +51,8 @@ export default function ChatRoomPage() {
   }, []);
 
   // WebSocket connection
-  const wsProtocol = process.env.NEXT_PUBLIC_API_BASE_URL?.startsWith('https') ? 'wss' : 'ws';
-  const wsBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/^https?:\/\//, '') || '43.200.249.22:8080';
-  const wsUrl = `${wsProtocol}://${wsBaseUrl}/api/v1/chats/ws`;
-
   const { isConnected, sendMessage } = useWebSocket({
-    url: wsUrl,
+    url: process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8080/api/v1/chats/ws',
     token: tokens?.access_token || "",
     onMessage: (data) => {
       if (data.type === "new_message" && data.message) {
@@ -137,19 +133,12 @@ export default function ChatRoomPage() {
     fetchRoomData();
   }, [isAuthenticated, tokens, roomId]);
 
-  // Join/Leave chat room for WebSocket
+  // Join chat room for WebSocket (WebSocket disconnect는 useWebSocket hook에서 자동 처리)
   useEffect(() => {
     if (!tokens?.access_token || !roomId || isNaN(roomId)) return;
 
     // Join the chat room when entering
     joinChatRoomAction(roomId, tokens.access_token);
-
-    // Leave the chat room when exiting
-    return () => {
-      if (tokens?.access_token) {
-        leaveChatRoomAction(roomId, tokens.access_token);
-      }
-    };
   }, [roomId, tokens?.access_token]);
 
   useEffect(() => {
@@ -165,7 +154,7 @@ export default function ChatRoomPage() {
     const roomResult = await getChatRoomAction(roomId, tokens.access_token);
     if (!roomResult.success || !roomResult.data) {
       handleApiError(roomResult.error);
-      toast.error(roomResult.error || "채팅방을 찾을 수 없습니다.");
+      toast.error(roomResult.error || "대화방을 찾을 수 없습니다.");
       router.push("/chats");
       return;
     }
@@ -601,8 +590,8 @@ export default function ChatRoomPage() {
   // 사용자 표시명 가져오기 (admin이고 매장명이 있으면 매장명, 아니면 이름)
   const getDisplayName = (chatUser: ChatRoom["user1"] | null) => {
     if (!chatUser) return "알 수 없음";
-    if (chatUser.role === "admin" && chatUser.store_name) {
-      return chatUser.store_name;
+    if (chatUser.role === "admin" && chatUser.store?.name) {
+      return chatUser.store.name;
     }
     return chatUser.name;
   };
@@ -612,12 +601,10 @@ export default function ChatRoomPage() {
     switch (type) {
       case "STORE":
         return "매장 문의";
-      case "GOLD_TRADE":
-        return "금 거래";
-      case "PERSONAL":
-        return "개인 채팅";
+      case "SALE":
+        return "금 거래 문의";
       default:
-        return "채팅";
+        return "대화";
     }
   };
 
@@ -648,18 +635,51 @@ export default function ChatRoomPage() {
             <ArrowLeft className="w-5 h-5" />
           </Button>
 
-          <div className="flex items-center gap-3 flex-1">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-yellow-400 to-yellow-500 flex items-center justify-center">
-              <User className="w-5 h-5 text-white" />
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-yellow-400 to-yellow-500 flex items-center justify-center flex-shrink-0">
+                <User className="w-5 h-5 text-white" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h2 className="font-semibold text-gray-900 truncate">
+                  {getDisplayName(otherUser)}
+                </h2>
+                <p className="text-xs text-gray-600">
+                  {room && getChatTypeLabel(room.type)}
+                </p>
+              </div>
             </div>
-            <div>
-              <h2 className="font-semibold text-gray-900">
-                {getDisplayName(otherUser)}
-              </h2>
-              <p className="text-xs text-gray-600">
-                {room && getChatTypeLabel(room.type)}
-              </p>
-            </div>
+
+            {/* 금 거래 게시글 요약 */}
+            {room && room.type === "SALE" && room.product && (
+              <div className="mt-2 p-2 bg-amber-50 border border-amber-200 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <MessageCircle className="w-3.5 h-3.5 text-amber-600 flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-semibold text-gray-900 truncate">
+                      {room.product.title}
+                    </p>
+                    <div className="flex items-center gap-1 mt-0.5">
+                      {room.product.gold_type && (
+                        <span className="text-[10px] bg-white text-gray-700 px-1.5 py-0.5 rounded font-medium">
+                          {room.product.gold_type}
+                        </span>
+                      )}
+                      {room.product.weight && (
+                        <span className="text-[10px] bg-white text-gray-700 px-1.5 py-0.5 rounded font-medium">
+                          {room.product.weight}g
+                        </span>
+                      )}
+                      {room.product.price && (
+                        <span className="text-[10px] bg-amber-500 text-white px-1.5 py-0.5 rounded font-bold">
+                          {room.product.price.toLocaleString()}원
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           <Button

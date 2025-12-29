@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 
-type ChatFilter = "all" | "STORE" | "GOLD_TRADE";
+type ChatFilter = "all" | "STORE" | "SALE";
 
 export default function ChatsPage() {
   const router = useRouter();
@@ -33,15 +33,6 @@ export default function ChatsPage() {
   const [deleteRoomId, setDeleteRoomId] = useState<number | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState<ChatFilter>("all");
-
-  useEffect(() => {
-    if (!isAuthenticated || !tokens?.access_token) {
-      router.push("/login");
-      return;
-    }
-
-    fetchRooms();
-  }, [isAuthenticated, tokens]);
 
   const fetchRooms = async () => {
     if (!tokens?.access_token) return;
@@ -54,10 +45,20 @@ export default function ChatsPage() {
     } else {
       // 401 에러 체크 및 자동 로그아웃
       handleApiError(result.error);
-      toast.error(result.error || "채팅방 목록을 불러올 수 없습니다.");
+      toast.error(result.error || "메시지 목록을 불러올 수 없습니다.");
     }
     setIsLoading(false);
   };
+
+  useEffect(() => {
+    if (!isAuthenticated || !tokens?.access_token) {
+      router.push("/login");
+      return;
+    }
+
+    fetchRooms();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, tokens?.access_token]);
 
   const getOtherUser = (room: ChatRoomWithUnread) => {
     if (!user) return null;
@@ -67,23 +68,21 @@ export default function ChatsPage() {
   // 사용자 표시명 가져오기 (admin이고 매장명이 있으면 매장명, 아니면 이름)
   const getDisplayName = (chatUser: ChatRoomWithUnread["user1"] | null) => {
     if (!chatUser) return "알 수 없음";
-    if (chatUser.role === "admin" && chatUser.store_name) {
-      return chatUser.store_name;
+    if (chatUser.role === "admin" && chatUser.store?.name) {
+      return chatUser.store.name;
     }
     return chatUser.name;
   };
 
-  // 채팅 타입 레이블 가져오기
+  // 대화 타입 레이블 가져오기
   const getChatTypeLabel = (type: ChatRoomWithUnread["type"]) => {
     switch (type) {
       case "STORE":
         return "매장 문의";
-      case "GOLD_TRADE":
-        return "금 거래";
-      case "PERSONAL":
-        return "개인 채팅";
+      case "SALE":
+        return "금 거래 문의";
       default:
-        return "채팅";
+        return "대화";
     }
   };
 
@@ -111,13 +110,13 @@ export default function ChatsPage() {
     const result = await leaveChatRoomAction(deleteRoomId, tokens.access_token);
 
     if (result.success) {
-      toast.success("채팅방을 나갔습니다.");
+      toast.success("대화방을 나갔습니다.");
       // 목록에서 제거
       setRooms((prev) => prev.filter((room) => room.id !== deleteRoomId));
     } else {
       // 401 에러 체크 및 자동 로그아웃
       handleApiError(result.error);
-      toast.error(result.error || "채팅방 나가기에 실패했습니다.");
+      toast.error(result.error || "대화방 나가기에 실패했습니다.");
     }
 
     setIsDeleting(false);
@@ -134,7 +133,7 @@ export default function ChatsPage() {
   const roomCounts = {
     all: rooms.length,
     STORE: rooms.filter((r) => r.type === "STORE").length,
-    GOLD_TRADE: rooms.filter((r) => r.type === "GOLD_TRADE").length,
+    SALE: rooms.filter((r) => r.type === "SALE").length,
   };
 
   if (isLoading) {
@@ -154,7 +153,7 @@ export default function ChatsPage() {
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
           <MessageCircle className="w-6 h-6" />
-          채팅
+          메시지
         </h1>
         <p className="text-sm text-gray-600 mt-1">
           {rooms.length}개의 대화
@@ -195,18 +194,18 @@ export default function ChatsPage() {
           )}
         </button>
         <button
-          onClick={() => setSelectedFilter("GOLD_TRADE")}
+          onClick={() => setSelectedFilter("SALE")}
           className={`px-4 py-2.5 text-sm font-semibold rounded-lg transition-all duration-200 flex items-center gap-2 ${
-            selectedFilter === "GOLD_TRADE"
+            selectedFilter === "SALE"
               ? "bg-gray-900 text-white shadow-sm"
               : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
           }`}
         >
           <MessageCircle className="w-4 h-4" />
           금거래 문의
-          {roomCounts.GOLD_TRADE > 0 && (
-            <span className={`ml-1 ${selectedFilter === "GOLD_TRADE" ? "text-gray-300" : "text-gray-400"}`}>
-              {roomCounts.GOLD_TRADE}
+          {roomCounts.SALE > 0 && (
+            <span className={`ml-1 ${selectedFilter === "SALE" ? "text-gray-300" : "text-gray-400"}`}>
+              {roomCounts.SALE}
             </span>
           )}
         </button>
@@ -215,14 +214,14 @@ export default function ChatsPage() {
       {rooms.length === 0 ? (
         <div className="text-center py-16">
           <MessageCircle className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-          <p className="text-gray-600">아직 채팅 내역이 없습니다.</p>
+          <p className="text-gray-600">아직 메시지 내역이 없습니다.</p>
         </div>
       ) : filteredRooms.length === 0 ? (
         <div className="text-center py-16">
           <MessageCircle className="w-16 h-16 text-gray-300 mx-auto mb-4" />
           <p className="text-gray-600">
-            {selectedFilter === "STORE" && "매장 문의 채팅이 없습니다."}
-            {selectedFilter === "GOLD_TRADE" && "금거래 문의 채팅이 없습니다."}
+            {selectedFilter === "STORE" && "매장 문의 대화가 없습니다."}
+            {selectedFilter === "SALE" && "금거래 문의 대화가 없습니다."}
           </p>
         </div>
       ) : (
@@ -277,13 +276,47 @@ export default function ChatsPage() {
                         )}
                       </div>
 
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className="text-xs text-gray-600">
+                      <div className="mt-2">
+                        <span className="inline-block text-[10px] text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
                           {getChatTypeLabel(room.type)}
                         </span>
                       </div>
                     </div>
                   </div>
+
+                  {/* 금 거래 게시글 요약 - 당근마켓 스타일 */}
+                  {room.type === "SALE" && room.product && (
+                    <div className="mt-3 pt-3 border-t border-gray-100">
+                      <div className="flex items-start gap-2">
+                        <div className="w-8 h-8 bg-amber-50 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <MessageCircle className="w-4 h-4 text-amber-600" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs text-gray-500 mb-0.5">문의 상품</p>
+                          <p className="text-sm font-semibold text-gray-900 mb-1.5 line-clamp-1">
+                            {room.product.title}
+                          </p>
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            {room.product.gold_type && (
+                              <span className="inline-flex items-center text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded font-medium">
+                                {room.product.gold_type}
+                              </span>
+                            )}
+                            {room.product.weight && (
+                              <span className="inline-flex items-center text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded font-medium">
+                                {room.product.weight}g
+                              </span>
+                            )}
+                            {room.product.price && (
+                              <span className="inline-flex items-center text-xs bg-amber-500 text-white px-2 py-1 rounded font-bold">
+                                {room.product.price.toLocaleString()}원
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </button>
 
                 {/* 삭제 버튼 */}
@@ -291,7 +324,7 @@ export default function ChatsPage() {
                   variant="ghost"
                   size="icon"
                   onClick={(e) => handleDeleteClick(e, room.id)}
-                  className="absolute top-4 right-4 text-gray-400 hover:text-red-500 hover:bg-red-50"
+                  className="absolute bottom-4 right-4 text-gray-400 hover:text-red-500 hover:bg-red-50"
                 >
                   <Trash2 className="w-4 h-4" />
                 </Button>
@@ -305,12 +338,12 @@ export default function ChatsPage() {
       <AlertDialog open={deleteRoomId !== null} onOpenChange={(open: boolean) => !open && setDeleteRoomId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>채팅방을 나가시겠습니까?</AlertDialogTitle>
+            <AlertDialogTitle>대화방을 나가시겠습니까?</AlertDialogTitle>
             <AlertDialogDescription>
-              채팅방 목록에서 숨겨지며, 상대방은 계속 메시지를 보낼 수 있습니다.
+              대화방 목록에서 숨겨지며, 상대방은 계속 메시지를 보낼 수 있습니다.
               <br />
               <span className="text-gray-600 mt-2 block">
-                새 메시지가 오면 채팅방이 다시 나타납니다.
+                새 메시지가 오면 대화방이 다시 나타납니다.
               </span>
             </AlertDialogDescription>
           </AlertDialogHeader>

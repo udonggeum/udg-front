@@ -248,4 +248,7 @@ export const CATEGORY_TYPES: Record<PostCategory, PostType[]> = {
 };
 
 // 관리자만 작성 가능한 타입
-export const ADMIN_ONLY_TYPES: PostType[] = ['buy_gold'];
+// - buy_gold: 금 구매(금은방 사장님의 매입 홍보)
+// - product_news, store_news, other: 금소식 카테고리 전체
+// - faq: 관리자 공식 FAQ
+export const ADMIN_ONLY_TYPES: PostType[] = ['buy_gold', 'product_news', 'store_news', 'other', 'faq'];
