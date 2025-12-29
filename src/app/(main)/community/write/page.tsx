@@ -3,8 +3,10 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { createPostAction } from "@/actions/community";
+import { createPostAction, generateContentAction } from "@/actions/community";
 import { useAuthStore } from "@/stores/useAuthStore";
+import { toast } from "sonner";
+import { Sparkles } from "lucide-react";
 import {
   POST_CATEGORY_LABELS,
   POST_TYPE_LABELS,
@@ -25,10 +27,15 @@ export default function CommunityWritePage() {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [goldType, setGoldType] = useState("");
+  const [goldTypeUnknown, setGoldTypeUnknown] = useState(false);
   const [weight, setWeight] = useState("");
+  const [weightUnknown, setWeightUnknown] = useState(false);
   const [price, setPrice] = useState("");
+  const [priceNegotiable, setPriceNegotiable] = useState(false);
   const [location, setLocation] = useState("");
+  const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   if (!user || !tokens?.access_token) {
@@ -40,6 +47,16 @@ export default function CommunityWritePage() {
       </div>
     );
   }
+
+  // 카테고리별로 사용자가 작성 가능한 타입이 있는지 확인
+  const isCategoryAvailable = (category: PostCategory) => {
+    return CATEGORY_TYPES[category].some((type) => {
+      if (ADMIN_ONLY_TYPES.includes(type)) {
+        return user.role === "admin";
+      }
+      return true;
+    });
+  };
 
   const availableTypes = CATEGORY_TYPES[selectedCategory].filter((type) => {
     if (ADMIN_ONLY_TYPES.includes(type)) {
@@ -73,8 +90,76 @@ export default function CommunityWritePage() {
       newErrors.content = "내용은 최소 10자 이상이어야 합니다.";
     }
 
+    // 금 판매글(sell_gold)일 때 필수 정보 검증
+    if (selectedCategory === "gold_trade" && selectedType === "sell_gold") {
+      if (imageUrls.length === 0) {
+        newErrors.images = "최소 1개 이상의 이미지를 업로드해야 합니다.";
+      }
+
+      if (!location.trim()) {
+        newErrors.location = "거래 지역은 필수입니다.";
+      }
+
+      if (!goldTypeUnknown && !goldType.trim()) {
+        newErrors.goldType = "금 종류를 선택하거나 '모름'을 체크해주세요.";
+      }
+
+      if (!weightUnknown && !weight.trim()) {
+        newErrors.weight = "중량을 입력하거나 '모름'을 체크해주세요.";
+      }
+
+      if (!priceNegotiable && !price.trim()) {
+        newErrors.price = "가격을 입력하거나 '가격 문의'를 체크해주세요.";
+      }
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
+  };
+
+  // AI 글 자동생성
+  const handleGenerateContent = async () => {
+    if (!tokens?.access_token) {
+      toast.error("로그인이 필요합니다.");
+      return;
+    }
+
+    // 키워드 추출 (제목에서)
+    const keywords = title.trim() ? [title.trim()] : ["금"];
+
+    if (!title.trim()) {
+      toast.error("제목을 먼저 입력해주세요.");
+      return;
+    }
+
+    setIsGenerating(true);
+
+    try {
+      const result = await generateContentAction(
+        {
+          type: selectedType,
+          keywords,
+          title: title || undefined,
+          gold_type: goldType || (goldTypeUnknown ? "알 수 없음" : undefined),
+          weight: weight ? parseFloat(weight) : undefined,
+          price: price ? parseInt(price, 10) : (priceNegotiable ? 0 : undefined),
+          location: location || undefined,
+        },
+        tokens.access_token
+      );
+
+      if (result.success && result.data) {
+        setContent(result.data.content);
+        toast.success("AI가 글 내용을 생성했습니다!");
+      } else {
+        toast.error(result.error || "글 생성에 실패했습니다.");
+      }
+    } catch (error) {
+      console.error("Generate content error:", error);
+      toast.error("글 생성 중 오류가 발생했습니다.");
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -95,10 +180,31 @@ export default function CommunityWritePage() {
 
     // 금거래 관련 정보 추가
     if (selectedCategory === "gold_trade") {
-      if (goldType) requestData.gold_type = goldType;
-      if (weight) requestData.weight = parseFloat(weight);
-      if (price) requestData.price = parseInt(price, 10);
+      // 금 종류: "모름"이면 "알 수 없음"으로 저장, 아니면 입력값
+      if (goldTypeUnknown) {
+        requestData.gold_type = "알 수 없음";
+      } else if (goldType) {
+        requestData.gold_type = goldType;
+      }
+
+      // 중량: "모름"이면 저장 안 함, 아니면 입력값
+      if (!weightUnknown && weight) {
+        requestData.weight = parseFloat(weight);
+      }
+
+      // 가격: "가격 문의"면 0으로 저장, 아니면 입력값
+      if (priceNegotiable) {
+        requestData.price = 0;
+      } else if (price) {
+        requestData.price = parseInt(price, 10);
+      }
+
       if (location) requestData.location = location;
+    }
+
+    // 이미지 추가
+    if (imageUrls.length > 0) {
+      requestData.image_urls = imageUrls;
     }
 
     const result = await createPostAction(requestData, tokens.access_token);
@@ -126,20 +232,31 @@ export default function CommunityWritePage() {
                 </label>
                 <div className="flex gap-2 mb-3">
                   {(Object.keys(POST_CATEGORY_LABELS) as PostCategory[]).map(
-                    (category) => (
-                      <button
-                        key={category}
-                        type="button"
-                        className={`px-4 py-3 rounded-xl text-sm font-semibold border transition-all ${
-                          selectedCategory === category
-                            ? "bg-gray-900 text-white border-gray-900"
-                            : "bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100"
-                        }`}
-                        onClick={() => handleCategoryChange(category)}
-                      >
-                        {POST_CATEGORY_LABELS[category]}
-                      </button>
-                    )
+                    (category) => {
+                      const isAvailable = isCategoryAvailable(category);
+                      return (
+                        <button
+                          key={category}
+                          type="button"
+                          disabled={!isAvailable}
+                          className={`px-4 py-3 rounded-xl text-sm font-semibold border transition-all relative group ${
+                            !isAvailable
+                              ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
+                              : selectedCategory === category
+                              ? "bg-gray-900 text-white border-gray-900"
+                              : "bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100"
+                          }`}
+                          onClick={() => isAvailable && handleCategoryChange(category)}
+                        >
+                          {POST_CATEGORY_LABELS[category]}
+                          {!isAvailable && (
+                            <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                              관리자만 작성 가능
+                            </span>
+                          )}
+                        </button>
+                      );
+                    }
                   )}
                 </div>
               </div>
@@ -183,11 +300,193 @@ export default function CommunityWritePage() {
                 )}
               </div>
 
-              {/* Content */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-3">
-                  내용 <span className="text-red-500">*</span>
-                </label>
+              {/* Gold Trade Additional Fields - sell_gold */}
+              {selectedCategory === "gold_trade" && selectedType === "sell_gold" && (
+                <div className="border-t pt-6">
+                  <h3 className="text-lg font-semibold mb-4">
+                    금 거래 정보 <span className="text-red-500">*</span>
+                  </h3>
+
+                  {/* 이미지 업로드 */}
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      이미지 <span className="text-red-500">*</span>
+                    </label>
+                    <div className={`border-2 border-dashed ${errors.images ? "border-red-500" : "border-gray-300"} rounded-lg p-4 text-center`}>
+                      <p className="text-sm text-gray-600 mb-2">
+                        판매할 금 제품의 사진을 업로드해주세요
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        * 이미지 업로드 기능은 추후 구현 예정
+                      </p>
+                    </div>
+                    {errors.images && (
+                      <p className="mt-2 text-sm text-red-500">{errors.images}</p>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* 금 종류 */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        금 종류 <span className="text-red-500">*</span>
+                      </label>
+                      <select
+                        className={`w-full p-3 rounded-lg border ${errors.goldType ? "border-red-500" : "border-gray-200"} focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent disabled:bg-gray-100`}
+                        value={goldType}
+                        onChange={(e) => setGoldType(e.target.value)}
+                        disabled={goldTypeUnknown}
+                      >
+                        <option value="">선택하세요</option>
+                        <option value="24K">24K</option>
+                        <option value="18K">18K</option>
+                        <option value="14K">14K</option>
+                        <option value="10K">10K</option>
+                        <option value="기타">기타</option>
+                      </select>
+                      <label className="flex items-center mt-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          className="w-4 h-4 rounded border-gray-300 text-gray-900 focus:ring-gray-900"
+                          checked={goldTypeUnknown}
+                          onChange={(e) => {
+                            setGoldTypeUnknown(e.target.checked);
+                            if (e.target.checked) setGoldType("");
+                          }}
+                        />
+                        <span className="ml-2 text-sm text-gray-600">모름</span>
+                      </label>
+                      {errors.goldType && (
+                        <p className="mt-1 text-sm text-red-500">{errors.goldType}</p>
+                      )}
+                    </div>
+
+                    {/* 중량 */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        중량 (g) <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        className={`w-full p-3 rounded-lg border ${errors.weight ? "border-red-500" : "border-gray-200"} focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent disabled:bg-gray-100`}
+                        placeholder="예: 18.75"
+                        value={weight}
+                        onChange={(e) => setWeight(e.target.value)}
+                        disabled={weightUnknown}
+                      />
+                      <label className="flex items-center mt-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          className="w-4 h-4 rounded border-gray-300 text-gray-900 focus:ring-gray-900"
+                          checked={weightUnknown}
+                          onChange={(e) => {
+                            setWeightUnknown(e.target.checked);
+                            if (e.target.checked) setWeight("");
+                          }}
+                        />
+                        <span className="ml-2 text-sm text-gray-600">모름</span>
+                      </label>
+                      {errors.weight && (
+                        <p className="mt-1 text-sm text-red-500">{errors.weight}</p>
+                      )}
+                    </div>
+
+                    {/* 가격 */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        가격 (원) <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="number"
+                        className={`w-full p-3 rounded-lg border ${errors.price ? "border-red-500" : "border-gray-200"} focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent disabled:bg-gray-100`}
+                        placeholder="예: 3500000"
+                        value={price}
+                        onChange={(e) => setPrice(e.target.value)}
+                        disabled={priceNegotiable}
+                      />
+                      <label className="flex items-center mt-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          className="w-4 h-4 rounded border-gray-300 text-gray-900 focus:ring-gray-900"
+                          checked={priceNegotiable}
+                          onChange={(e) => {
+                            setPriceNegotiable(e.target.checked);
+                            if (e.target.checked) setPrice("");
+                          }}
+                        />
+                        <span className="ml-2 text-sm text-gray-600">가격 문의</span>
+                      </label>
+                      {errors.price && (
+                        <p className="mt-1 text-sm text-red-500">{errors.price}</p>
+                      )}
+                    </div>
+
+                    {/* 거래 지역 */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        거래 지역 <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        className={`w-full p-3 rounded-lg border ${errors.location ? "border-red-500" : "border-gray-200"} focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent`}
+                        placeholder="예: 서울 강남구"
+                        value={location}
+                        onChange={(e) => setLocation(e.target.value)}
+                      />
+                      {errors.location && (
+                        <p className="mt-1 text-sm text-red-500">{errors.location}</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Gold Trade Additional Fields - buy_gold (admin only) */}
+              {selectedCategory === "gold_trade" && selectedType === "buy_gold" && user.role === "admin" && (
+                <div className="border-t pt-6">
+                  <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg flex items-start gap-3">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      className="stroke-blue-600 shrink-0 w-5 h-5 mt-0.5"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                      ></path>
+                    </svg>
+                    <p className="text-sm text-blue-700">
+                      이 글은 귀하의 매장({user.name})으로 자동 등록됩니다.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Content - 옵션 입력 후 마지막에 배치 */}
+              <div className="border-t pt-6">
+                <div className="flex items-center justify-between mb-3">
+                  <label className="block text-sm font-medium text-gray-700">
+                    내용 <span className="text-red-500">*</span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={handleGenerateContent}
+                    disabled={isGenerating || !title.trim()}
+                    className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white text-sm font-semibold rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg"
+                  >
+                    <Sparkles className="w-4 h-4" />
+                    {isGenerating ? "생성 중..." : "글 자동생성"}
+                  </button>
+                </div>
+                {!title.trim() && (
+                  <p className="text-xs text-gray-500 mb-2">
+                    💡 제목과 금 정보를 먼저 입력하면 AI가 내용을 자동으로 생성해드려요
+                  </p>
+                )}
                 <textarea
                   className={`w-full p-3 rounded-lg border ${
                     errors.content ? "border-red-500" : "border-gray-200"
@@ -201,91 +500,6 @@ export default function CommunityWritePage() {
                   <p className="mt-2 text-sm text-red-500">{errors.content}</p>
                 )}
               </div>
-
-              {/* Gold Trade Additional Fields */}
-              {selectedCategory === "gold_trade" && (
-                <div className="border-t pt-6">
-                  <h3 className="text-lg font-semibold mb-4">
-                    금 거래 정보 (선택)
-                  </h3>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        금 종류
-                      </label>
-                      <input
-                        type="text"
-                        className="w-full p-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
-                        placeholder="예: 24K, 18K, 14K"
-                        value={goldType}
-                        onChange={(e) => setGoldType(e.target.value)}
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        중량 (g)
-                      </label>
-                      <input
-                        type="number"
-                        step="0.01"
-                        className="w-full p-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
-                        placeholder="예: 18.75"
-                        value={weight}
-                        onChange={(e) => setWeight(e.target.value)}
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        가격 (원)
-                      </label>
-                      <input
-                        type="number"
-                        className="w-full p-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
-                        placeholder="예: 3500000"
-                        value={price}
-                        onChange={(e) => setPrice(e.target.value)}
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        거래 지역
-                      </label>
-                      <input
-                        type="text"
-                        className="w-full p-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
-                        placeholder="예: 서울 강남구"
-                        value={location}
-                        onChange={(e) => setLocation(e.target.value)}
-                      />
-                    </div>
-                  </div>
-
-                  {selectedType === "buy_gold" && user.role === "admin" && (
-                    <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg flex items-start gap-3">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        className="stroke-blue-600 shrink-0 w-5 h-5 mt-0.5"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                        ></path>
-                      </svg>
-                      <p className="text-sm text-blue-700">
-                        이 글은 귀하의 매장({user.name})으로 자동 등록됩니다.
-                      </p>
-                    </div>
-                  )}
-                </div>
-              )}
 
               {/* Submit Buttons */}
               <div className="flex items-center justify-between pt-6 border-t">

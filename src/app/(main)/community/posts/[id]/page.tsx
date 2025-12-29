@@ -190,29 +190,30 @@ export default function CommunityDetailPage() {
       return;
     }
 
-    const loadingToast = toast.loading("채팅방을 생성하는 중...");
+    const loadingToast = toast.loading("대화방을 생성하는 중...");
 
     try {
       const result = await createChatRoomAction(
         {
           target_user_id: postData.user_id,
-          type: "GOLD_TRADE",
+          type: "SALE",
+          product_id: postData.id,
         },
         tokens.access_token
       );
 
       if (result.success && result.data) {
         toast.success(
-          result.data.is_new ? "새 채팅방이 생성되었습니다." : "채팅방으로 이동합니다.",
+          result.data.is_new ? "새 대화방이 생성되었습니다." : "대화방으로 이동합니다.",
           { id: loadingToast }
         );
         router.push(`/chats/${result.data.room.id}`);
       } else {
-        toast.error(result.error || "채팅방 생성에 실패했습니다.", { id: loadingToast });
+        toast.error(result.error || "대화방 생성에 실패했습니다.", { id: loadingToast });
       }
     } catch (error) {
       console.error("Create chat room error:", error);
-      toast.error("채팅방 생성 중 오류가 발생했습니다.", { id: loadingToast });
+      toast.error("대화방 생성 중 오류가 발생했습니다.", { id: loadingToast });
     }
   };
 

@@ -2,7 +2,7 @@ import Link from "next/link";
 
 const footerLinks = {
   서비스: [
-    { label: "금시세", href: "/price" },
+    { label: "금시세", href: "/prices" },
     { label: "매장찾기", href: "/stores" },
     { label: "이벤트", href: "#" },
   ],

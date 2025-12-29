@@ -38,7 +38,7 @@ export function Header() {
     }
   }, [user?.address, currentLocation, initializeFromUserAddress]);
 
-  // 안읽은 채팅 개수 가져오기
+  // 안읽은 메시지 개수 가져오기
   const fetchUnreadCount = useCallback(async () => {
     if (!isAuthenticated || !tokens?.access_token) {
       setUnreadChatCount(0);
@@ -83,11 +83,8 @@ export function Header() {
   }, [fetchUnreadCount]);
 
   // WebSocket으로 실시간 메시지 수신
-  const wsProtocol = process.env.NEXT_PUBLIC_API_BASE_URL?.startsWith('https') ? 'wss' : 'ws';
-  const wsBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/^https?:\/\//, '') || '43.200.249.22:8080';
-
   useWebSocket({
-    url: `${wsProtocol}://${wsBaseUrl}/api/v1/chats/ws`,
+    url: process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8080/api/v1/chats/ws',
     token: tokens?.access_token || "",
     onMessage: handleWebSocketMessage,
   });
@@ -164,7 +161,7 @@ export function Header() {
               href="/chats"
               className="nav-link text-[15px] font-medium text-gray-600 hover:text-gray-900 smooth-transition relative"
             >
-              채팅
+              메시지
               {unreadChatCount > 0 && (
                 <span className="absolute -top-1 -right-3 bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
                   {unreadChatCount > 99 ? "99+" : unreadChatCount}

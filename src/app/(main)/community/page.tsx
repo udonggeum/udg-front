@@ -243,215 +243,144 @@ function CommunityPageContent() {
             )}
           </div>
 
-          {/* Main Category Toggle - 큰 토글 스위치 */}
-          <div className="mb-6 inline-flex bg-white rounded-2xl p-2 border-2 border-gray-200 shadow-sm">
+          {/* Main Category Toggle - 1단계: 페이지 성격 선택 */}
+          <div className="mb-8 inline-flex bg-white rounded-2xl p-1.5 border-2 border-gray-200 shadow-sm">
             <button
               onClick={() => handleMainCategoryChange("market")}
-              className={`px-8 py-3 text-[18px] font-bold rounded-xl transition-all duration-200 ${
+              className={`px-8 py-3 text-[16px] font-bold rounded-xl transition-all duration-200 ${
                 mainCategory === "market"
                   ? "bg-yellow-400 text-gray-900 shadow-md"
-                  : "text-gray-500 hover:text-gray-700"
+                  : "text-gray-600 hover:text-gray-900"
               }`}
             >
-              🏪 금시장
+              금시장
             </button>
             <button
               onClick={() => handleMainCategoryChange("community")}
-              className={`px-8 py-3 text-[18px] font-bold rounded-xl transition-all duration-200 ${
+              className={`px-8 py-3 text-[16px] font-bold rounded-xl transition-all duration-200 ${
                 mainCategory === "community"
                   ? "bg-yellow-400 text-gray-900 shadow-md"
-                  : "text-gray-500 hover:text-gray-700"
+                  : "text-gray-600 hover:text-gray-900"
               }`}
             >
-              💬 금소식
+              금소식
             </button>
           </div>
 
-          {/* Filters */}
-          <div className="bg-white rounded-xl p-5 border border-gray-200 space-y-4">
-            {/* Sort */}
-            <div className="flex items-center justify-between mb-4 pb-4 border-b border-gray-100">
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-600 font-medium mr-2">
-                  정렬
-                </span>
-                <button
-                  onClick={() => setCurrentSort("latest")}
-                  className={`px-4 py-2 text-[14px] font-medium rounded-lg transition-colors duration-200 ${
-                    currentSort === "latest"
-                      ? "bg-gray-900 text-white"
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                  }`}
-                >
-                  최신순
-                </button>
-                <button
-                  onClick={() => setCurrentSort("popular")}
-                  className={`px-4 py-2 text-[14px] font-medium rounded-lg transition-colors duration-200 ${
-                    currentSort === "popular"
-                      ? "bg-gray-900 text-white"
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                  }`}
-                >
-                  인기순
-                </button>
-              </div>
-            </div>
+          {/* Divider */}
+          <div className="mb-6 border-t-2 border-gray-100"></div>
 
+          {/* 2단계: 세부 필터 + 정렬 */}
+          <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             {/* Type Filters - 금시장 */}
             {mainCategory === "market" && (
-              <div className="flex items-start gap-2">
-                <span className="text-sm text-gray-600 font-medium mr-2 pt-2">
-                  유형
-                </span>
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    onClick={() => setSelectedType(undefined)}
-                    className={`px-4 py-2 text-[14px] font-medium rounded-lg transition-colors duration-200 ${
-                      !selectedType
-                        ? "bg-gray-900 text-white"
-                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                    }`}
-                  >
-                    전체
-                  </button>
-                  <button
-                    onClick={() => setSelectedType("sell_gold")}
-                    className={`px-4 py-2 text-[14px] font-medium rounded-lg transition-colors duration-200 ${
-                      selectedType === "sell_gold"
-                        ? "bg-gray-900 text-white"
-                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                    }`}
-                  >
-                    금 판매
-                  </button>
-                  <button
-                    onClick={() => setSelectedType("buy_gold")}
-                    className={`px-4 py-2 text-[14px] font-medium rounded-lg transition-colors duration-200 ${
-                      selectedType === "buy_gold"
-                        ? "bg-gray-900 text-white"
-                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                    }`}
-                  >
-                    금 구매
-                  </button>
-                </div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <button
+                  onClick={() => setSelectedType(undefined)}
+                  className={`px-5 py-2.5 text-[14px] font-semibold rounded-lg transition-all duration-200 ${
+                    !selectedType
+                      ? "bg-gray-900 text-white shadow-sm"
+                      : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
+                  }`}
+                >
+                  전체
+                </button>
+                <button
+                  onClick={() => setSelectedType("buy_gold")}
+                  className={`px-5 py-2.5 text-[14px] font-semibold rounded-lg transition-all duration-200 ${
+                    selectedType === "buy_gold"
+                      ? "bg-gray-900 text-white shadow-sm"
+                      : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
+                  }`}
+                >
+                  금 구매
+                </button>
+                <button
+                  onClick={() => setSelectedType("sell_gold")}
+                  className={`px-5 py-2.5 text-[14px] font-semibold rounded-lg transition-all duration-200 ${
+                    selectedType === "sell_gold"
+                      ? "bg-gray-900 text-white shadow-sm"
+                      : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
+                  }`}
+                >
+                  금 판매
+                </button>
               </div>
             )}
 
             {/* Type Filters - 금소식 (커뮤니티) */}
             {mainCategory === "community" && (
-              <div className="flex items-start gap-2">
-                <span className="text-sm text-gray-600 font-medium mr-2 pt-2">
-                  카테고리
-                </span>
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    onClick={() => handleCategoryChange("gold_news")}
-                    className={`px-4 py-2 text-[14px] font-medium rounded-lg transition-colors duration-200 ${
-                      selectedCategory === "gold_news"
-                        ? "bg-gray-900 text-white"
-                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                    }`}
-                  >
-                    금소식
-                  </button>
-                  <button
-                    onClick={() => handleCategoryChange("qna")}
-                    className={`px-4 py-2 text-[14px] font-medium rounded-lg transition-colors duration-200 ${
-                      selectedCategory === "qna"
-                        ? "bg-gray-900 text-white"
-                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                    }`}
-                  >
-                    Q&A
-                  </button>
-                </div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <button
+                  onClick={() => {
+                    setSelectedCategory("gold_news");
+                    setSelectedType(undefined);
+                  }}
+                  className={`px-5 py-2.5 text-[14px] font-semibold rounded-lg transition-all duration-200 ${
+                    selectedCategory === "gold_news" && !selectedType
+                      ? "bg-gray-900 text-white shadow-sm"
+                      : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
+                  }`}
+                >
+                  전체
+                </button>
+                <button
+                  onClick={() => {
+                    setSelectedCategory("gold_news");
+                    setSelectedType("product_news");
+                  }}
+                  className={`px-5 py-2.5 text-[14px] font-semibold rounded-lg transition-all duration-200 ${
+                    selectedType === "product_news"
+                      ? "bg-gray-900 text-white shadow-sm"
+                      : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
+                  }`}
+                >
+                  상품소식
+                </button>
+                <button
+                  onClick={() => {
+                    setSelectedCategory("gold_news");
+                    setSelectedType("store_news");
+                  }}
+                  className={`px-5 py-2.5 text-[14px] font-semibold rounded-lg transition-all duration-200 ${
+                    selectedType === "store_news"
+                      ? "bg-gray-900 text-white shadow-sm"
+                      : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
+                  }`}
+                >
+                  매장소식
+                </button>
+                <button
+                  onClick={() => {
+                    setSelectedCategory("qna");
+                    setSelectedType("question");
+                  }}
+                  className={`px-5 py-2.5 text-[14px] font-semibold rounded-lg transition-all duration-200 ${
+                    selectedCategory === "qna"
+                      ? "bg-gray-900 text-white shadow-sm"
+                      : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
+                  }`}
+                >
+                  Q&A
+                </button>
               </div>
             )}
 
-            {/* Sub Type Filters - 금소식 */}
-            {selectedCategory === "gold_news" && (
-              <div className="flex items-start gap-2">
-                <span className="text-sm text-gray-600 font-medium mr-2 pt-2">
-                  유형
-                </span>
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    onClick={() => setSelectedType(undefined)}
-                    className={`px-4 py-2 text-[14px] font-medium rounded-lg transition-colors duration-200 ${
-                      !selectedType
-                        ? "bg-gray-900 text-white"
-                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                    }`}
-                  >
-                    전체
-                  </button>
-                  <button
-                    onClick={() => setSelectedType("product_news")}
-                    className={`px-4 py-2 text-[14px] font-medium rounded-lg transition-colors duration-200 ${
-                      selectedType === "product_news"
-                        ? "bg-gray-900 text-white"
-                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                    }`}
-                  >
-                    상품 소식
-                  </button>
-                  <button
-                    onClick={() => setSelectedType("store_news")}
-                    className={`px-4 py-2 text-[14px] font-medium rounded-lg transition-colors duration-200 ${
-                      selectedType === "store_news"
-                        ? "bg-gray-900 text-white"
-                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                    }`}
-                  >
-                    매장 소식
-                  </button>
-                  <button
-                    onClick={() => setSelectedType("other")}
-                    className={`px-4 py-2 text-[14px] font-medium rounded-lg transition-colors duration-200 ${
-                      selectedType === "other"
-                        ? "bg-gray-900 text-white"
-                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                    }`}
-                  >
-                    기타
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Type Filters - QnA */}
-            {selectedCategory === "qna" && (
-              <div className="flex items-start gap-2">
-                <span className="text-sm text-gray-600 font-medium mr-2 pt-2">
-                  유형
-                </span>
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    onClick={() => setSelectedType(undefined)}
-                    className={`px-4 py-2 text-[14px] font-medium rounded-lg transition-colors duration-200 ${
-                      !selectedType
-                        ? "bg-gray-900 text-white"
-                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                    }`}
-                  >
-                    전체
-                  </button>
-                  <button
-                    onClick={() => setSelectedType("question")}
-                    className={`px-4 py-2 text-[14px] font-medium rounded-lg transition-colors duration-200 ${
-                      selectedType === "question"
-                        ? "bg-gray-900 text-white"
-                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                    }`}
-                  >
-                    질문
-                  </button>
-                </div>
-              </div>
-            )}
+            {/* Sort - 오른쪽 정렬 */}
+            <div className="flex items-center gap-2">
+              <select
+                value={currentSort}
+                onChange={(e) => setCurrentSort(e.target.value as "latest" | "popular")}
+                className="px-4 py-2.5 text-[14px] font-medium border border-gray-300 rounded-lg bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition-all duration-200 cursor-pointer"
+              >
+                <option value="latest">최신순</option>
+                <option value="popular">인기순</option>
+              </select>
+            </div>
           </div>
+
+          {/* Divider */}
+          <div className="mb-6 border-t-2 border-gray-100"></div>
 
           {/* FAQ Section - 필터 아래에 표시 */}
           {faqData && faqData.data.length > 0 && selectedType !== "faq" && (
