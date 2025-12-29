@@ -1,18 +1,35 @@
 "use server";
 
-import axios from "axios";
-import type { PresignedUrlRequest, PresignedUrlResponse } from "@/types/upload";
 import { apiClient, handleApiError, type ApiResponse } from "@/lib/axios";
 
 /**
- * S3 업로드용 Presigned URL 생성
+ * Presigned URL 응답 타입
  */
-export async function getPresignedUrlAction(
-  data: PresignedUrlRequest,
+export interface PresignedURLResponse {
+  upload_url: string;
+  file_url: string;
+  key: string;
+}
+
+/**
+ * Presigned URL 요청 타입
+ */
+export interface GeneratePresignedURLRequest {
+  filename: string;
+  content_type: string;
+  file_size: number;
+  folder?: string;
+}
+
+/**
+ * Presigned URL 생성
+ */
+export async function generatePresignedURLAction(
+  data: GeneratePresignedURLRequest,
   accessToken: string
-): Promise<ApiResponse<PresignedUrlResponse>> {
+): Promise<ApiResponse<PresignedURLResponse>> {
   try {
-    const response = await apiClient.post<PresignedUrlResponse>(
+    const response = await apiClient.post<PresignedURLResponse>(
       "/upload/presigned-url",
       data,
       {
@@ -27,33 +44,40 @@ export async function getPresignedUrlAction(
       data: response.data,
     };
   } catch (error) {
-    return handleApiError(error, "Presigned URL 생성에 실패했습니다.");
+    return handleApiError(error, "업로드 URL 생성에 실패했습니다.");
   }
 }
 
 /**
- * S3에 파일 직접 업로드 (클라이언트 사이드에서 사용)
+ * S3에 직접 파일 업로드
  */
-export async function uploadToS3(
+export async function uploadFileToS3(
   uploadUrl: string,
   file: File
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    await axios.put(uploadUrl, file, {
+    const response = await fetch(uploadUrl, {
+      method: "PUT",
+      body: file,
       headers: {
         "Content-Type": file.type,
       },
     });
 
-    return {
-      success: true,
-    };
+    if (!response.ok) {
+      throw new Error(`Upload failed: ${response.statusText}`);
+    }
+
+    return { success: true };
   } catch (error) {
     console.error("S3 upload error:", error);
-
     return {
       success: false,
-      error: "파일 업로드에 실패했습니다.",
+      error: error instanceof Error ? error.message : "파일 업로드에 실패했습니다.",
     };
   }
 }
+
+// 기존 코드 호환성을 위한 alias
+export const getPresignedUrlAction = generatePresignedURLAction;
+export const uploadToS3 = uploadFileToS3;

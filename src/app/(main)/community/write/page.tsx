@@ -7,6 +7,7 @@ import { createPostAction, generateContentAction } from "@/actions/community";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { toast } from "sonner";
 import { Sparkles } from "lucide-react";
+import { ImageUploader } from "@/components/image-uploader";
 import {
   POST_CATEGORY_LABELS,
   POST_TYPE_LABELS,
@@ -36,6 +37,8 @@ export default function CommunityWritePage() {
   const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [additionalNotes, setAdditionalNotes] = useState("");
+  const [showAdditionalNotes, setShowAdditionalNotes] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   if (!user || !tokens?.access_token) {
@@ -124,12 +127,15 @@ export default function CommunityWritePage() {
       return;
     }
 
-    // 키워드 추출 (제목에서)
-    const keywords = title.trim() ? [title.trim()] : ["금"];
-
     if (!title.trim()) {
       toast.error("제목을 먼저 입력해주세요.");
       return;
+    }
+
+    // 키워드 추출 (제목 + 추가 설명)
+    const keywords = [title.trim()];
+    if (additionalNotes.trim()) {
+      keywords.push(additionalNotes.trim());
     }
 
     setIsGenerating(true);
@@ -312,14 +318,13 @@ export default function CommunityWritePage() {
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       이미지 <span className="text-red-500">*</span>
                     </label>
-                    <div className={`border-2 border-dashed ${errors.images ? "border-red-500" : "border-gray-300"} rounded-lg p-4 text-center`}>
-                      <p className="text-sm text-gray-600 mb-2">
-                        판매할 금 제품의 사진을 업로드해주세요
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        * 이미지 업로드 기능은 추후 구현 예정
-                      </p>
-                    </div>
+                    <ImageUploader
+                      imageUrls={imageUrls}
+                      onImagesChange={setImageUrls}
+                      maxImages={5}
+                      accessToken={tokens.access_token}
+                      folder="community"
+                    />
                     {errors.images && (
                       <p className="mt-2 text-sm text-red-500">{errors.images}</p>
                     )}
@@ -482,11 +487,40 @@ export default function CommunityWritePage() {
                     {isGenerating ? "생성 중..." : "글 자동생성"}
                   </button>
                 </div>
+
+                {/* AI 생성 추가 설명 입력 (토글) */}
                 {!title.trim() && (
                   <p className="text-xs text-gray-500 mb-2">
                     💡 제목과 금 정보를 먼저 입력하면 AI가 내용을 자동으로 생성해드려요
                   </p>
                 )}
+                {title.trim() && (
+                  <div className="mb-3">
+                    <button
+                      type="button"
+                      onClick={() => setShowAdditionalNotes(!showAdditionalNotes)}
+                      className="text-sm text-purple-600 hover:text-purple-700 flex items-center gap-1"
+                    >
+                      <span>{showAdditionalNotes ? "▼" : "▶"}</span>
+                      <span>추가로 강조하고 싶은 내용이 있나요? (선택)</span>
+                    </button>
+                    {showAdditionalNotes && (
+                      <div className="mt-2 p-3 bg-purple-50 border border-purple-200 rounded-lg">
+                        <textarea
+                          className="w-full p-2 text-sm rounded border border-purple-200 focus:outline-none focus:ring-2 focus:ring-purple-400 resize-none"
+                          rows={2}
+                          placeholder="예: 급하게 팔아야 해서 가격 협상 가능합니다 / 깨끗한 상태이고 박스 포함되어 있습니다"
+                          value={additionalNotes}
+                          onChange={(e) => setAdditionalNotes(e.target.value)}
+                        />
+                        <p className="text-xs text-purple-600 mt-1">
+                          💬 이 내용이 AI 생성 시 반영됩니다
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 <textarea
                   className={`w-full p-3 rounded-lg border ${
                     errors.content ? "border-red-500" : "border-gray-200"
