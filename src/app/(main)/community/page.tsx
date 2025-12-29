@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense, useRef, useCallback } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { getPostsAction } from "@/actions/community";
+import { getStoreLocationsAction } from "@/actions/stores";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { Section, Container, PageHeader } from "@/components/layout-primitives";
 import { Button } from "@/components/ui/button";
@@ -28,6 +29,11 @@ function CommunityPageContent() {
   );
   const [currentPage, setCurrentPage] = useState(1);
 
+  // 지역 필터
+  const [regions, setRegions] = useState<Array<{ region: string; districts: string[] }>>([]);
+  const [selectedRegion, setSelectedRegion] = useState<string>("");
+  const [selectedDistrict, setSelectedDistrict] = useState<string>("");
+
   const { user } = useAuthStore();
 
   // 게시글 데이터
@@ -42,6 +48,17 @@ function CommunityPageContent() {
 
   // Infinite scroll observer
   const observerTarget = useRef<HTMLDivElement>(null);
+
+  // 지역 데이터 로드
+  useEffect(() => {
+    const fetchLocations = async () => {
+      const result = await getStoreLocationsAction();
+      if (result.success && result.data) {
+        setRegions(result.data.regions);
+      }
+    };
+    fetchLocations();
+  }, []);
 
   // URL 쿼리 파라미터로 초기 state 설정
   useEffect(() => {
@@ -73,6 +90,8 @@ function CommunityPageContent() {
         page_size: 9,
         sort_by: currentSort === "latest" ? "created_at" : "like_count",
         sort_order: "desc",
+        region: selectedRegion || undefined,
+        district: selectedDistrict || undefined,
       });
 
       if (result.success && result.data) {
@@ -87,7 +106,7 @@ function CommunityPageContent() {
     };
 
     fetchPosts();
-  }, [selectedCategory, selectedType, currentSort]);
+  }, [selectedCategory, selectedType, currentSort, selectedRegion, selectedDistrict]);
 
   // 추가 데이터 로드 (무한스크롤)
   const loadMorePosts = useCallback(async () => {
@@ -102,6 +121,8 @@ function CommunityPageContent() {
       page_size: 9,
       sort_by: currentSort === "latest" ? "created_at" : "like_count",
       sort_order: "desc",
+      region: selectedRegion || undefined,
+      district: selectedDistrict || undefined,
     });
 
     if (result.success && result.data) {
@@ -126,6 +147,8 @@ function CommunityPageContent() {
     selectedType,
     currentPage,
     currentSort,
+    selectedRegion,
+    selectedDistrict,
   ]);
 
   // Intersection Observer 설정
@@ -182,12 +205,16 @@ function CommunityPageContent() {
     }
     setSelectedType(undefined);
     setCurrentPage(1);
+    setSelectedRegion("");
+    setSelectedDistrict("");
   };
 
   const handleCategoryChange = (category: PostCategory) => {
     setSelectedCategory(category);
     setSelectedType(undefined);
     setCurrentPage(1);
+    setSelectedRegion("");
+    setSelectedDistrict("");
   };
 
   const getWriteButtonText = () => {
@@ -367,8 +394,44 @@ function CommunityPageContent() {
               </div>
             )}
 
-            {/* Sort - 오른쪽 정렬 */}
-            <div className="flex items-center gap-2">
+            {/* Region Filter + Sort - 오른쪽 정렬 */}
+            <div className="flex items-center gap-2 flex-wrap">
+              {/* 지역 선택 */}
+              <select
+                value={selectedRegion}
+                onChange={(e) => {
+                  setSelectedRegion(e.target.value);
+                  setSelectedDistrict("");
+                }}
+                className="px-4 py-2.5 text-caption font-medium border border-gray-300 rounded-lg bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition-all duration-200 cursor-pointer"
+              >
+                <option value="">전체 지역</option>
+                {regions.map((region) => (
+                  <option key={region.region} value={region.region}>
+                    {region.region}
+                  </option>
+                ))}
+              </select>
+
+              {/* 구/군 선택 */}
+              {selectedRegion && (
+                <select
+                  value={selectedDistrict}
+                  onChange={(e) => setSelectedDistrict(e.target.value)}
+                  className="px-4 py-2.5 text-caption font-medium border border-gray-300 rounded-lg bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition-all duration-200 cursor-pointer"
+                >
+                  <option value="">전체 구/군</option>
+                  {regions
+                    .find((r) => r.region === selectedRegion)
+                    ?.districts.map((district) => (
+                      <option key={district} value={district}>
+                        {district}
+                      </option>
+                    ))}
+                </select>
+              )}
+
+              {/* 정렬 */}
               <select
                 value={currentSort}
                 onChange={(e) => setCurrentSort(e.target.value as "latest" | "popular")}
