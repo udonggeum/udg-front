@@ -396,7 +396,7 @@ export default function SignupPage() {
     <div className="min-h-screen flex flex-col bg-white">
       {/* 헤더 */}
       <header className="w-full bg-white border-b border-gray-100 sticky top-0 z-50">
-        <div className="max-w-[520px] mx-auto px-5 h-[60px] flex items-center justify-between">
+        <div className="max-w-[520px] mx-auto px-page h-[60px] flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
             <div className="w-8 h-8 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-lg flex items-center justify-center">
               <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
@@ -405,7 +405,7 @@ export default function SignupPage() {
             </div>
             <span className="text-lg font-bold text-gray-900">우리동네금은방</span>
           </Link>
-          <Link href="/login" className="text-[14px] text-gray-500 hover:text-gray-900 smooth-transition">
+          <Link href="/login" className="text-caption text-gray-500 hover:text-gray-900 smooth-transition">
             로그인
           </Link>
         </div>
@@ -413,35 +413,35 @@ export default function SignupPage() {
 
       {/* 메인 컨텐츠 */}
       <main className="flex-1 flex flex-col">
-        <div className="max-w-[520px] w-full mx-auto px-5 py-10">
+        <div className="max-w-[520px] w-full mx-auto px-page py-10">
           {/* 스텝 인디케이터 */}
           <div className="flex items-center justify-center gap-4 mb-10">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-gray-900 text-white rounded-full flex items-center justify-center text-[13px] font-semibold">
+              <div className="w-8 h-8 bg-gray-900 text-white rounded-full flex items-center justify-center text-small font-semibold">
                 1
               </div>
-              <span className="text-[13px] font-medium text-gray-900 hidden sm:block">정보입력</span>
+              <span className="text-small font-medium text-gray-900 hidden sm:block">정보입력</span>
             </div>
             <div className="w-8 h-0.5 bg-gray-200"></div>
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center text-[13px] font-semibold text-gray-500">
+              <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center text-small font-semibold text-gray-500">
                 2
               </div>
-              <span className="text-[13px] font-medium text-gray-400 hidden sm:block">약관동의</span>
+              <span className="text-small font-medium text-gray-400 hidden sm:block">약관동의</span>
             </div>
             <div className="w-8 h-0.5 bg-gray-200"></div>
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center text-[13px] font-semibold text-gray-500">
+              <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center text-small font-semibold text-gray-500">
                 3
               </div>
-              <span className="text-[13px] font-medium text-gray-400 hidden sm:block">가입완료</span>
+              <span className="text-small font-medium text-gray-400 hidden sm:block">가입완료</span>
             </div>
           </div>
 
           {/* 타이틀 */}
           <div className="text-center mb-10">
             <h1 className="text-[26px] font-bold text-gray-900 mb-2">회원가입</h1>
-            <p className="text-[15px] text-gray-500">간편하게 가입하고 다양한 서비스를 이용하세요</p>
+            <p className="text-body text-gray-500">간편하게 가입하고 다양한 서비스를 이용하세요</p>
           </div>
 
           {/* 에러 메시지 */}
@@ -461,7 +461,8 @@ export default function SignupPage() {
               type="button"
               onClick={() => handleSocialSignup("카카오")}
               disabled={isPending}
-              className="w-full flex items-center justify-center gap-3 py-6 bg-[#FEE500] hover:bg-[#FEE500]/90 text-gray-900 rounded-xl text-[15px] font-semibold smooth-transition h-auto"
+              variant="kakao"
+              className="w-full py-6 h-auto"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M12 3C6.477 3 2 6.477 2 10.5c0 2.47 1.607 4.647 4.023 5.903-.176.657-.64 2.385-.733 2.758-.114.461.17.454.357.33.147-.097 2.343-1.595 3.293-2.243.349.05.706.076 1.06.076 5.523 0 10-3.477 10-7.824C20 6.477 17.523 3 12 3z"/>
@@ -474,7 +475,8 @@ export default function SignupPage() {
               type="button"
               onClick={() => handleSocialSignup("네이버")}
               disabled={isPending}
-              className="w-full flex items-center justify-center gap-3 py-6 bg-[#03C75A] hover:bg-[#03C75A]/90 text-white rounded-xl text-[15px] font-semibold smooth-transition h-auto"
+              variant="naver"
+              className="w-full py-6 h-auto"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M16.273 12.845L7.376 3H3v18h4.726V12.155L16.624 21H21V3h-4.727z"/>
@@ -486,7 +488,7 @@ export default function SignupPage() {
           {/* 구분선 */}
           <div className="relative flex items-center gap-4 mb-8">
             <div className="flex-1 h-px bg-gray-200"></div>
-            <span className="text-[13px] text-gray-400">또는 이메일로 가입</span>
+            <span className="text-small text-gray-400">또는 이메일로 가입</span>
             <div className="flex-1 h-px bg-gray-200"></div>
           </div>
 
@@ -494,7 +496,7 @@ export default function SignupPage() {
           <form className="space-y-5" onSubmit={handleSubmit}>
             {/* 이메일 */}
             <div>
-              <Label className="block text-[13px] font-semibold text-gray-900 mb-2">
+              <Label className="block text-small font-semibold text-gray-900 mb-2">
                 이메일 <span className="text-red-500">*</span>
               </Label>
               <div className="flex gap-2">
@@ -507,7 +509,7 @@ export default function SignupPage() {
                     onChange={handleChange}
                     onBlur={() => handleBlur("email")}
                     disabled={isPending}
-                    className={`px-4 py-6 bg-gray-100 border-transparent focus:border-gray-900 focus:bg-white rounded-xl text-[15px] placeholder-gray-400 smooth-transition ${
+                    className={`px-4 py-6 bg-gray-100 border-transparent focus:border-gray-900 focus:bg-white rounded-xl text-body placeholder-gray-400 smooth-transition ${
                       touched.email && formErrors.email ? "border-red-500 focus:border-red-500" : ""
                     }`}
                   />
@@ -519,7 +521,7 @@ export default function SignupPage() {
                   type="button"
                   variant="secondary"
                   disabled={isPending}
-                  className="px-5 py-6 bg-gray-200 hover:bg-gray-300 text-gray-700 text-[14px] font-semibold rounded-xl whitespace-nowrap"
+                  className="px-5 py-6 bg-gray-200 hover:bg-gray-300 text-gray-700 text-caption font-semibold rounded-xl whitespace-nowrap"
                 >
                   인증요청
                 </Button>
@@ -531,7 +533,7 @@ export default function SignupPage() {
 
             {/* 비밀번호 */}
             <div>
-              <Label className="block text-[13px] font-semibold text-gray-900 mb-2">
+              <Label className="block text-small font-semibold text-gray-900 mb-2">
                 비밀번호 <span className="text-red-500">*</span>
               </Label>
               <div className="relative">
@@ -543,7 +545,7 @@ export default function SignupPage() {
                   onChange={handleChange}
                   onBlur={() => handleBlur("password")}
                   disabled={isPending}
-                  className={`w-full px-4 py-6 bg-gray-100 border-transparent focus:border-gray-900 focus:bg-white rounded-xl text-[15px] placeholder-gray-400 smooth-transition pr-12 ${
+                  className={`w-full px-4 py-6 bg-gray-100 border-transparent focus:border-gray-900 focus:bg-white rounded-xl text-body placeholder-gray-400 smooth-transition pr-12 ${
                     touched.password && formErrors.password ? "border-red-500 focus:border-red-500" : ""
                   }`}
                 />
@@ -598,7 +600,7 @@ export default function SignupPage() {
 
             {/* 비밀번호 확인 */}
             <div>
-              <Label className="block text-[13px] font-semibold text-gray-900 mb-2">
+              <Label className="block text-small font-semibold text-gray-900 mb-2">
                 비밀번호 확인 <span className="text-red-500">*</span>
               </Label>
               <div className="relative">
@@ -610,7 +612,7 @@ export default function SignupPage() {
                   onChange={handleChange}
                   onBlur={() => handleBlur("passwordConfirm")}
                   disabled={isPending}
-                  className={`w-full px-4 py-6 bg-gray-100 border-transparent focus:border-gray-900 focus:bg-white rounded-xl text-[15px] placeholder-gray-400 smooth-transition pr-12 ${
+                  className={`w-full px-4 py-6 bg-gray-100 border-transparent focus:border-gray-900 focus:bg-white rounded-xl text-body placeholder-gray-400 smooth-transition pr-12 ${
                     touched.passwordConfirm && formErrors.passwordConfirm
                       ? "border-red-500 focus:border-red-500"
                       : ""
@@ -631,7 +633,7 @@ export default function SignupPage() {
 
             {/* 이름 */}
             <div>
-              <Label className="block text-[13px] font-semibold text-gray-900 mb-2">
+              <Label className="block text-small font-semibold text-gray-900 mb-2">
                 이름 <span className="text-red-500">*</span>
               </Label>
               <Input
@@ -642,7 +644,7 @@ export default function SignupPage() {
                 onChange={handleChange}
                 onBlur={() => handleBlur("name")}
                 disabled={isPending}
-                className={`w-full px-4 py-6 bg-gray-100 border-transparent focus:border-gray-900 focus:bg-white rounded-xl text-[15px] placeholder-gray-400 smooth-transition ${
+                className={`w-full px-4 py-6 bg-gray-100 border-transparent focus:border-gray-900 focus:bg-white rounded-xl text-body placeholder-gray-400 smooth-transition ${
                   touched.name && formErrors.name ? "border-red-500 focus:border-red-500" : ""
                 }`}
               />
@@ -653,7 +655,7 @@ export default function SignupPage() {
 
             {/* 휴대폰 번호 */}
             <div>
-              <Label className="block text-[13px] font-semibold text-gray-900 mb-2">
+              <Label className="block text-small font-semibold text-gray-900 mb-2">
                 휴대폰 번호 <span className="text-red-500">*</span>
               </Label>
               <div className="flex gap-2">
@@ -666,7 +668,7 @@ export default function SignupPage() {
                     onChange={handleChange}
                     onBlur={() => handleBlur("phone")}
                     disabled={isPending}
-                    className={`px-4 py-6 bg-gray-100 border-transparent focus:border-gray-900 focus:bg-white rounded-xl text-[15px] placeholder-gray-400 smooth-transition ${
+                    className={`px-4 py-6 bg-gray-100 border-transparent focus:border-gray-900 focus:bg-white rounded-xl text-body placeholder-gray-400 smooth-transition ${
                       touched.phone && formErrors.phone ? "border-red-500 focus:border-red-500" : ""
                     }`}
                   />
@@ -678,7 +680,7 @@ export default function SignupPage() {
                   type="button"
                   variant="secondary"
                   disabled={isPending}
-                  className="px-5 py-6 bg-gray-200 hover:bg-gray-300 text-gray-700 text-[14px] font-semibold rounded-xl whitespace-nowrap"
+                  className="px-5 py-6 bg-gray-200 hover:bg-gray-300 text-gray-700 text-caption font-semibold rounded-xl whitespace-nowrap"
                 >
                   인증요청
                 </Button>
@@ -690,7 +692,7 @@ export default function SignupPage() {
 
             {/* 약관 동의 */}
             <div className="space-y-4">
-              <h3 className="text-[15px] font-semibold text-gray-900">약관 동의</h3>
+              <h3 className="text-body font-semibold text-gray-900">약관 동의</h3>
 
               {/* 전체 동의 */}
               <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl">
@@ -701,7 +703,7 @@ export default function SignupPage() {
                   disabled={isPending}
                   className="w-6 h-6 rounded-full border-2 border-gray-900 data-[state=checked]:bg-gray-900"
                 />
-                <Label htmlFor="all" className="text-[15px] font-semibold text-gray-900 cursor-pointer">
+                <Label htmlFor="all" className="text-body font-semibold text-gray-900 cursor-pointer">
                   전체 동의
                 </Label>
               </div>
@@ -719,14 +721,14 @@ export default function SignupPage() {
                       disabled={isPending}
                       className="rounded"
                     />
-                    <Label htmlFor="terms" className="text-[14px] text-gray-700 cursor-pointer">
+                    <Label htmlFor="terms" className="text-caption text-gray-700 cursor-pointer">
                       [필수] 이용약관 동의
                     </Label>
                   </div>
                   <Button
                     type="button"
                     variant="ghost"
-                    className="text-[13px] text-gray-400 hover:text-gray-600 h-auto p-0"
+                    className="text-small text-gray-400 hover:text-gray-600 h-auto p-0"
                   >
                     보기
                   </Button>
@@ -744,14 +746,14 @@ export default function SignupPage() {
                       disabled={isPending}
                       className="rounded"
                     />
-                    <Label htmlFor="privacy" className="text-[14px] text-gray-700 cursor-pointer">
+                    <Label htmlFor="privacy" className="text-caption text-gray-700 cursor-pointer">
                       [필수] 개인정보 수집 및 이용 동의
                     </Label>
                   </div>
                   <Button
                     type="button"
                     variant="ghost"
-                    className="text-[13px] text-gray-400 hover:text-gray-600 h-auto p-0"
+                    className="text-small text-gray-400 hover:text-gray-600 h-auto p-0"
                   >
                     보기
                   </Button>
@@ -769,14 +771,14 @@ export default function SignupPage() {
                       disabled={isPending}
                       className="rounded"
                     />
-                    <Label htmlFor="location" className="text-[14px] text-gray-700 cursor-pointer">
+                    <Label htmlFor="location" className="text-caption text-gray-700 cursor-pointer">
                       [필수] 위치기반 서비스 이용약관 동의
                     </Label>
                   </div>
                   <Button
                     type="button"
                     variant="ghost"
-                    className="text-[13px] text-gray-400 hover:text-gray-600 h-auto p-0"
+                    className="text-small text-gray-400 hover:text-gray-600 h-auto p-0"
                   >
                     보기
                   </Button>
@@ -794,14 +796,14 @@ export default function SignupPage() {
                       disabled={isPending}
                       className="rounded"
                     />
-                    <Label htmlFor="marketing" className="text-[14px] text-gray-500 cursor-pointer">
+                    <Label htmlFor="marketing" className="text-caption text-gray-500 cursor-pointer">
                       [선택] 마케팅 정보 수신 동의
                     </Label>
                   </div>
                   <Button
                     type="button"
                     variant="ghost"
-                    className="text-[13px] text-gray-400 hover:text-gray-600 h-auto p-0"
+                    className="text-small text-gray-400 hover:text-gray-600 h-auto p-0"
                   >
                     보기
                   </Button>
@@ -819,7 +821,7 @@ export default function SignupPage() {
                       disabled={isPending}
                       className="w-[18px] h-[18px] rounded"
                     />
-                    <Label htmlFor="sms" className="text-[13px] text-gray-500 cursor-pointer">
+                    <Label htmlFor="sms" className="text-small text-gray-500 cursor-pointer">
                       SMS
                     </Label>
                   </div>
@@ -833,7 +835,7 @@ export default function SignupPage() {
                       disabled={isPending}
                       className="w-[18px] h-[18px] rounded"
                     />
-                    <Label htmlFor="email-marketing" className="text-[13px] text-gray-500 cursor-pointer">
+                    <Label htmlFor="email-marketing" className="text-small text-gray-500 cursor-pointer">
                       이메일
                     </Label>
                   </div>
@@ -847,7 +849,7 @@ export default function SignupPage() {
                       disabled={isPending}
                       className="w-[18px] h-[18px] rounded"
                     />
-                    <Label htmlFor="push" className="text-[13px] text-gray-500 cursor-pointer">
+                    <Label htmlFor="push" className="text-small text-gray-500 cursor-pointer">
                       앱 푸시
                     </Label>
                   </div>
@@ -859,7 +861,8 @@ export default function SignupPage() {
             <Button
               type="submit"
               disabled={isPending || !isFormValid()}
-              className="w-full py-6 bg-gray-900 hover:bg-gray-800 text-white text-[16px] font-semibold rounded-xl smooth-transition mt-8 h-auto disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              variant="brand-primary"
+              className="w-full py-6 mt-8 h-auto text-[16px]"
             >
               {isPending ? (
                 <>
@@ -873,7 +876,7 @@ export default function SignupPage() {
           </form>
 
           {/* 로그인 링크 */}
-          <p className="text-center text-[14px] text-gray-500 mt-6">
+          <p className="text-center text-caption text-gray-500 mt-6">
             이미 회원이신가요?
             <Link href="/login" className="font-semibold text-gray-900 hover:underline ml-1">
               로그인
@@ -893,7 +896,8 @@ export default function SignupPage() {
             }
           }}
           disabled={isPending}
-          className="w-full py-6 bg-gray-900 hover:bg-gray-800 text-white text-[16px] font-semibold rounded-xl smooth-transition h-auto cursor-pointer"
+          variant="brand-primary"
+          className="w-full py-6 h-auto text-[16px]"
         >
           {isPending ? (
             <>
@@ -907,7 +911,7 @@ export default function SignupPage() {
       </div>
 
       {/* 푸터 (데스크탑만) */}
-      <footer className="border-t border-gray-100 py-6 px-5 md:block hidden">
+      <footer className="border-t border-gray-100 py-6 px-page md:block hidden">
         <div className="max-w-[520px] mx-auto">
           <p className="text-[12px] text-gray-400 text-center">
             © 2024 우리동네금은방. All rights reserved.

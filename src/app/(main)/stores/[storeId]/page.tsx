@@ -125,7 +125,7 @@ function KakaoMap({ address, storeName }: { address: string; storeName: string }
             href={`https://map.kakao.com/link/search/${encodeURIComponent(address)}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-[13px] text-blue-600 hover:underline"
+            className="text-small text-blue-600 hover:underline"
           >
             지도에서 보기
           </a>
@@ -350,7 +350,7 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
       <div className="flex min-h-screen items-center justify-center bg-gray-50">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto mb-4"></div>
-          <p className="text-[14px] text-gray-500">매장 정보를 불러오는 중...</p>
+          <p className="text-caption text-gray-500">매장 정보를 불러오는 중...</p>
         </div>
       </div>
     );
@@ -365,10 +365,10 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
           <h2 className="text-[20px] font-bold text-gray-900 mb-2">
             매장을 불러올 수 없습니다
           </h2>
-          <p className="text-[14px] text-gray-500 mb-6">{storeError}</p>
+          <p className="text-caption text-gray-500 mb-6">{storeError}</p>
           <button
             onClick={() => router.back()}
-            className="px-6 py-3 bg-gray-900 hover:bg-gray-800 text-white text-[14px] font-semibold rounded-lg transition-colors"
+            className="px-6 py-3 bg-gray-900 hover:bg-gray-800 text-white text-caption font-semibold rounded-lg transition-colors"
           >
             돌아가기
           </button>
@@ -764,12 +764,12 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
           className="absolute top-4 left-4 z-10 flex items-center gap-2 px-4 py-2 bg-white/90 backdrop-blur-sm hover:bg-white rounded-lg transition-colors shadow-sm"
         >
           <ArrowLeft className="w-5 h-5 text-gray-900" />
-          <span className="text-[14px] font-semibold text-gray-900">뒤로가기</span>
+          <span className="text-caption font-semibold text-gray-900">뒤로가기</span>
         </button>
       </div>
 
       {/* 매장 메인 정보 */}
-      <div className="relative z-10 -mt-20 max-w-[1080px] mx-auto px-5 w-full">
+      <div className="relative z-10 -mt-20 max-w-[1080px] mx-auto px-page w-full">
         <div className="bg-white rounded-2xl p-6 shadow-lg mb-5">
           <div className="flex flex-col md:flex-row gap-4">
             {/* 매장 이미지 */}
@@ -866,7 +866,7 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
                     )}
                     {/* 매장명 수정 중이 아닐 때만 영업 상태 표시 */}
                     {!editSections.name && (
-                      <span className={`px-3 py-1 text-[13px] font-semibold rounded-full ${status.className}`}>
+                      <span className={`px-3 py-1 text-small font-semibold rounded-full ${status.className}`}>
                         {status.label}
                       </span>
                     )}
@@ -898,7 +898,7 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
                   )}
 
                   {/* 별점 + 리뷰 수 */}
-                  <div className="flex items-center gap-3 text-[15px] mb-3 ml-3">
+                  <div className="flex items-center gap-3 text-body mb-3 ml-3">
                     <span className="flex items-center gap-1 text-yellow-500 font-semibold">
                       <Star className="w-5 h-5 fill-current" />
                       4.8
@@ -926,13 +926,13 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
                             <textarea
                               value={formData.description}
                               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                              className="w-full text-[15px] leading-relaxed text-gray-600 bg-transparent border-none outline-none resize-none"
+                              className="w-full text-body leading-relaxed text-gray-600 bg-transparent border-none outline-none resize-none"
                               placeholder="한줄로 매장을 소개해주세요"
                               rows={2}
                             />
                           ) : (
                             <p
-                              className={`text-[15px] leading-relaxed ${
+                              className={`text-body leading-relaxed ${
                                 store.description ? "text-gray-600" : "text-gray-400 italic"
                               }`}
                             >
@@ -974,7 +974,7 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
                   {isMyStore ? (
                     <button
                       onClick={handleToggleEditMode}
-                      className={`flex items-center gap-1.5 px-3 py-2 rounded-lg transition-colors text-[13px] font-semibold ${
+                      className={`flex items-center gap-1.5 px-3 py-2 rounded-lg transition-colors text-small font-semibold ${
                         isAnyEditing || isEditMode
                           ? "bg-gray-900 hover:bg-gray-800 text-white"
                           : "bg-gray-100 hover:bg-gray-200 text-gray-900"
@@ -989,7 +989,7 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
                       className="flex items-center gap-2 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
                     >
                       <Heart className={`w-5 h-5 ${isWishlisted ? "fill-red-500 text-red-500" : "text-gray-600"}`} />
-                      <span className="text-[14px] font-semibold text-gray-900">찜하기</span>
+                      <span className="text-caption font-semibold text-gray-900">찜하기</span>
                     </button>
                   )}
                 </div>
@@ -1008,13 +1008,13 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
                         store.tags.map((tag) => (
                           <span
                             key={tag.id}
-                            className="px-3 py-1.5 bg-gray-100 text-gray-700 text-[13px] font-medium rounded-lg"
+                            className="px-3 py-1.5 bg-gray-100 text-gray-700 text-small font-medium rounded-lg"
                           >
                             {tag.name}
                           </span>
                         ))
                       ) : (
-                        <span className="text-gray-400 text-[13px] italic">태그를 추가해주세요</span>
+                        <span className="text-gray-400 text-small italic">태그를 추가해주세요</span>
                       )}
                     </div>
                     {isMyStore && (
@@ -1035,7 +1035,7 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
                 {!isMyStore && (
                   <button
                     onClick={handleInquiry}
-                    className="flex-1 flex items-center justify-center gap-2 py-3 bg-yellow-400 hover:bg-yellow-500 text-gray-900 text-[15px] font-semibold rounded-xl transition-colors shadow-md hover:shadow-lg"
+                    className="flex-1 flex items-center justify-center gap-2 py-3 bg-yellow-400 hover:bg-yellow-500 text-gray-900 text-body font-semibold rounded-xl transition-colors shadow-md hover:shadow-lg"
                   >
                     <MessageCircle className="w-5 h-5" />
                     문의하기
@@ -1044,7 +1044,7 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
                 {store.phone_number && (
                   <a
                     href={`tel:${store.phone_number.replace(/[^0-9]/g, '')}`}
-                    className="flex-1 flex items-center justify-center gap-2 py-3 bg-gray-900 hover:bg-gray-800 text-white text-[15px] font-semibold rounded-xl transition-colors"
+                    className="flex-1 flex items-center justify-center gap-2 py-3 bg-gray-900 hover:bg-gray-800 text-white text-body font-semibold rounded-xl transition-colors"
                   >
                     <Phone className="w-5 h-5" />
                     전화하기
@@ -1055,13 +1055,13 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
                     href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(store.address)}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className={`${!isMyStore && !store.phone_number ? "flex-1" : "flex-shrink-0"} flex items-center justify-center gap-2 ${!isMyStore && !store.phone_number ? "py-3" : "px-5 py-3"} bg-white border-2 border-gray-200 hover:border-gray-900 text-gray-900 text-[15px] font-semibold rounded-xl transition-colors`}
+                    className={`${!isMyStore && !store.phone_number ? "flex-1" : "flex-shrink-0"} flex items-center justify-center gap-2 ${!isMyStore && !store.phone_number ? "py-3" : "px-page py-3"} bg-white border-2 border-gray-200 hover:border-gray-900 text-gray-900 text-body font-semibold rounded-xl transition-colors`}
                   >
                     <MapPin className="w-5 h-5" />
                     {!isMyStore && !store.phone_number ? "길찾기" : <span className="sr-only">길찾기</span>}
                   </a>
                 )}
-                <button className="flex items-center justify-center gap-2 px-5 py-3 bg-white border-2 border-gray-200 hover:border-gray-900 text-gray-900 text-[15px] font-semibold rounded-xl transition-colors">
+                <button className="flex items-center justify-center gap-2 px-page py-3 bg-white border-2 border-gray-200 hover:border-gray-900 text-gray-900 text-body font-semibold rounded-xl transition-colors">
                   <Share2 className="w-5 h-5" />
                   <span className="sr-only">공유</span>
                 </button>
@@ -1072,7 +1072,7 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
       </div>
 
       {/* 메인 컨텐츠 */}
-      <div className="max-w-[1080px] mx-auto px-5 py-8 w-full">
+      <div className="max-w-[1080px] mx-auto px-page py-8 w-full">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* 좌측: 메인 컨텐츠 */}
           <div className="lg:col-span-2">
@@ -1081,7 +1081,7 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
               <nav className="border-b border-gray-100 px-6 flex items-center gap-8 overflow-x-auto">
                 <button
                   onClick={() => setActiveTab("home")}
-                  className={`relative py-4 text-[15px] font-medium whitespace-nowrap transition-colors ${
+                  className={`relative py-4 text-body font-medium whitespace-nowrap transition-colors ${
                     activeTab === "home"
                       ? "text-gray-900 font-semibold after:absolute after:bottom-[-1px] after:left-0 after:right-0 after:h-[2px] after:bg-gray-900"
                       : "text-gray-500 hover:text-gray-900"
@@ -1091,7 +1091,7 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
                 </button>
                 <button
                   onClick={() => setActiveTab("news")}
-                  className={`relative py-4 text-[15px] font-medium whitespace-nowrap transition-colors ${
+                  className={`relative py-4 text-body font-medium whitespace-nowrap transition-colors ${
                     activeTab === "news"
                       ? "text-gray-900 font-semibold after:absolute after:bottom-[-1px] after:left-0 after:right-0 after:h-[2px] after:bg-gray-900"
                       : "text-gray-500 hover:text-gray-900"
@@ -1101,7 +1101,7 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
                 </button>
                 <button
                   onClick={() => setActiveTab("gallery")}
-                  className={`relative py-4 text-[15px] font-medium whitespace-nowrap transition-colors ${
+                  className={`relative py-4 text-body font-medium whitespace-nowrap transition-colors ${
                     activeTab === "gallery"
                       ? "text-gray-900 font-semibold after:absolute after:bottom-[-1px] after:left-0 after:right-0 after:h-[2px] after:bg-gray-900"
                       : "text-gray-500 hover:text-gray-900"
@@ -1116,11 +1116,11 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
                 {activeTab === "home" && (
                   <div className="space-y-4">
                     {isLoadingPosts ? (
-                      <div className="flex items-center justify-center py-12">
+                      <div className="flex items-center justify-center py-page">
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
                       </div>
                     ) : posts.length === 0 ? (
-                      <div className="text-center py-12">
+                      <div className="text-center py-page">
                         <p className="text-gray-500">아직 작성된 게시글이 없습니다.</p>
                       </div>
                     ) : (
@@ -1326,7 +1326,7 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
 
                     {/* 게시글 목록 */}
                     {isLoadingPosts ? (
-                      <div className="flex items-center justify-center py-12">
+                      <div className="flex items-center justify-center py-page">
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
                       </div>
                     ) : (() => {
@@ -1335,7 +1335,7 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
                         : posts.filter(p => p.type === selectedNewsType);
 
                       return filteredPosts.length === 0 ? (
-                        <div className="text-center py-12">
+                        <div className="text-center py-page">
                           <p className="text-gray-500">아직 작성된 매장소식이 없습니다.</p>
                         </div>
                       ) : (
@@ -1512,11 +1512,11 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
                 {activeTab === "gallery" && (
                   <div>
                     {isLoadingGallery ? (
-                      <div className="flex items-center justify-center py-12">
+                      <div className="flex items-center justify-center py-page">
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
                       </div>
                     ) : gallery.length === 0 ? (
-                      <div className="text-center py-12">
+                      <div className="text-center py-page">
                         <p className="text-gray-500">아직 업로드된 이미지가 없습니다.</p>
                       </div>
                     ) : (
@@ -1564,7 +1564,7 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
               {/* 매장 정보 카드 */}
               <div className="bg-white rounded-2xl p-5 shadow-sm">
                 <h3 className="text-[16px] font-bold text-gray-900 mb-3">매장 정보</h3>
-                <div className="space-y-3 text-[14px]">
+                <div className="space-y-3 text-caption">
                   {/* 주소 */}
                   {(store.address || isMyStore) && (
                     <div
@@ -1584,7 +1584,7 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
                               type="text"
                               value={formData.address}
                               onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                              className="w-full text-[14px] text-gray-600 bg-transparent border-none outline-none"
+                              className="w-full text-caption text-gray-600 bg-transparent border-none outline-none"
                               placeholder="매장 주소"
                             />
                           ) : (
@@ -1640,7 +1640,7 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
                               type="tel"
                               value={formData.phone_number}
                               onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
-                              className="w-full text-[14px] text-gray-600 bg-transparent border-none outline-none"
+                              className="w-full text-caption text-gray-600 bg-transparent border-none outline-none"
                               placeholder="전화번호"
                             />
                           ) : store.phone_number ? (
@@ -1699,18 +1699,18 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
                                 type="time"
                                 value={formData.open_time}
                                 onChange={(e) => setFormData({ ...formData, open_time: e.target.value })}
-                                className="text-[14px] text-gray-900 bg-transparent border border-gray-300 rounded px-2 py-1 outline-none focus:border-yellow-400"
+                                className="text-caption text-gray-900 bg-transparent border border-gray-300 rounded px-2 py-1 outline-none focus:border-yellow-400"
                               />
                               <span className="text-gray-500">-</span>
                               <input
                                 type="time"
                                 value={formData.close_time}
                                 onChange={(e) => setFormData({ ...formData, close_time: e.target.value })}
-                                className="text-[14px] text-gray-900 bg-transparent border border-gray-300 rounded px-2 py-1 outline-none focus:border-yellow-400"
+                                className="text-caption text-gray-900 bg-transparent border border-gray-300 rounded px-2 py-1 outline-none focus:border-yellow-400"
                               />
                             </div>
                           ) : (
-                            <div className="text-[14px] text-gray-900 font-medium">
+                            <div className="text-caption text-gray-900 font-medium">
                               {(store.open_time || "--:--") + " - " + (store.close_time || "--:--")}
                             </div>
                           )}

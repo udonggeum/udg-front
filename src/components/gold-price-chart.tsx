@@ -192,7 +192,7 @@ export default function GoldPriceChart({ type, period }: GoldPriceChartProps) {
       <div className="relative h-[320px] rounded-xl border border-gray-100 bg-gradient-to-b from-gray-50 to-white flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-2"></div>
-          <p className="text-[14px] text-gray-400">차트 데이터 로딩중...</p>
+          <p className="text-caption text-gray-400">차트 데이터 로딩중...</p>
         </div>
       </div>
     );
@@ -204,7 +204,7 @@ export default function GoldPriceChart({ type, period }: GoldPriceChartProps) {
       <div className="relative h-[320px] rounded-xl border border-gray-100 bg-gradient-to-b from-gray-50 to-white flex items-center justify-center">
         <div className="text-center">
           <p className="text-[16px] font-semibold text-gray-400 mb-2">데이터 없음</p>
-          <p className="text-[14px] text-gray-400">선택한 기간의 시세 데이터가 없습니다</p>
+          <p className="text-caption text-gray-400">선택한 기간의 시세 데이터가 없습니다</p>
         </div>
       </div>
     );

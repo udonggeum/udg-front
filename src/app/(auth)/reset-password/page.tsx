@@ -197,7 +197,7 @@ function ResetPasswordForm() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 py-12">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 py-page">
       <div className="w-full max-w-md bg-white rounded-lg shadow-lg p-8">
         {/* 헤더 */}
         <div className="flex items-center gap-3 mb-6">
@@ -278,12 +278,13 @@ function ResetPasswordForm() {
             {/* 제출 버튼 */}
             <Button
               type="submit"
-              className="w-full h-12 bg-[#FFD700] hover:bg-[#FFC700] text-gray-900 font-semibold"
+              variant="brand-gold"
+              className="w-full h-12 font-semibold"
               disabled={isPending}
             >
               {isPending ? (
                 <>
-                  <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-gray-900 border-t-transparent"></span>
+                  <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></span>
                   변경 중...
                 </>
               ) : (

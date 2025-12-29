@@ -101,7 +101,7 @@ export default function PriceTableHistory({ type, period }: PriceTableHistoryPro
         <div className="p-12 flex items-center justify-center">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-2"></div>
-            <p className="text-[14px] text-gray-400">데이터 로딩중...</p>
+            <p className="text-caption text-gray-400">데이터 로딩중...</p>
           </div>
         </div>
       </div>
@@ -120,7 +120,7 @@ export default function PriceTableHistory({ type, period }: PriceTableHistoryPro
         <div className="p-12 flex items-center justify-center">
           <div className="text-center">
             <p className="text-[16px] font-semibold text-gray-400 mb-2">데이터 없음</p>
-            <p className="text-[14px] text-gray-400">선택한 기간의 시세 데이터가 없습니다</p>
+            <p className="text-caption text-gray-400">선택한 기간의 시세 데이터가 없습니다</p>
           </div>
         </div>
       </div>
@@ -131,7 +131,7 @@ export default function PriceTableHistory({ type, period }: PriceTableHistoryPro
     <>
       {/* 통계 요약 */}
       <div className="mb-4 text-center">
-        <p className="text-[13px] text-gray-500">
+        <p className="text-small text-gray-500">
           최근 <span className="font-semibold text-gray-700">{historyData.length}일</span>간의 시세 변동
         </p>
       </div>
@@ -147,7 +147,7 @@ export default function PriceTableHistory({ type, period }: PriceTableHistoryPro
               <th className="py-3 px-4 text-right">등락률</th>
             </tr>
           </thead>
-          <tbody className="text-[14px] bg-white">
+          <tbody className="text-caption bg-white">
             {historyData.map((row, index) => {
               const isPositive = row.change > 0;
               const isNegative = row.change < 0;

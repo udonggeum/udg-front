@@ -7,6 +7,7 @@ import { getLatestGoldPricesAction } from "@/actions/goldPrices";
 import GoldPriceChart from "@/components/gold-price-chart";
 import PriceTableHistory from "@/components/price-table-history";
 import PriceCalculator from "@/components/price-calculator";
+import { Container } from "@/components/layout-primitives";
 import type { GoldPrice, GoldType, HistoryPeriod } from "@/types/goldPrices";
 
 interface GoldPriceWithCalculations extends GoldPrice {
@@ -114,7 +115,8 @@ export default function PricesPage() {
   });
 
   return (
-    <main className="max-w-[1200px] mx-auto px-5 py-8">
+    <main className="py-8">
+      <Container>
       {/* 페이지 헤더 */}
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-2">
@@ -124,7 +126,7 @@ export default function PricesPage() {
             <span className="text-[12px] font-semibold text-green-700">LIVE</span>
           </div>
         </div>
-        <p className="text-[15px] text-gray-500">{currentTime} 기준</p>
+        <p className="text-body text-gray-500">{currentTime} 기준</p>
       </div>
 
       {/* 메인 시세 카드 - 개선된 UI */}
@@ -174,7 +176,7 @@ export default function PricesPage() {
                     </span>
                   </div>
                   <div className="flex-1">
-                    <h3 className="text-[14px] font-bold text-gray-900">
+                    <h3 className="text-caption font-bold text-gray-900">
                       {price.type === "24K"
                         ? "순금"
                         : price.type === "18K"
@@ -218,7 +220,7 @@ export default function PricesPage() {
                         />
                       )}
                       <span
-                        className={`text-[13px] font-bold tabular-nums ${
+                        className={`text-small font-bold tabular-nums ${
                           isPositive ? "text-red-500" : "text-blue-500"
                         }`}
                       >
@@ -237,7 +239,7 @@ export default function PricesPage() {
                   )}
                   {isZero && (
                     <div className="flex items-center gap-1.5 px-2.5 py-1 bg-gray-50 rounded-lg">
-                      <span className="text-[13px] font-medium text-gray-500 tabular-nums">
+                      <span className="text-small font-medium text-gray-500 tabular-nums">
                         변동없음
                       </span>
                     </div>
@@ -247,7 +249,7 @@ export default function PricesPage() {
                   <div className="px-2.5 py-1 bg-gray-50 rounded-lg">
                     <div className="flex items-center justify-between">
                       <span className="text-[11px] text-gray-500">1돈(3.75g)</span>
-                      <span className="text-[13px] font-bold text-gray-900 tabular-nums">
+                      <span className="text-small font-bold text-gray-900 tabular-nums">
                         {price.price_per_don.toLocaleString()}원
                       </span>
                     </div>
@@ -277,7 +279,7 @@ export default function PricesPage() {
                   : "은"}{" "}
                 시세 추이
               </h2>
-              <p className="text-[14px] text-gray-500">
+              <p className="text-caption text-gray-500">
                 국내{" "}
                 {selectedType === "Platinum"
                   ? "백금"
@@ -295,7 +297,7 @@ export default function PricesPage() {
                 <button
                   type="button"
                   onClick={() => setViewMode("chart")}
-                  className={`px-3 py-1.5 text-[13px] font-medium rounded-md transition-all duration-200 ${
+                  className={`px-3 py-1.5 text-small font-medium rounded-md transition-all duration-200 ${
                     viewMode === "chart"
                       ? "bg-white text-gray-900 shadow-sm"
                       : "text-gray-500 hover:text-gray-700"
@@ -306,7 +308,7 @@ export default function PricesPage() {
                 <button
                   type="button"
                   onClick={() => setViewMode("table")}
-                  className={`px-3 py-1.5 text-[13px] font-medium rounded-md transition-all duration-200 ${
+                  className={`px-3 py-1.5 text-small font-medium rounded-md transition-all duration-200 ${
                     viewMode === "table"
                       ? "bg-white text-gray-900 shadow-sm"
                       : "text-gray-500 hover:text-gray-700"
@@ -323,7 +325,7 @@ export default function PricesPage() {
                     key={period}
                     type="button"
                     onClick={() => setSelectedPeriod(period)}
-                    className={`px-3 py-1.5 text-[13px] font-medium rounded-lg transition-all duration-200 ${
+                    className={`px-3 py-1.5 text-small font-medium rounded-lg transition-all duration-200 ${
                       selectedPeriod === period
                         ? "bg-gray-900 text-white shadow-sm"
                         : "text-gray-600 hover:bg-gray-100"
@@ -351,7 +353,7 @@ export default function PricesPage() {
                 <div className="relative h-[320px] rounded-xl border border-gray-100 bg-gradient-to-b from-gray-50 to-white flex items-center justify-center">
                   <div className="text-center">
                     <p className="text-[16px] font-semibold text-gray-400 mb-2">데이터 로딩중</p>
-                    <p className="text-[14px] text-gray-400">잠시만 기다려주세요</p>
+                    <p className="text-caption text-gray-400">잠시만 기다려주세요</p>
                   </div>
                 </div>
               )}
@@ -415,15 +417,15 @@ export default function PricesPage() {
             </div>
             <div>
               <h3 className="text-[18px] font-bold text-gray-900">근처 매입 금은방</h3>
-              <p className="text-[13px] text-gray-600">내 주변 금 매입 가능한 매장 찾기</p>
+              <p className="text-small text-gray-600">내 주변 금 매입 가능한 매장 찾기</p>
             </div>
           </div>
-          <p className="text-[14px] text-gray-600 mb-4">
+          <p className="text-caption text-gray-600 mb-4">
             보유하신 금을 판매하고 싶으신가요? 가까운 매장에서 최적의 가격으로 매입해드립니다.
           </p>
           <button
             onClick={() => router.push("/stores?buying=true")}
-            className="w-full px-5 py-3 bg-yellow-500 hover:bg-yellow-600 text-white font-semibold rounded-xl transition-all duration-200 transform hover:-translate-y-0.5 hover:shadow-lg"
+            className="w-full px-page py-3 bg-yellow-500 hover:bg-yellow-600 text-white font-semibold rounded-xl transition-all duration-200 transform hover:-translate-y-0.5 hover:shadow-lg"
           >
             근처 매입 매장 보기
           </button>
@@ -433,13 +435,14 @@ export default function PricesPage() {
       {/* 정보 섹션 */}
       <div className="bg-gray-50 rounded-2xl p-6">
         <h3 className="text-[18px] font-bold text-gray-900 mb-4">금시세 안내</h3>
-        <div className="space-y-3 text-[14px] text-gray-600">
+        <div className="space-y-3 text-caption text-gray-600">
           <p>• 위 시세는 실시간으로 업데이트되며, 매장별로 실제 거래 가격은 다를 수 있습니다.</p>
           <p>• 1돈 = 3.75g 기준으로 계산된 가격입니다.</p>
           <p>• 매입가와 매도가는 각 매장의 정책에 따라 차이가 있을 수 있습니다.</p>
           <p>• 정확한 시세는 매장에 직접 문의하시기 바랍니다.</p>
         </div>
       </div>
+      </Container>
     </main>
   );
 }

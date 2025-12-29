@@ -30,6 +30,7 @@ import { logoutUserAction, updateProfileAction } from "@/actions/auth";
 import { getPostsAction } from "@/actions/community";
 import { getPresignedUrlAction, uploadToS3 } from "@/actions/upload";
 import { getUserLikedStoresAction } from "@/actions/stores";
+import { Container } from "@/components/layout-primitives";
 import type { CommunityPost } from "@/types/community";
 import type { StoreDetail } from "@/types/stores";
 import { toast } from "sonner";
@@ -218,7 +219,7 @@ export default function MyPage() {
 
   return (
     <main className="flex-grow py-8 bg-gray-50">
-      <div className="container mx-auto px-4 max-w-5xl">
+      <Container className="max-w-5xl">
         {/* 프로필 헤더 + 활동 통계 */}
         <Card className="mb-6 border-0 shadow-sm">
           <CardContent className="p-6 md:p-6">
@@ -368,12 +369,12 @@ export default function MyPage() {
             <Card className="border-0 shadow-sm">
               <CardContent className="p-6">
                 {isLoadingStores ? (
-                  <div className="text-center py-12">
+                  <div className="text-center py-page">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto mb-4"></div>
                     <p className="text-sm text-gray-500">매장 목록을 불러오는 중...</p>
                   </div>
                 ) : likedStores.length === 0 ? (
-                  <div className="text-center py-12">
+                  <div className="text-center py-page">
                     <Store className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                     <h3 className="text-lg font-semibold text-gray-900 mb-2">
                       좋아요한 매장이 없습니다
@@ -382,7 +383,7 @@ export default function MyPage() {
                       마음에 드는 매장을 찾아 좋아요를 눌러보세요
                     </p>
                     <Link href="/stores">
-                      <Button className="bg-gray-900 hover:bg-gray-800 text-white">
+                      <Button variant="brand-primary">
                         매장 둘러보기
                       </Button>
                     </Link>
@@ -471,12 +472,12 @@ export default function MyPage() {
                 </div>
 
                 {isLoadingPosts ? (
-                  <div className="text-center py-12">
+                  <div className="text-center py-page">
                     <div className="inline-block w-8 h-8 border-4 border-gray-200 border-t-gray-900 rounded-full animate-spin"></div>
                     <p className="text-gray-500 text-sm mt-4">게시글 불러오는 중...</p>
                   </div>
                 ) : myPosts.length === 0 ? (
-                  <div className="text-center py-12">
+                  <div className="text-center py-page">
                     <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                     <h3 className="text-lg font-semibold text-gray-900 mb-2">
                       {selectedCategory === "all" ? "작성한 글이 없습니다" : "이 카테고리에 작성한 글이 없습니다"}
@@ -485,7 +486,7 @@ export default function MyPage() {
                       커뮤니티에서 첫 글을 작성해보세요
                     </p>
                     <Link href="/community">
-                      <Button className="bg-gray-900 hover:bg-gray-800 text-white">
+                      <Button variant="brand-primary">
                         커뮤니티 가기
                       </Button>
                     </Link>
@@ -541,7 +542,7 @@ export default function MyPage() {
             </Card>
           </TabsContent>
         </Tabs>
-      </div>
+      </Container>
     </main>
   );
 }

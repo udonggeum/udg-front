@@ -181,7 +181,7 @@ export default function AddressManagementPage() {
               <h1 className="text-3xl font-bold">배송지 관리</h1>
               <p className="mt-2 text-gray-600">배송지를 추가하고 관리하세요</p>
             </div>
-            <Button onClick={handleAddAddress} className="gap-2 bg-gray-900 hover:bg-gray-800 text-white">
+            <Button onClick={handleAddAddress} variant="brand-primary" className="gap-2">
               <Plus size={20} />
               배송지 추가
             </Button>
@@ -200,7 +200,7 @@ export default function AddressManagementPage() {
               <AlertTitle>배송지 목록을 불러올 수 없습니다</AlertTitle>
               <AlertDescription>{error}</AlertDescription>
             </Alert>
-            <Button onClick={loadAddresses} className="mt-6 bg-gray-900 hover:bg-gray-800 text-white">
+            <Button onClick={loadAddresses} variant="brand-primary" className="mt-6">
               다시 시도
             </Button>
           </div>
@@ -210,7 +210,7 @@ export default function AddressManagementPage() {
             <MapPin size={64} className="text-gray-400 mb-6" />
             <h2 className="text-xl font-semibold mb-2">등록된 배송지가 없습니다</h2>
             <p className="text-gray-600 mb-6">새로운 배송지를 추가해보세요</p>
-            <Button onClick={handleAddAddress} className="gap-2 bg-gray-900 hover:bg-gray-800 text-white">
+            <Button onClick={handleAddAddress} variant="brand-primary" className="gap-2">
               <Plus size={20} />
               배송지 추가
             </Button>

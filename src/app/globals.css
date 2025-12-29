@@ -50,6 +50,21 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+
+  /* 프로젝트 전용 브랜드 색상 */
+  --color-brand-primary: var(--brand-primary);
+  --color-brand-primary-hover: var(--brand-primary-hover);
+  --color-brand-yellow: var(--brand-yellow);
+  --color-brand-yellow-hover: var(--brand-yellow-hover);
+  --color-brand-gold: var(--brand-gold);
+  --color-brand-gold-hover: var(--brand-gold-hover);
+  --color-kakao-yellow: var(--kakao-yellow);
+  --color-kakao-yellow-hover: var(--kakao-yellow-hover);
+
+  /* 공통 라운딩 */
+  --radius-button: var(--radius-button);
+  --radius-card: var(--radius-card);
+  --radius-input: var(--radius-input);
 }
 
 :root {
@@ -86,6 +101,38 @@
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
   --gold: #D7B56D;
+
+  /* 프로젝트 전용 브랜드 색상 */
+  --brand-primary: oklch(0.205 0 0); /* gray-900 equivalent */
+  --brand-primary-hover: oklch(0.269 0 0); /* gray-800 equivalent */
+  --brand-yellow: oklch(0.828 0.189 84.429); /* yellow-400 equivalent */
+  --brand-yellow-hover: oklch(0.769 0.188 70.08); /* yellow-500 equivalent */
+  --brand-gold: #D7B56D;
+  --brand-gold-hover: #C9A95F;
+  --kakao-yellow: #FEE500;
+  --kakao-yellow-hover: #FDD835;
+
+  /* 공통 간격 (페이지별 일관성) */
+  --spacing-page-x: 1.25rem; /* px-5 = 20px */
+  --spacing-page-y: 3rem; /* py-12 = 48px */
+  --spacing-section: 3rem; /* 48px */
+  --spacing-card: 1.25rem; /* 20px */
+  --spacing-button-x: 1.5rem; /* px-6 = 24px */
+  --spacing-button-y: 0.75rem; /* py-3 = 12px */
+
+  /* 공통 텍스트 크기 (페이지별 일관성) */
+  --text-page-title: 2.5rem; /* 40px */
+  --text-page-title-mobile: 1.75rem; /* 28px */
+  --text-section-title: 1.375rem; /* 22px */
+  --text-button: 0.9375rem; /* 15px */
+  --text-body: 0.9375rem; /* 15px */
+  --text-small: 0.8125rem; /* 13px */
+  --text-caption: 0.875rem; /* 14px */
+
+  /* 공통 라운딩 (일관성) */
+  --radius-button: 0.75rem; /* rounded-xl = 12px */
+  --radius-card: 1rem; /* rounded-2xl = 16px */
+  --radius-input: 0.75rem; /* rounded-xl = 12px */
 }
 
 .dark {
@@ -164,6 +211,45 @@
 
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
+  }
+
+  /* 통일된 텍스트 크기 유틸리티 */
+  .text-page-title {
+    font-size: var(--text-page-title);
+  }
+  .text-page-title-mobile {
+    font-size: var(--text-page-title-mobile);
+  }
+  .text-section-title {
+    font-size: var(--text-section-title);
+  }
+  .text-button {
+    font-size: var(--text-button);
+  }
+  .text-body {
+    font-size: var(--text-body);
+  }
+  .text-small {
+    font-size: var(--text-small);
+  }
+  .text-caption {
+    font-size: var(--text-caption);
+  }
+
+  /* 통일된 간격 유틸리티 */
+  .px-page {
+    padding-left: var(--spacing-page-x);
+    padding-right: var(--spacing-page-x);
+  }
+  .py-page {
+    padding-top: var(--spacing-page-y);
+    padding-bottom: var(--spacing-page-y);
+  }
+  .gap-section {
+    gap: var(--spacing-section);
+  }
+  .p-card {
+    padding: var(--spacing-card);
   }
 }
 

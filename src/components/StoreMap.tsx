@@ -208,7 +208,7 @@ export default function StoreMap({
                 >
                   <div className="p-3">
                     {/* 매장명 */}
-                    <h4 className="text-[14px] font-bold text-gray-900 mb-1">
+                    <h4 className="text-caption font-bold text-gray-900 mb-1">
                       {store.name}
                     </h4>
 

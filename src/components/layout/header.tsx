@@ -121,7 +121,7 @@ export function Header() {
 
   return (
     <header className="w-full bg-white sticky top-0 z-50 border-b border-gray-100">
-      <div className="max-w-[1200px] mx-auto px-5 h-[60px] flex justify-between items-center">
+      <div className="max-w-[1200px] mx-auto px-page h-[60px] flex justify-between items-center">
         {/* 로고 */}
         <Link href="/" className="flex items-center gap-2">
           <div className="w-8 h-8 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-lg flex items-center justify-center">
@@ -140,26 +140,26 @@ export function Header() {
         <nav className="hidden md:flex items-center gap-8">
           <Link
             href="/prices"
-            className="nav-link text-[15px] font-medium text-gray-600 hover:text-gray-900 smooth-transition"
+            className="nav-link text-body font-medium text-gray-600 hover:text-gray-900 smooth-transition"
           >
             금시세
           </Link>
           <Link
             href="/stores"
-            className="nav-link text-[15px] font-medium text-gray-600 hover:text-gray-900 smooth-transition"
+            className="nav-link text-body font-medium text-gray-600 hover:text-gray-900 smooth-transition"
           >
             매장찾기
           </Link>
           <Link
             href="/community"
-            className="nav-link text-[15px] font-medium text-gray-600 hover:text-gray-900 smooth-transition"
+            className="nav-link text-body font-medium text-gray-600 hover:text-gray-900 smooth-transition"
           >
             금광산
           </Link>
           {isAuthenticated && (
             <Link
               href="/chats"
-              className="nav-link text-[15px] font-medium text-gray-600 hover:text-gray-900 smooth-transition relative"
+              className="nav-link text-body font-medium text-gray-600 hover:text-gray-900 smooth-transition relative"
             >
               메시지
               {unreadChatCount > 0 && (
@@ -189,13 +189,13 @@ export function Header() {
               <Link href="/login">
                 <Button
                   variant="ghost"
-                  className="hidden md:block text-[14px] font-semibold text-gray-700 hover:bg-gray-100"
+                  className="hidden md:block text-caption font-semibold text-gray-700 hover:bg-gray-100"
                 >
                   로그인
                 </Button>
               </Link>
               <Link href="/signup">
-                <Button className="px-4 py-2.5 text-[14px] font-semibold text-white bg-gray-900 hover:bg-gray-800">
+                <Button className="px-4 py-2.5 text-caption font-semibold text-white bg-gray-900 hover:bg-gray-800">
                   시작하기
                 </Button>
               </Link>
@@ -227,7 +227,7 @@ export function Header() {
                 <Button
                   variant="ghost"
                   onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                  className="flex items-center gap-2 text-[14px] font-semibold text-gray-700 hover:bg-gray-100"
+                  className="flex items-center gap-2 text-caption font-semibold text-gray-700 hover:bg-gray-100"
                 >
                   <User className="w-4 h-4" />
                   <span className="hidden sm:inline">{user?.name || "사용자"}</span>
@@ -253,7 +253,7 @@ export function Header() {
                     <Link
                       href="/mypage"
                       onClick={() => setIsDropdownOpen(false)}
-                      className="flex items-center gap-2 px-4 py-2.5 text-[14px] text-gray-700 hover:bg-gray-50 smooth-transition"
+                      className="flex items-center gap-2 px-4 py-2.5 text-caption text-gray-700 hover:bg-gray-50 smooth-transition"
                     >
                       <User className="w-4 h-4" />
                       마이페이지
@@ -263,7 +263,7 @@ export function Header() {
                     <Link
                       href="/mypage/edit"
                       onClick={() => setIsDropdownOpen(false)}
-                      className="flex items-center gap-2 px-4 py-2.5 text-[14px] text-gray-700 hover:bg-gray-50 smooth-transition"
+                      className="flex items-center gap-2 px-4 py-2.5 text-caption text-gray-700 hover:bg-gray-50 smooth-transition"
                     >
                       <Settings className="w-4 h-4" />
                       프로필 수정
@@ -276,7 +276,7 @@ export function Header() {
                     <button
                       onClick={handleLogout}
                       disabled={isLoggingOut}
-                      className="flex items-center gap-2 w-full px-4 py-2.5 text-[14px] text-red-600 hover:bg-gray-50 smooth-transition disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="flex items-center gap-2 w-full px-4 py-2.5 text-caption text-red-600 hover:bg-gray-50 smooth-transition disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <LogOut className="w-4 h-4" />
                       {isLoggingOut ? "로그아웃 중..." : "로그아웃"}
@@ -301,25 +301,25 @@ export function Header() {
 
           {/* 슬라이드 메뉴 */}
           <div className="fixed top-[60px] left-0 right-0 bg-white border-b border-gray-200 z-50 md:hidden animate-in slide-in-from-top duration-200">
-            <nav className="px-5 py-4 space-y-1">
+            <nav className="px-page py-4 space-y-1">
               <Link
                 href="/prices"
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="block px-4 py-3.5 text-[15px] font-medium text-gray-700 hover:bg-gray-50 rounded-lg active:bg-gray-100 transition-colors"
+                className="block px-4 py-3.5 text-body font-medium text-gray-700 hover:bg-gray-50 rounded-lg active:bg-gray-100 transition-colors"
               >
                 금시세
               </Link>
               <Link
                 href="/stores"
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="block px-4 py-3.5 text-[15px] font-medium text-gray-700 hover:bg-gray-50 rounded-lg active:bg-gray-100 transition-colors"
+                className="block px-4 py-3.5 text-body font-medium text-gray-700 hover:bg-gray-50 rounded-lg active:bg-gray-100 transition-colors"
               >
                 매장찾기
               </Link>
               <Link
                 href="/community"
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="block px-4 py-3.5 text-[15px] font-medium text-gray-700 hover:bg-gray-50 rounded-lg active:bg-gray-100 transition-colors"
+                className="block px-4 py-3.5 text-body font-medium text-gray-700 hover:bg-gray-50 rounded-lg active:bg-gray-100 transition-colors"
               >
                 금광산
               </Link>
@@ -327,7 +327,7 @@ export function Header() {
                 <Link
                   href="/chats"
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="block px-4 py-3.5 text-[15px] font-medium text-gray-700 hover:bg-gray-50 rounded-lg active:bg-gray-100 transition-colors relative"
+                  className="block px-4 py-3.5 text-body font-medium text-gray-700 hover:bg-gray-50 rounded-lg active:bg-gray-100 transition-colors relative"
                 >
                   <div className="flex items-center justify-between">
                     <span>채팅</span>
@@ -346,7 +346,7 @@ export function Header() {
                   <Link
                     href="/login"
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className="block px-4 py-3.5 text-[15px] font-medium text-gray-700 hover:bg-gray-50 rounded-lg active:bg-gray-100 transition-colors"
+                    className="block px-4 py-3.5 text-body font-medium text-gray-700 hover:bg-gray-50 rounded-lg active:bg-gray-100 transition-colors"
                   >
                     로그인
                   </Link>

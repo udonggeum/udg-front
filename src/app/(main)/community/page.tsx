@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { getPostsAction } from "@/actions/community";
 import { useAuthStore } from "@/stores/useAuthStore";
+import { Section, Container, PageHeader } from "@/components/layout-primitives";
 import type {
   PostCategory,
   PostType,
@@ -211,8 +212,8 @@ function CommunityPageContent() {
   return (
     <div className="min-h-screen bg-white">
       {/* Hero Section */}
-      <section className="pt-12 px-5 bg-gradient-to-b from-gray-50 to-white">
-        <div className="max-w-[1200px] mx-auto">
+      <Section background="gradient" className="pt-12">
+        <Container>
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-6">
             <div>
               <h1 className="text-[24px] sm:text-[32px] md:text-[40px] font-bold leading-tight tracking-[-0.02em] text-gray-900 mb-2">
@@ -221,24 +222,23 @@ function CommunityPageContent() {
               <p className="text-[16px] text-gray-600">{getSubtitle()}</p>
             </div>
             {user && (
-              <Link
-                href="/community/write"
-                className="px-6 py-3.5 bg-gray-900 hover:bg-gray-800 text-white text-[15px] font-semibold rounded-xl transition-colors duration-200 flex items-center gap-2 shadow-sm"
-              >
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10"
-                  />
-                </svg>
-                {getWriteButtonText()}
+              <Link href="/community/write">
+                <Button variant="brand-primary" size="lg">
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10"
+                    />
+                  </svg>
+                  {getWriteButtonText()}
+                </Button>
               </Link>
             )}
           </div>
@@ -277,7 +277,7 @@ function CommunityPageContent() {
               <div className="flex items-center gap-2 flex-wrap">
                 <button
                   onClick={() => setSelectedType(undefined)}
-                  className={`px-5 py-2.5 text-[14px] font-semibold rounded-lg transition-all duration-200 ${
+                  className={`px-page py-2.5 text-caption font-semibold rounded-lg transition-all duration-200 ${
                     !selectedType
                       ? "bg-gray-900 text-white shadow-sm"
                       : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
@@ -287,7 +287,7 @@ function CommunityPageContent() {
                 </button>
                 <button
                   onClick={() => setSelectedType("buy_gold")}
-                  className={`px-5 py-2.5 text-[14px] font-semibold rounded-lg transition-all duration-200 ${
+                  className={`px-page py-2.5 text-caption font-semibold rounded-lg transition-all duration-200 ${
                     selectedType === "buy_gold"
                       ? "bg-gray-900 text-white shadow-sm"
                       : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
@@ -297,7 +297,7 @@ function CommunityPageContent() {
                 </button>
                 <button
                   onClick={() => setSelectedType("sell_gold")}
-                  className={`px-5 py-2.5 text-[14px] font-semibold rounded-lg transition-all duration-200 ${
+                  className={`px-page py-2.5 text-caption font-semibold rounded-lg transition-all duration-200 ${
                     selectedType === "sell_gold"
                       ? "bg-gray-900 text-white shadow-sm"
                       : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
@@ -316,7 +316,7 @@ function CommunityPageContent() {
                     setSelectedCategory("gold_news");
                     setSelectedType(undefined);
                   }}
-                  className={`px-5 py-2.5 text-[14px] font-semibold rounded-lg transition-all duration-200 ${
+                  className={`px-page py-2.5 text-caption font-semibold rounded-lg transition-all duration-200 ${
                     selectedCategory === "gold_news" && !selectedType
                       ? "bg-gray-900 text-white shadow-sm"
                       : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
@@ -329,7 +329,7 @@ function CommunityPageContent() {
                     setSelectedCategory("gold_news");
                     setSelectedType("product_news");
                   }}
-                  className={`px-5 py-2.5 text-[14px] font-semibold rounded-lg transition-all duration-200 ${
+                  className={`px-page py-2.5 text-caption font-semibold rounded-lg transition-all duration-200 ${
                     selectedType === "product_news"
                       ? "bg-gray-900 text-white shadow-sm"
                       : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
@@ -342,7 +342,7 @@ function CommunityPageContent() {
                     setSelectedCategory("gold_news");
                     setSelectedType("store_news");
                   }}
-                  className={`px-5 py-2.5 text-[14px] font-semibold rounded-lg transition-all duration-200 ${
+                  className={`px-page py-2.5 text-caption font-semibold rounded-lg transition-all duration-200 ${
                     selectedType === "store_news"
                       ? "bg-gray-900 text-white shadow-sm"
                       : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
@@ -355,7 +355,7 @@ function CommunityPageContent() {
                     setSelectedCategory("qna");
                     setSelectedType("question");
                   }}
-                  className={`px-5 py-2.5 text-[14px] font-semibold rounded-lg transition-all duration-200 ${
+                  className={`px-page py-2.5 text-caption font-semibold rounded-lg transition-all duration-200 ${
                     selectedCategory === "qna"
                       ? "bg-gray-900 text-white shadow-sm"
                       : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
@@ -371,7 +371,7 @@ function CommunityPageContent() {
               <select
                 value={currentSort}
                 onChange={(e) => setCurrentSort(e.target.value as "latest" | "popular")}
-                className="px-4 py-2.5 text-[14px] font-medium border border-gray-300 rounded-lg bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition-all duration-200 cursor-pointer"
+                className="px-4 py-2.5 text-caption font-medium border border-gray-300 rounded-lg bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition-all duration-200 cursor-pointer"
               >
                 <option value="latest">최신순</option>
                 <option value="popular">인기순</option>
@@ -399,7 +399,7 @@ function CommunityPageContent() {
                     d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z"
                   />
                 </svg>
-                <h3 className="text-[15px] font-semibold text-gray-900">
+                <h3 className="text-body font-semibold text-gray-900">
                   자주 묻는 질문
                 </h3>
               </div>
@@ -410,7 +410,7 @@ function CommunityPageContent() {
                     href={`/community/posts/${faq.id}`}
                     className="block bg-white rounded-lg p-3 hover:bg-gray-100 transition-colors border border-gray-200"
                   >
-                    <p className="text-[14px] text-gray-900 line-clamp-1">
+                    <p className="text-caption text-gray-900 line-clamp-1">
                       {faq.title}
                     </p>
                   </Link>
@@ -422,19 +422,19 @@ function CommunityPageContent() {
       </section>
 
       {/* Posts Grid */}
-      <section className="py-8 px-5 bg-white">
+      <section className="py-8 px-page bg-white">
         <div className="max-w-[1200px] mx-auto">
           {/* Loading */}
           {isLoading && (
-            <div className="text-center py-12">
+            <div className="text-center py-page">
               <div className="inline-block w-8 h-8 border-4 border-gray-200 border-t-gray-900 rounded-full animate-spin"></div>
-              <p className="text-gray-600 text-[14px] mt-4">불러오는 중...</p>
+              <p className="text-gray-600 text-caption mt-4">불러오는 중...</p>
             </div>
           )}
 
           {/* Error */}
           {error && (
-            <div className="text-center py-12">
+            <div className="text-center py-page">
               <div className="text-red-500 mb-4">
                 게시글을 불러오는데 실패했습니다.
               </div>
@@ -462,7 +462,7 @@ function CommunityPageContent() {
               <h3 className="text-[18px] font-semibold text-gray-900 mb-2">
                 아직 게시글이 없습니다
               </h3>
-              <p className="text-[14px] text-gray-500">
+              <p className="text-caption text-gray-500">
                 첫 번째 게시글을 작성해보세요!
               </p>
             </div>
@@ -509,7 +509,7 @@ function CommunityPageContent() {
                         </h3>
 
                         {/* Content Preview */}
-                        <p className="text-[14px] text-gray-500 mb-4 line-clamp-3">
+                        <p className="text-caption text-gray-500 mb-4 line-clamp-3">
                           {post.content}
                         </p>
 
@@ -594,7 +594,7 @@ function CommunityPageContent() {
                       </h3>
 
                       {/* Content Preview */}
-                      <p className="text-[15px] text-gray-500 mb-4 line-clamp-2">
+                      <p className="text-body text-gray-500 mb-4 line-clamp-2">
                         {post.content}
                       </p>
 
@@ -673,8 +673,8 @@ function CommunityPageContent() {
               )}
             </>
           )}
-        </div>
-      </section>
+        </Container>
+      </Section>
     </div>
   );
 }

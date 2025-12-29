@@ -250,7 +250,7 @@ function LoginForm() {
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                   </svg>
                 </div>
-                <span className="text-[15px] text-white/90">실시간 금시세 확인</span>
+                <span className="text-body text-white/90">실시간 금시세 확인</span>
               </div>
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
@@ -259,7 +259,7 @@ function LoginForm() {
                     <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"></path>
                   </svg>
                 </div>
-                <span className="text-[15px] text-white/90">내 주변 금은방 찾기</span>
+                <span className="text-body text-white/90">내 주변 금은방 찾기</span>
               </div>
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
@@ -267,13 +267,13 @@ function LoginForm() {
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z"></path>
                   </svg>
                 </div>
-                <span className="text-[15px] text-white/90">신뢰할 수 있는 매장 정보</span>
+                <span className="text-body text-white/90">신뢰할 수 있는 매장 정보</span>
               </div>
             </div>
           </div>
 
           {/* 하단 */}
-          <p className="text-[13px] text-white/50">
+          <p className="text-small text-white/50">
             © 2024 우리동네금은방. All rights reserved.
           </p>
         </div>
@@ -283,7 +283,7 @@ function LoginForm() {
       <div className="flex-1 flex flex-col">
         {/* 모바일 헤더 */}
         <header className="lg:hidden w-full bg-white border-b border-gray-100">
-          <div className="px-5 h-[60px] flex items-center justify-between">
+          <div className="px-page h-[60px] flex items-center justify-between">
             <Link href="/" className="flex items-center gap-2">
               <div className="w-8 h-8 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-lg flex items-center justify-center">
                 <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
@@ -292,19 +292,19 @@ function LoginForm() {
               </div>
               <span className="text-lg font-bold text-gray-900">우리동네금은방</span>
             </Link>
-            <Link href="/" className="text-[14px] text-gray-500 hover:text-gray-900 smooth-transition">
+            <Link href="/" className="text-caption text-gray-500 hover:text-gray-900 smooth-transition">
               홈으로
             </Link>
           </div>
         </header>
 
         {/* 로그인 폼 컨테이너 */}
-        <div className="flex-1 flex items-center justify-center px-5 py-12 bg-gray-50">
+        <div className="flex-1 flex items-center justify-center px-page py-page bg-gray-50">
           <div className="w-full max-w-[400px]">
             {/* 타이틀 */}
             <div className="text-center mb-8">
               <h1 className="text-[26px] font-bold text-gray-900 mb-2">로그인</h1>
-              <p className="text-[15px] text-gray-500">우리동네금은방에 오신 것을 환영합니다</p>
+              <p className="text-body text-gray-500">우리동네금은방에 오신 것을 환영합니다</p>
             </div>
 
             {/* 소셜 로그인 */}
@@ -313,7 +313,8 @@ function LoginForm() {
               <Button
                 type="button"
                 onClick={() => handleSocialLogin("카카오")}
-                className="w-full flex items-center justify-center gap-3 py-6 bg-[#FEE500] hover:bg-[#FEE500]/90 text-gray-900 rounded-xl text-[15px] font-semibold smooth-transition h-auto"
+                variant="kakao"
+                className="w-full py-6 h-auto"
               >
                 <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M12 3C6.477 3 2 6.477 2 10.5c0 2.47 1.607 4.647 4.023 5.903-.176.657-.64 2.385-.733 2.758-.114.461.17.454.357.33.147-.097 2.343-1.595 3.293-2.243.349.05.706.076 1.06.076 5.523 0 10-3.477 10-7.824C20 6.477 17.523 3 12 3z"/>
@@ -326,7 +327,7 @@ function LoginForm() {
                 type="button"
                 onClick={() => handleSocialLogin("Google")}
                 variant="outline"
-                className="w-full flex items-center justify-center gap-3 py-6 bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 rounded-xl text-[15px] font-semibold smooth-transition h-auto"
+                className="w-full flex items-center justify-center gap-3 py-6 bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 rounded-xl text-body font-semibold smooth-transition h-auto"
               >
                 <svg className="w-5 h-5" viewBox="0 0 24 24">
                   <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -341,7 +342,7 @@ function LoginForm() {
             {/* 구분선 */}
             <div className="relative flex items-center gap-4 mb-8">
               <div className="flex-1 h-px bg-gray-200"></div>
-              <span className="text-[13px] text-gray-400">또는 이메일로 로그인</span>
+              <span className="text-small text-gray-400">또는 이메일로 로그인</span>
               <div className="flex-1 h-px bg-gray-200"></div>
             </div>
 
@@ -349,7 +350,7 @@ function LoginForm() {
             <form className="space-y-4 mb-6" onSubmit={handleEmailLogin} noValidate>
               {/* 이메일 */}
               <div>
-                <Label className="block text-[13px] font-medium text-gray-700 mb-2">이메일</Label>
+                <Label className="block text-small font-medium text-gray-700 mb-2">이메일</Label>
                 <Input
                   type="email"
                   name="email"
@@ -358,7 +359,7 @@ function LoginForm() {
                   onChange={handleChange}
                   onBlur={handleBlur}
                   required
-                  className={`w-full px-4 py-6 bg-gray-100 border-transparent focus:border-gray-900 focus:bg-white rounded-xl text-[15px] placeholder-gray-400 smooth-transition ${
+                  className={`w-full px-4 py-6 bg-gray-100 border-transparent focus:border-gray-900 focus:bg-white rounded-xl text-body placeholder-gray-400 smooth-transition ${
                     touched.email && formErrors.email
                       ? "border-red-400 focus:border-red-400"
                       : ""
@@ -380,7 +381,7 @@ function LoginForm() {
                   onBlur={handleBlur}
                   error={touched.password ? formErrors.password : undefined}
                   required
-                  className="w-full px-4 py-6 bg-gray-100 border-transparent focus:border-gray-900 focus:bg-white rounded-xl text-[15px] placeholder-gray-400 smooth-transition"
+                  className="w-full px-4 py-6 bg-gray-100 border-transparent focus:border-gray-900 focus:bg-white rounded-xl text-body placeholder-gray-400 smooth-transition"
                 />
               </div>
 
@@ -393,11 +394,11 @@ function LoginForm() {
                     onCheckedChange={(checked) => setRememberMe(checked as boolean)}
                     className="rounded"
                   />
-                  <Label htmlFor="remember" className="text-[13px] text-gray-600 cursor-pointer">
+                  <Label htmlFor="remember" className="text-small text-gray-600 cursor-pointer">
                     로그인 유지
                   </Label>
                 </div>
-                <Link href="/forgot-password" className="text-[13px] text-gray-500 hover:text-gray-900 smooth-transition">
+                <Link href="/forgot-password" className="text-small text-gray-500 hover:text-gray-900 smooth-transition">
                   비밀번호 찾기
                 </Link>
               </div>
@@ -406,14 +407,15 @@ function LoginForm() {
               <Button
                 type="submit"
                 disabled={isLoading}
-                className="w-full py-6 bg-gray-900 hover:bg-gray-800 text-white text-[15px] font-semibold rounded-xl smooth-transition mt-6 h-auto disabled:opacity-50 disabled:cursor-not-allowed"
+                variant="brand-primary"
+                className="w-full py-6 mt-6 h-auto"
               >
                 {isLoading ? "로그인 중..." : "로그인"}
               </Button>
             </form>
 
             {/* 회원가입 링크 */}
-            <p className="text-center text-[14px] text-gray-500">
+            <p className="text-center text-caption text-gray-500">
               아직 회원이 아니신가요?
               <Link href="/signup" className="font-semibold text-gray-900 hover:underline ml-1">
                 회원가입

@@ -19,6 +19,13 @@ const buttonVariants = cva(
         ghost:
           "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
         link: "text-primary underline-offset-4 hover:underline",
+
+        // 프로젝트 전용 브랜드 variant
+        "brand-primary": "bg-brand-primary text-white hover:bg-brand-primary-hover rounded-[--radius-button]",
+        "brand-yellow": "bg-brand-yellow text-gray-900 hover:bg-brand-yellow-hover rounded-[--radius-button] shadow-sm",
+        "brand-gold": "bg-brand-gold text-white hover:bg-brand-gold-hover rounded-[--radius-button]",
+        "kakao": "bg-kakao-yellow text-gray-900 hover:bg-kakao-yellow-hover rounded-[--radius-button]",
+        "naver": "bg-[#03C75A] text-white hover:bg-[#02B350] rounded-[--radius-button]",
       },
       size: {
         default: "h-9 px-4 py-2 has-[>svg]:px-3",

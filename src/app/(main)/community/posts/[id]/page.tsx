@@ -242,7 +242,7 @@ export default function CommunityDetailPage() {
 
   return (
     <div className="min-h-screen bg-white">
-      <div className="max-w-[800px] mx-auto px-5 py-8 w-full min-h-screen">
+      <div className="max-w-[800px] mx-auto px-page py-8 w-full min-h-screen">
         {/* Post Content */}
         <div className="mb-6">
           <div>

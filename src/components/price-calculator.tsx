@@ -115,7 +115,7 @@ export default function PriceCalculator({ prices }: PriceCalculatorProps) {
           <Calculator className="w-5 h-5 text-yellow-600" />
           <h2 className="text-[18px] font-bold text-gray-900">시세 계산기</h2>
         </div>
-        <p className="text-[13px] text-gray-500">
+        <p className="text-small text-gray-500">
           무게를 입력하면 예상 매입/매도 가격을 확인할 수 있습니다
         </p>
       </div>
@@ -127,11 +127,11 @@ export default function PriceCalculator({ prices }: PriceCalculatorProps) {
           <div className="space-y-4">
             {/* 금 유형 선택 */}
             <div>
-              <label className="block text-[13px] font-medium text-gray-700 mb-2">금 유형</label>
+              <label className="block text-small font-medium text-gray-700 mb-2">금 유형</label>
               <select
                 value={selectedType}
                 onChange={(e) => setSelectedType(e.target.value as GoldType)}
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl text-[14px] focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent transition-all"
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl text-caption focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent transition-all"
               >
                 {prices.map((price) => (
                   <option key={price.type} value={price.type}>
@@ -143,7 +143,7 @@ export default function PriceCalculator({ prices }: PriceCalculatorProps) {
 
             {/* 무게 입력 */}
             <div>
-              <label className="block text-[13px] font-medium text-gray-700 mb-2">무게</label>
+              <label className="block text-small font-medium text-gray-700 mb-2">무게</label>
               <div className="flex gap-2">
                 <input
                   type="number"
@@ -152,12 +152,12 @@ export default function PriceCalculator({ prices }: PriceCalculatorProps) {
                   placeholder="0"
                   min="0"
                   step="0.01"
-                  className="flex-1 px-4 py-3 border border-gray-200 rounded-xl text-[14px] focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent transition-all tabular-nums"
+                  className="flex-1 px-4 py-3 border border-gray-200 rounded-xl text-caption focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent transition-all tabular-nums"
                 />
                 <select
                   value={unit}
                   onChange={(e) => setUnit(e.target.value as WeightUnit)}
-                  className="px-4 py-3 border border-gray-200 rounded-xl text-[14px] focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent transition-all"
+                  className="px-4 py-3 border border-gray-200 rounded-xl text-caption focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent transition-all"
                 >
                   <option value="g">g</option>
                   <option value="돈">돈</option>
@@ -191,7 +191,7 @@ export default function PriceCalculator({ prices }: PriceCalculatorProps) {
                 />
                 <label
                   htmlFor="purityConversion"
-                  className="text-[13px] font-medium text-gray-700 cursor-pointer"
+                  className="text-small font-medium text-gray-700 cursor-pointer"
                 >
                   순도 변환 계산하기
                 </label>
@@ -199,13 +199,13 @@ export default function PriceCalculator({ prices }: PriceCalculatorProps) {
 
               {purityConversionEnabled && (
                 <div className="space-y-2">
-                  <label className="block text-[13px] font-medium text-gray-700">
+                  <label className="block text-small font-medium text-gray-700">
                     변환할 순도 선택
                   </label>
                   <select
                     value={targetPurity}
                     onChange={(e) => setTargetPurity(e.target.value as GoldType)}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl text-[14px] focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent transition-all"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl text-caption focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent transition-all"
                   >
                     {prices
                       .filter((p) => p.type !== selectedType)
@@ -240,7 +240,7 @@ export default function PriceCalculator({ prices }: PriceCalculatorProps) {
           <div className="space-y-4">
             {/* 매입 예상가 (살 때) */}
             <div className="p-4 bg-gradient-to-br from-green-50 to-green-100 rounded-xl border border-green-200">
-              <p className="text-[13px] font-medium text-green-700 mb-1">살 때 예상가 (매입가)</p>
+              <p className="text-small font-medium text-green-700 mb-1">살 때 예상가 (매입가)</p>
               <p className="text-[28px] font-bold text-green-600 tabular-nums">
                 {buyEstimate.toLocaleString()}
                 <span className="text-[16px] ml-1">원</span>
@@ -262,7 +262,7 @@ export default function PriceCalculator({ prices }: PriceCalculatorProps) {
 
             {/* 매도 예상가 (팔 때) */}
             <div className="p-4 bg-gradient-to-br from-red-50 to-red-100 rounded-xl border border-red-200">
-              <p className="text-[13px] font-medium text-red-700 mb-1">팔 때 예상가 (매도가)</p>
+              <p className="text-small font-medium text-red-700 mb-1">팔 때 예상가 (매도가)</p>
               <p className="text-[28px] font-bold text-red-600 tabular-nums">
                 {sellEstimate.toLocaleString()}
                 <span className="text-[16px] ml-1">원</span>

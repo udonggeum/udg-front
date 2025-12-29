@@ -115,7 +115,7 @@ export default function WishlistPage() {
               <AlertTitle>찜 목록을 불러올 수 없습니다</AlertTitle>
               <AlertDescription>{error}</AlertDescription>
             </Alert>
-            <Button onClick={loadWishlist} className="mt-6 bg-gray-900 hover:bg-gray-800">
+            <Button onClick={loadWishlist} variant="brand-primary" className="mt-6">
               다시 시도
             </Button>
           </div>
@@ -128,7 +128,7 @@ export default function WishlistPage() {
               찜한 상품을 확인하려면 로그인해주세요.
             </p>
             <Link href="/login">
-              <Button className="bg-gray-900 hover:bg-gray-800">로그인하기</Button>
+              <Button variant="brand-primary">로그인하기</Button>
             </Link>
           </div>
         ) : products.length === 0 ? (
@@ -142,7 +142,7 @@ export default function WishlistPage() {
               하트 아이콘을 클릭하여 찜 목록에 추가할 수 있습니다.
             </p>
             <Link href="/products">
-              <Button className="gap-2 bg-gray-900 hover:bg-gray-800">
+              <Button variant="brand-primary" className="gap-2">
                 <Search size={20} />
                 상품 둘러보기
               </Button>

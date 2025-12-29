@@ -21,6 +21,7 @@ import { getDistanceText } from "@/utils/distance";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { toast } from "sonner";
 import { useAuthenticatedAction } from "@/hooks/useAuthenticatedAction";
+import { Button } from "@/components/ui/button";
 
 /**
  * 매장 이미지 컴포넌트 - 로딩 실패 시 폴백 UI 표시
@@ -541,7 +542,7 @@ export default function StoresPage() {
                     placeholder="매장명, 지역, 주소로 검색 (예: 강남, 종로)"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="flex-1 py-2.5 text-[15px] text-gray-900 placeholder-gray-400 bg-transparent outline-none"
+                    className="flex-1 py-2.5 text-body text-gray-900 placeholder-gray-400 bg-transparent outline-none"
                   />
                   {searchQuery && (
                     <button
@@ -553,12 +554,14 @@ export default function StoresPage() {
                     </button>
                   )}
                 </div>
-                <button
+                <Button
                   type="submit"
-                  className="px-4 py-2.5 bg-gray-900 hover:bg-gray-800 text-white text-[14px] font-semibold rounded-lg transition-colors duration-200"
+                  variant="brand-primary"
+                  size="sm"
+                  className="rounded-lg"
                 >
                   검색
-                </button>
+                </Button>
               </div>
             </form>
 
@@ -566,7 +569,7 @@ export default function StoresPage() {
             <button
               type="button"
               onClick={getCurrentLocation}
-              className="w-full flex items-center justify-center gap-2 py-3 bg-white border border-gray-200 rounded-xl text-[14px] font-medium text-gray-700 hover:bg-gray-50 transition-colors duration-200 mb-4"
+              className="w-full flex items-center justify-center gap-2 py-3 bg-white border border-gray-200 rounded-xl text-caption font-medium text-gray-700 hover:bg-gray-50 transition-colors duration-200 mb-4"
             >
               <MapPin className="w-5 h-5 text-blue-500" />
               현재 위치로 검색
@@ -579,7 +582,7 @@ export default function StoresPage() {
                   key={tag.id}
                   type="button"
                   onClick={() => setSelectedFilter(tag.id)}
-                  className={`px-4 py-2.5 min-h-[44px] text-[13px] font-medium rounded-full border whitespace-nowrap transition-all duration-200 ${
+                  className={`px-4 py-2.5 min-h-[44px] text-small font-medium rounded-full border whitespace-nowrap transition-all duration-200 ${
                     selectedFilter === tag.id
                       ? "bg-gray-900 text-white border-gray-900 active:bg-gray-800"
                       : "bg-white text-gray-600 border-gray-200 hover:border-gray-400 active:bg-gray-50"
@@ -592,18 +595,18 @@ export default function StoresPage() {
           </div>
 
           {/* 결과 헤더 - 모바일에서 리스트 탭일 때만 표시 */}
-          <div className={`px-5 py-4 flex items-center justify-between border-b border-gray-50 ${
+          <div className={`px-page py-4 flex items-center justify-between border-b border-gray-50 ${
             isMobileMapOpen ? "hidden md:flex" : "flex"
           }`}>
             <div className="flex items-center gap-2">
-              <span className="text-[14px] text-gray-500">검색결과</span>
-              <span className="text-[14px] font-bold text-gray-900">{filteredStores.length}</span>
+              <span className="text-caption text-gray-500">검색결과</span>
+              <span className="text-caption font-bold text-gray-900">{filteredStores.length}</span>
             </div>
             <div className="relative">
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-                className="appearance-none text-[13px] font-medium text-gray-600 pr-5 cursor-pointer bg-transparent focus:outline-none"
+                className="appearance-none text-small font-medium text-gray-600 pr-5 cursor-pointer bg-transparent focus:outline-none"
               >
                 <option value="distance">거리순</option>
                 <option value="rating">별점순</option>
@@ -630,22 +633,23 @@ export default function StoresPage() {
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
               </div>
             ) : error ? (
-              <div className="flex flex-col items-center justify-center py-20 px-5 text-center">
+              <div className="flex flex-col items-center justify-center py-20 px-page text-center">
                 <StoreIcon className="w-12 h-12 text-gray-300 mb-4" />
                 <h3 className="text-[16px] font-semibold text-gray-900 mb-2">오류가 발생했습니다</h3>
-                <p className="text-[14px] text-gray-500 mb-4">{error}</p>
-                <button
+                <p className="text-caption text-gray-500 mb-4">{error}</p>
+                <Button
                   onClick={() => window.location.reload()}
-                  className="px-4 py-3 min-h-[44px] bg-gray-900 hover:bg-gray-800 active:bg-gray-700 text-white text-[14px] font-semibold rounded-lg"
+                  variant="brand-primary"
+                  className="min-h-[44px]"
                 >
                   다시 시도
-                </button>
+                </Button>
               </div>
             ) : filteredStores.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-20 px-5 text-center">
+              <div className="flex flex-col items-center justify-center py-20 px-page text-center">
                 <StoreIcon className="w-12 h-12 text-gray-300 mb-4" />
                 <h3 className="text-[16px] font-semibold text-gray-900 mb-2">검색 결과가 없습니다</h3>
-                <p className="text-[14px] text-gray-500">
+                <p className="text-caption text-gray-500">
                   다른 검색어를 입력하거나 필터를 변경해보세요
                 </p>
               </div>
@@ -690,14 +694,14 @@ export default function StoresPage() {
                           />
                         </button>
                       </div>
-                      <div className="flex items-center gap-1.5 text-[13px] mb-2">
+                      <div className="flex items-center gap-1.5 text-small mb-2">
                         <span className="text-yellow-500 font-semibold">
                           ★ {store.rating?.toFixed(1) || "4.5"}
                         </span>
                         <span className="text-gray-300">|</span>
                         <span className="text-gray-500">리뷰 {store.reviewCount || 0}</span>
                       </div>
-                      <p className="text-[13px] text-gray-500 mb-2 truncate">
+                      <p className="text-small text-gray-500 mb-2 truncate">
                         {store.address || "주소 정보 없음"}
                       </p>
                       {store.tags && store.tags.length > 0 && (
@@ -715,7 +719,7 @@ export default function StoresPage() {
                     </div>
                     {store.distance && (
                       <div className="flex items-start">
-                        <span className="text-[13px] font-semibold text-blue-600">
+                        <span className="text-small font-semibold text-blue-600">
                           {store.distance}
                         </span>
                       </div>
@@ -768,7 +772,7 @@ export default function StoresPage() {
                 >
                   <ChevronLeft className="w-5 h-5" />
                 </button>
-                <span className="text-[15px] font-medium text-gray-900">매장 정보</span>
+                <span className="text-body font-medium text-gray-900">매장 정보</span>
               </div>
 
               {/* 사진 갤러리 */}
@@ -799,7 +803,7 @@ export default function StoresPage() {
                           {selectedStore.name}
                         </h3>
                       </button>
-                      <div className="flex items-center gap-2 text-[14px]">
+                      <div className="flex items-center gap-2 text-caption">
                         <span className="text-yellow-500 font-semibold flex items-center gap-1">
                           <Star className="w-4 h-4 fill-current" />
                           {selectedStore.rating?.toFixed(1) || "4.5"}
@@ -821,7 +825,7 @@ export default function StoresPage() {
                     </button>
                   </div>
                   {/* 영업 상태 */}
-                  <div className="flex items-center gap-2 text-[14px]">
+                  <div className="flex items-center gap-2 text-caption">
                     <span className={selectedStore.isOpen ? "text-green-600 font-medium" : "text-gray-500"}>
                       {selectedStore.isOpen ? "영업중" : "준비중"}
                     </span>
@@ -832,13 +836,13 @@ export default function StoresPage() {
 
                 {/* 전문분야 */}
                 <div className="py-4 border-b border-gray-100">
-                  <h4 className="text-[13px] font-medium text-gray-500 mb-2">전문분야</h4>
+                  <h4 className="text-small font-medium text-gray-500 mb-2">전문분야</h4>
                   <div className="flex flex-wrap gap-2">
                     {selectedStore.tags && selectedStore.tags.length > 0 ? (
                       selectedStore.tags.slice(0, 5).map((tag, idx) => (
                         <span
                           key={tag.id}
-                          className={`px-3 py-1.5 text-[13px] font-medium rounded-full ${
+                          className={`px-3 py-1.5 text-small font-medium rounded-full ${
                             idx === 0
                               ? "bg-gray-900 text-white"
                               : "bg-gray-100 text-gray-700"
@@ -848,7 +852,7 @@ export default function StoresPage() {
                         </span>
                       ))
                     ) : (
-                      <span className="text-[13px] text-gray-500">태그 없음</span>
+                      <span className="text-small text-gray-500">태그 없음</span>
                     )}
                   </div>
                 </div>
@@ -859,11 +863,11 @@ export default function StoresPage() {
                     <div className="flex items-start gap-3">
                       <MapPin className="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0" />
                       <div className="flex-1">
-                        <p className="text-[14px] text-gray-900">
+                        <p className="text-caption text-gray-900">
                           {selectedStore.address || "주소 정보 없음"}
                         </p>
                         {selectedStore.distance && (
-                          <p className="text-[13px] text-blue-600 font-medium">
+                          <p className="text-small text-blue-600 font-medium">
                             {selectedStore.distance}
                           </p>
                         )}
@@ -871,25 +875,27 @@ export default function StoresPage() {
                     </div>
                     <div className="flex items-center gap-3">
                       <Phone className="w-5 h-5 text-gray-400 flex-shrink-0" />
-                      <p className="text-[14px] text-gray-900">
+                      <p className="text-caption text-gray-900">
                         {selectedStore.phone_number || "02-1234-5678"}
                       </p>
                     </div>
                     <div className="flex items-center gap-3">
                       <Clock className="w-5 h-5 text-gray-400 flex-shrink-0" />
-                      <p className="text-[14px] text-gray-900">10:00 - 20:00</p>
+                      <p className="text-caption text-gray-900">10:00 - 20:00</p>
                     </div>
                   </div>
                 </div>
 
                 {/* 매장 상세보기 버튼 */}
-                <button
+                <Button
                   type="button"
                   onClick={() => router.push(`/stores/${selectedStore.id}`)}
-                  className="w-full py-3 bg-gray-900 hover:bg-gray-800 text-white text-[15px] font-semibold rounded-xl transition-colors duration-200"
+                  variant="brand-primary"
+                  size="lg"
+                  className="w-full"
                 >
                   매장 상세보기
-                </button>
+                </Button>
               </div>
             </div>
           )}
