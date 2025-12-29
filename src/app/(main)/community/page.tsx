@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { getPostsAction } from "@/actions/community";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { Section, Container, PageHeader } from "@/components/layout-primitives";
+import { Button } from "@/components/ui/button";
 import type {
   PostCategory,
   PostType,
@@ -418,12 +419,12 @@ function CommunityPageContent() {
               </div>
             </div>
           )}
-        </div>
-      </section>
+        </Container>
+      </Section>
 
       {/* Posts Grid */}
-      <section className="py-8 px-page bg-white">
-        <div className="max-w-[1200px] mx-auto">
+      <Section className="py-8">
+        <Container>
           {/* Loading */}
           {isLoading && (
             <div className="text-center py-page">
