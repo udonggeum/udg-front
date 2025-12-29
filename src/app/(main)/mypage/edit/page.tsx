@@ -201,6 +201,7 @@ export default function ProfileEditPage() {
           filename: file.name,
           content_type: file.type,
           file_size: file.size,
+          folder: "uploads",
         },
         tokens.access_token
       );

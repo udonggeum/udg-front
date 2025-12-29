@@ -393,6 +393,7 @@ export default function MyStoreEditPage() {
           filename: file.name,
           content_type: file.type,
           file_size: file.size,
+          folder: "stores",
         },
         tokens.access_token
       );
