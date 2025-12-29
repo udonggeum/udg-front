@@ -59,6 +59,9 @@ export interface CommunityPost {
   is_answered: boolean;
   accepted_answer_id?: number | null;
 
+  // 매장 게시글 관리
+  is_pinned: boolean;
+
   // 통계
   view_count: number;
   like_count: number;
@@ -180,6 +183,21 @@ export interface LikeResponse {
 
 export interface AcceptAnswerResponse {
   message: string;
+}
+
+export interface GalleryItem {
+  post_id: number;
+  image_url: string;
+  title: string;
+  content: string;
+  created_at: string;
+}
+
+export interface GalleryResponse {
+  data: GalleryItem[];
+  total: number;
+  page: number;
+  page_size: number;
 }
 
 export interface GenerateContentRequest {

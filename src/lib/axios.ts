@@ -18,12 +18,30 @@ export const apiClient = axios.create({
 apiClient.interceptors.response.use(
   (response: AxiosResponse) => response,
   (error: AxiosError) => {
-    // Add isUnauthorized flag for 401 errors
+    // Handle 401 Unauthorized errors
     if (error.response?.status === 401) {
-      return Promise.reject({
-        ...error,
-        isUnauthorized: true,
-      });
+      // Client-side only: clear auth and redirect
+      if (typeof window !== "undefined") {
+        // Dynamically import to avoid circular dependencies
+        import("@/stores/useAuthStore").then(({ useAuthStore }) => {
+          const { clearAuth } = useAuthStore.getState();
+          clearAuth();
+
+          // Show toast message
+          import("sonner").then(({ toast }) => {
+            toast.error("로그인이 만료되었습니다. 다시 로그인해주세요.");
+          });
+
+          // Redirect to login after a short delay
+          setTimeout(() => {
+            window.location.href = "/login";
+          }, 1000);
+        });
+      }
+
+      // AxiosError의 prototype을 유지하면서 속성 추가
+      (error as any).isUnauthorized = true;
+      return Promise.reject(error);
     }
     return Promise.reject(error);
   }
@@ -46,9 +64,9 @@ export function handleApiError<T = unknown>(error: unknown, defaultMessage: stri
   console.error("API error:", error);
 
   if (axios.isAxiosError(error)) {
-    const axiosError = error as AxiosError<{ message?: string }> & { isUnauthorized?: boolean };
+    const axiosError = error as AxiosError<{ error?: string; message?: string }> & { isUnauthorized?: boolean };
 
-    // 401 Unauthorized
+    // 401 Unauthorized - 가장 우선적으로 체크
     if (axiosError.response?.status === 401 || axiosError.isUnauthorized) {
       return {
         success: false,
@@ -59,7 +77,7 @@ export function handleApiError<T = unknown>(error: unknown, defaultMessage: stri
 
     return {
       success: false,
-      error: axiosError.response?.data?.message || defaultMessage,
+      error: axiosError.response?.data?.error || axiosError.response?.data?.message || defaultMessage,
     };
   }
 
