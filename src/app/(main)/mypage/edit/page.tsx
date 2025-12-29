@@ -468,7 +468,7 @@ export default function ProfileEditPage() {
                 </Button>
                 <Button
                   type="submit"
-                  className="gap-2 bg-gray-900 hover:bg-gray-800"
+                  className="gap-2 bg-gray-900 hover:bg-gray-800 text-white"
                   disabled={isPending}
                 >
                   {isPending ? (

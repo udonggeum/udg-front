@@ -382,7 +382,7 @@ export default function MyPage() {
                       마음에 드는 매장을 찾아 좋아요를 눌러보세요
                     </p>
                     <Link href="/stores">
-                      <Button className="bg-gray-900 hover:bg-gray-800">
+                      <Button className="bg-gray-900 hover:bg-gray-800 text-white">
                         매장 둘러보기
                       </Button>
                     </Link>
@@ -440,7 +440,7 @@ export default function MyPage() {
                     variant={selectedCategory === "all" ? "default" : "outline"}
                     size="sm"
                     onClick={() => setSelectedCategory("all")}
-                    className={selectedCategory === "all" ? "bg-gray-900 hover:bg-gray-800" : ""}
+                    className={selectedCategory === "all" ? "bg-gray-900 hover:bg-gray-800 text-white" : ""}
                   >
                     전체 ({totalPosts})
                   </Button>
@@ -448,7 +448,7 @@ export default function MyPage() {
                     variant={selectedCategory === "gold_trade" ? "default" : "outline"}
                     size="sm"
                     onClick={() => setSelectedCategory("gold_trade")}
-                    className={selectedCategory === "gold_trade" ? "bg-gray-900 hover:bg-gray-800" : ""}
+                    className={selectedCategory === "gold_trade" ? "bg-gray-900 hover:bg-gray-800 text-white" : ""}
                   >
                     금거래
                   </Button>
@@ -456,7 +456,7 @@ export default function MyPage() {
                     variant={selectedCategory === "gold_news" ? "default" : "outline"}
                     size="sm"
                     onClick={() => setSelectedCategory("gold_news")}
-                    className={selectedCategory === "gold_news" ? "bg-gray-900 hover:bg-gray-800" : ""}
+                    className={selectedCategory === "gold_news" ? "bg-gray-900 hover:bg-gray-800 text-white" : ""}
                   >
                     금소식
                   </Button>
@@ -464,7 +464,7 @@ export default function MyPage() {
                     variant={selectedCategory === "qna" ? "default" : "outline"}
                     size="sm"
                     onClick={() => setSelectedCategory("qna")}
-                    className={selectedCategory === "qna" ? "bg-gray-900 hover:bg-gray-800" : ""}
+                    className={selectedCategory === "qna" ? "bg-gray-900 hover:bg-gray-800 text-white" : ""}
                   >
                     QnA
                   </Button>
@@ -485,7 +485,7 @@ export default function MyPage() {
                       커뮤니티에서 첫 글을 작성해보세요
                     </p>
                     <Link href="/community">
-                      <Button className="bg-gray-900 hover:bg-gray-800">
+                      <Button className="bg-gray-900 hover:bg-gray-800 text-white">
                         커뮤니티 가기
                       </Button>
                     </Link>
