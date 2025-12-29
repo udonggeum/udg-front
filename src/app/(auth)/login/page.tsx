@@ -313,8 +313,7 @@ function LoginForm() {
               <Button
                 type="button"
                 onClick={() => handleSocialLogin("카카오")}
-                variant="kakao"
-                className="w-full py-6 h-auto"
+                className="w-full flex items-center justify-center gap-3 py-6 bg-[#FEE500] hover:bg-[#FEE500]/90 text-gray-900 rounded-xl text-[15px] font-semibold smooth-transition h-auto"
               >
                 <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M12 3C6.477 3 2 6.477 2 10.5c0 2.47 1.607 4.647 4.023 5.903-.176.657-.64 2.385-.733 2.758-.114.461.17.454.357.33.147-.097 2.343-1.595 3.293-2.243.349.05.706.076 1.06.076 5.523 0 10-3.477 10-7.824C20 6.477 17.523 3 12 3z"/>

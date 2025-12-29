@@ -425,7 +425,7 @@ export default function PricesPage() {
           </p>
           <button
             onClick={() => router.push("/stores?buying=true")}
-            className="w-full px-page py-3 bg-yellow-500 hover:bg-yellow-600 text-white font-semibold rounded-xl transition-all duration-200 transform hover:-translate-y-0.5 hover:shadow-lg"
+            className="w-full px-6 py-3 bg-yellow-500 hover:bg-yellow-600 text-white font-semibold rounded-xl transition-all duration-200 transform hover:-translate-y-0.5 hover:shadow-lg"
           >
             근처 매입 매장 보기
           </button>

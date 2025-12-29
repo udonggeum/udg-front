@@ -29,7 +29,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { logoutUserAction, updateProfileAction } from "@/actions/auth";
 import { getPostsAction } from "@/actions/community";
 import { getPresignedUrlAction, uploadToS3 } from "@/actions/upload";
-import { getUserLikedStoresAction } from "@/actions/stores";
+import { getUserLikedStoresAction, getMyStoreAction, getStoresAction } from "@/actions/stores";
 import { Container } from "@/components/layout-primitives";
 import type { CommunityPost } from "@/types/community";
 import type { StoreDetail } from "@/types/stores";
@@ -53,6 +53,13 @@ export default function MyPage() {
   const [likedStores, setLikedStores] = useState<StoreDetail[]>([]);
   const [totalLikedStores, setTotalLikedStores] = useState(0);
   const [isLoadingStores, setIsLoadingStores] = useState(false);
+
+  // admin 사용자의 매장 상태
+  const [myStore, setMyStore] = useState<StoreDetail | null>(null);
+  const [isLoadingMyStore, setIsLoadingMyStore] = useState(false);
+
+  // admin 권한 확인
+  const isAdmin = user?.role === "admin";
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -92,10 +99,48 @@ export default function MyPage() {
     }
   }, [isAuthenticated, user, selectedCategory]);
 
-  // 좋아요한 매장 불러오기
+  // admin 사용자의 매장 불러오기
+  useEffect(() => {
+    const fetchMyStore = async () => {
+      if (!isAdmin || !tokens?.access_token || !user?.id) return;
+
+      setIsLoadingMyStore(true);
+      try {
+        // 먼저 /users/me/store API 시도
+        const result = await getMyStoreAction(tokens.access_token);
+
+        if (result.success && result.data?.store) {
+          setMyStore(result.data.store);
+        } else {
+          // API가 실패하면 전체 매장 목록에서 현재 사용자의 매장 찾기
+          const storesResult = await getStoresAction({}, tokens.access_token);
+
+          if (storesResult.success && storesResult.data?.stores) {
+            const myStoreFound = storesResult.data.stores.find(
+              (store: StoreDetail) => store.user_id === user.id
+            );
+
+            if (myStoreFound) {
+              setMyStore(myStoreFound);
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Failed to fetch my store:", error);
+      } finally {
+        setIsLoadingMyStore(false);
+      }
+    };
+
+    if (isAuthenticated && isAdmin && tokens?.access_token && user?.id) {
+      fetchMyStore();
+    }
+  }, [isAuthenticated, isAdmin, user?.id, tokens?.access_token]);
+
+  // 좋아요한 매장 불러오기 (일반 사용자만)
   useEffect(() => {
     const fetchLikedStores = async () => {
-      if (!tokens?.access_token) return;
+      if (!tokens?.access_token || isAdmin) return;
 
       setIsLoadingStores(true);
       try {
@@ -112,10 +157,10 @@ export default function MyPage() {
       }
     };
 
-    if (isAuthenticated && tokens?.access_token) {
+    if (isAuthenticated && !isAdmin && tokens?.access_token) {
       fetchLikedStores();
     }
-  }, [isAuthenticated, tokens?.access_token]);
+  }, [isAuthenticated, isAdmin, tokens?.access_token]);
 
   const handleLogout = async () => {
     try {
@@ -283,17 +328,29 @@ export default function MyPage() {
                       작성한 글 <span className="font-bold text-gray-900">{totalPosts}</span>
                     </span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Heart className="w-4 h-4 text-gray-600" />
-                    <span className="text-sm text-gray-600">
-                      관심 매장 <span className="font-bold text-gray-900">{totalLikedStores}</span>
-                    </span>
-                  </div>
+                  {!isAdmin && (
+                    <div className="flex items-center gap-2">
+                      <Heart className="w-4 h-4 text-gray-600" />
+                      <span className="text-sm text-gray-600">
+                        관심 매장 <span className="font-bold text-gray-900">{totalLikedStores}</span>
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
 
               {/* 액션 버튼 */}
               <div className="flex flex-col gap-2 w-full md:w-auto">
+                {isAdmin && (
+                  <Button
+                    variant="outline"
+                    onClick={() => router.push("/mystore")}
+                    className="gap-2"
+                  >
+                    <Store className="w-4 h-4" />
+                    내 매장 관리
+                  </Button>
+                )}
                 <Button
                   variant="outline"
                   onClick={() => router.push("/mypage/edit")}
@@ -319,7 +376,9 @@ export default function MyPage() {
         <Tabs defaultValue="info" className="w-full">
           <TabsList className="grid w-full grid-cols-3 mb-6">
             <TabsTrigger value="info">회원정보</TabsTrigger>
-            <TabsTrigger value="stores">관심 매장</TabsTrigger>
+            <TabsTrigger value="stores">
+              {isAdmin ? "내 매장" : "관심 매장"}
+            </TabsTrigger>
             <TabsTrigger value="posts">작성한 글</TabsTrigger>
           </TabsList>
 
@@ -364,68 +423,210 @@ export default function MyPage() {
             </Card>
           </TabsContent>
 
-          {/* 좋아요한 매장 탭 */}
+          {/* 매장 탭 (admin: 내 매장, 일반: 관심 매장) */}
           <TabsContent value="stores">
             <Card className="border-0 shadow-sm">
               <CardContent className="p-6">
-                {isLoadingStores ? (
-                  <div className="text-center py-page">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto mb-4"></div>
-                    <p className="text-sm text-gray-500">매장 목록을 불러오는 중...</p>
-                  </div>
-                ) : likedStores.length === 0 ? (
-                  <div className="text-center py-page">
-                    <Store className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                      좋아요한 매장이 없습니다
-                    </h3>
-                    <p className="text-sm text-gray-600 mb-6">
-                      마음에 드는 매장을 찾아 좋아요를 눌러보세요
-                    </p>
-                    <Link href="/stores">
-                      <Button variant="brand-primary">
-                        매장 둘러보기
-                      </Button>
-                    </Link>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {likedStores.map((store) => (
-                      <Link key={store.id} href={`/stores/${store.id}`}>
-                        <div className="p-4 border rounded-lg hover:shadow-md transition-shadow cursor-pointer">
-                          <div className="flex items-start gap-3">
-                            <Store className="w-10 h-10 text-gray-400 flex-shrink-0" />
-                            <div className="flex-1 min-w-0">
-                              <h4 className="font-semibold text-gray-900 mb-1 truncate">{store.name}</h4>
-                              <div className="flex items-center gap-1 text-sm text-gray-600 mb-2">
-                                <MapPin className="w-3 h-3 flex-shrink-0" />
-                                <span className="truncate">
-                                  {store.region && store.district
-                                    ? `${store.region} ${store.district}`
-                                    : store.address || "주소 정보 없음"}
-                                </span>
+                {isAdmin ? (
+                  // Admin - 내 매장 정보
+                  <>
+                    {isLoadingMyStore ? (
+                      <div className="text-center py-12">
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto mb-4"></div>
+                        <p className="text-sm text-gray-500">매장 정보를 불러오는 중...</p>
+                      </div>
+                    ) : !myStore ? (
+                      <div className="text-center py-12">
+                        <Store className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                        <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                          등록된 매장이 없습니다
+                        </h3>
+                        <p className="text-sm text-gray-600 mb-6">
+                          매장을 등록하고 관리를 시작해보세요
+                        </p>
+                        <Link href="/mystore">
+                          <Button variant="brand-primary">
+                            매장 등록하기
+                          </Button>
+                        </Link>
+                      </div>
+                    ) : (
+                      <div className="space-y-6">
+                        {/* 매장 요약 카드 */}
+                        <div className="p-6 bg-gradient-to-br from-yellow-50 to-orange-50 rounded-xl border border-yellow-200">
+                          <div className="flex items-start justify-between mb-4">
+                            <div className="flex items-center gap-3">
+                              <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center overflow-hidden border border-gray-200">
+                                {myStore.image_url ? (
+                                  <Image
+                                    src={myStore.image_url}
+                                    alt={myStore.name}
+                                    width={48}
+                                    height={48}
+                                    className="w-full h-full object-cover"
+                                  />
+                                ) : (
+                                  <Store className="w-6 h-6 text-gray-400" />
+                                )}
                               </div>
-                              {store.tags && store.tags.length > 0 && (
-                                <div className="flex flex-wrap gap-1">
-                                  {store.tags.slice(0, 3).map((tag) => (
-                                    <Badge key={tag.id} variant="secondary" className="text-xs">
-                                      {tag.name}
-                                    </Badge>
-                                  ))}
-                                  {store.tags.length > 3 && (
-                                    <Badge variant="secondary" className="text-xs">
-                                      +{store.tags.length - 3}
-                                    </Badge>
+                              <div>
+                                <h3 className="text-xl font-bold text-gray-900">{myStore.name}</h3>
+                                <p className="text-sm text-gray-600 flex items-center gap-1 mt-1">
+                                  <MapPin className="w-3 h-3" />
+                                  {myStore.region && myStore.district
+                                    ? `${myStore.region} ${myStore.district}`
+                                    : myStore.address || "주소 정보 없음"}
+                                </p>
+                              </div>
+                            </div>
+                            <Link href="/mystore">
+                              <Button variant="outline" size="sm">
+                                매장 수정
+                              </Button>
+                            </Link>
+                          </div>
+
+                          {/* 전체 주소 */}
+                          {myStore.address && (
+                            <div className="bg-white/50 p-4 rounded-lg mb-4">
+                              <div className="flex items-start gap-2">
+                                <MapPin className="w-4 h-4 text-gray-500 mt-0.5 flex-shrink-0" />
+                                <div className="flex-1">
+                                  <span className="text-xs text-gray-600 block mb-1">주소</span>
+                                  <p className="text-sm font-medium text-gray-900">{myStore.address}</p>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* 매장 상세 정보 */}
+                          <div className="grid grid-cols-2 gap-3">
+                            <div className="bg-white p-4 rounded-lg">
+                              <div className="flex items-center gap-2 mb-1">
+                                <Phone className="w-4 h-4 text-gray-500" />
+                                <span className="text-xs text-gray-600">연락처</span>
+                              </div>
+                              <p className="text-sm font-semibold text-gray-900">
+                                {myStore.phone_number || "미설정"}
+                              </p>
+                            </div>
+                            <div className="bg-white p-4 rounded-lg">
+                              <div className="flex items-center gap-2 mb-1">
+                                <Clock className="w-4 h-4 text-gray-500" />
+                                <span className="text-xs text-gray-600">영업시간</span>
+                              </div>
+                              <p className="text-sm font-semibold text-gray-900">
+                                {myStore.business_hours ||
+                                 (myStore.open_time && myStore.close_time
+                                   ? `${myStore.open_time} - ${myStore.close_time}`
+                                   : "미설정")}
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* 매장 소개 */}
+                          {myStore.description && (
+                            <div className="bg-white/50 p-4 rounded-lg mt-4">
+                              <span className="text-xs text-gray-600 block mb-2">매장 소개</span>
+                              <p className="text-sm text-gray-700 leading-relaxed">
+                                {myStore.description}
+                              </p>
+                            </div>
+                          )}
+
+                          {/* 태그 */}
+                          {myStore.tags && myStore.tags.length > 0 && (
+                            <div className="mt-4 flex flex-wrap gap-2">
+                              {myStore.tags.map((tag) => (
+                                <Badge key={tag.id} variant="secondary" className="bg-white">
+                                  {tag.name}
+                                </Badge>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* 관리 버튼 */}
+                        <div className="flex gap-3">
+                          <Link href="/mystore" className="flex-1">
+                            <Button variant="brand-primary" className="w-full">
+                              <Edit className="w-4 h-4 mr-2" />
+                              매장 정보 수정
+                            </Button>
+                          </Link>
+                          <Link href={`/stores/${myStore.id}`} className="flex-1">
+                            <Button variant="outline" className="w-full">
+                              <Eye className="w-4 h-4 mr-2" />
+                              매장 페이지 보기
+                            </Button>
+                          </Link>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  // 일반 사용자 - 관심 매장
+                  <>
+                    {isLoadingStores ? (
+                      <div className="text-center py-12">
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto mb-4"></div>
+                        <p className="text-sm text-gray-500">매장 목록을 불러오는 중...</p>
+                      </div>
+                    ) : likedStores.length === 0 ? (
+                      <div className="text-center py-12">
+                        <Store className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                        <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                          좋아요한 매장이 없습니다
+                        </h3>
+                        <p className="text-sm text-gray-600 mb-6">
+                          마음에 드는 매장을 찾아 좋아요를 눌러보세요
+                        </p>
+                        <Link href="/stores">
+                          <Button variant="brand-primary">
+                            매장 둘러보기
+                          </Button>
+                        </Link>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {likedStores.map((store) => (
+                          <Link key={store.id} href={`/stores/${store.id}`}>
+                            <div className="p-4 border rounded-lg hover:shadow-md transition-shadow cursor-pointer">
+                              <div className="flex items-start gap-3">
+                                <Store className="w-10 h-10 text-gray-400 flex-shrink-0" />
+                                <div className="flex-1 min-w-0">
+                                  <h4 className="font-semibold text-gray-900 mb-1 truncate">{store.name}</h4>
+                                  <div className="flex items-center gap-1 text-sm text-gray-600 mb-2">
+                                    <MapPin className="w-3 h-3 flex-shrink-0" />
+                                    <span className="truncate">
+                                      {store.region && store.district
+                                        ? `${store.region} ${store.district}`
+                                        : store.address || "주소 정보 없음"}
+                                    </span>
+                                  </div>
+                                  {store.tags && store.tags.length > 0 && (
+                                    <div className="flex flex-wrap gap-1">
+                                      {store.tags.slice(0, 3).map((tag) => (
+                                        <Badge key={tag.id} variant="secondary" className="text-xs">
+                                          {tag.name}
+                                        </Badge>
+                                      ))}
+                                      {store.tags.length > 3 && (
+                                        <Badge variant="secondary" className="text-xs">
+                                          +{store.tags.length - 3}
+                                        </Badge>
+                                      )}
+                                    </div>
                                   )}
                                 </div>
-                              )}
+                                <Heart className="w-5 h-5 text-red-500 fill-red-500 flex-shrink-0" />
+                              </div>
                             </div>
-                            <Heart className="w-5 h-5 text-red-500 fill-red-500 flex-shrink-0" />
-                          </div>
-                        </div>
-                      </Link>
-                    ))}
-                  </div>
+                          </Link>
+                        ))}
+                      </div>
+                    )}
+                  </>
                 )}
               </CardContent>
             </Card>

@@ -8,6 +8,7 @@ import type {
   StoreDetailResponse,
   StoreLikeResponse,
 } from "@/types/stores";
+import type { UpdateStoreRequest } from "@/schemas/stores";
 import { apiClient, handleApiError, type ApiResponse } from "@/lib/axios";
 
 /**
@@ -142,5 +143,50 @@ export async function getUserLikedStoresAction(
     };
   } catch (error) {
     return handleApiError(error, "관심 매장 목록 조회에 실패했습니다.");
+  }
+}
+
+/**
+ * 내 매장 정보 조회 Server Action (admin 전용)
+ */
+export async function getMyStoreAction(
+  accessToken: string
+): Promise<ApiResponse<StoreDetailResponse>> {
+  try {
+    const response = await apiClient.get<StoreDetailResponse>("/users/me/store", {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+
+    return {
+      success: true,
+      data: response.data,
+    };
+  } catch (error) {
+    return handleApiError(error, "내 매장 정보 조회에 실패했습니다.");
+  }
+}
+
+/**
+ * 내 매장 정보 수정 Server Action (admin 전용)
+ */
+export async function updateMyStoreAction(
+  data: UpdateStoreRequest,
+  accessToken: string
+): Promise<ApiResponse<StoreDetailResponse>> {
+  try {
+    const response = await apiClient.put<StoreDetailResponse>("/users/me/store", data, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+
+    return {
+      success: true,
+      data: response.data,
+    };
+  } catch (error) {
+    return handleApiError(error, "매장 정보 수정에 실패했습니다.");
   }
 }

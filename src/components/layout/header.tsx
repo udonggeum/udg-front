@@ -9,10 +9,12 @@ import { useLocationStore } from "@/stores/useLocationStore";
 import { useApiErrorHandler } from "@/hooks/useApiCall";
 import { logoutUserAction } from "@/actions/auth";
 import { getChatRoomsAction } from "@/actions/chat";
+import { getMyStoreAction, getStoresAction } from "@/actions/stores";
 import { useWebSocket } from "@/hooks/useWebSocket";
 import { toast } from "sonner";
 import { User, Settings, LogOut, ChevronDown, MapPin, Menu, X } from "lucide-react";
 import LocationSettingModal from "@/components/LocationSettingModal";
+import type { StoreDetail } from "@/types/stores";
 import {
   Tooltip,
   TooltipContent,
@@ -30,6 +32,7 @@ export function Header() {
   const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [unreadChatCount, setUnreadChatCount] = useState(0);
+  const [myStoreId, setMyStoreId] = useState<number | null>(null);
 
   // user.address로 초기화 (currentLocation이 없을 때만)
   useEffect(() => {
@@ -81,6 +84,41 @@ export function Header() {
   useEffect(() => {
     fetchUnreadCount();
   }, [fetchUnreadCount]);
+
+  // admin 사용자의 매장 ID 가져오기
+  useEffect(() => {
+    const fetchMyStoreId = async () => {
+      if (user?.role !== "admin" || !tokens?.access_token) {
+        setMyStoreId(null);
+        return;
+      }
+
+      try {
+        // 먼저 /users/me/store API 시도
+        const result = await getMyStoreAction(tokens.access_token);
+        if (result.success && result.data?.store) {
+          setMyStoreId(result.data.store.id);
+        } else {
+          // API가 실패하면 전체 매장 목록에서 현재 사용자의 매장 찾기
+          const storesResult = await getStoresAction({}, tokens.access_token);
+          if (storesResult.success && storesResult.data?.stores) {
+            const myStore = storesResult.data.stores.find(
+              (store: StoreDetail) => store.user_id === user?.id
+            );
+            if (myStore) {
+              setMyStoreId(myStore.id);
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Failed to fetch my store ID:", error);
+      }
+    };
+
+    if (user?.role === "admin" && tokens?.access_token) {
+      fetchMyStoreId();
+    }
+  }, [user?.role, user?.id, tokens?.access_token]);
 
   // WebSocket으로 실시간 메시지 수신
   useWebSocket({
@@ -247,6 +285,9 @@ export function Header() {
                     {/* 사용자 정보 */}
                     <div className="px-4 py-2 border-b border-gray-100">
                       <p className="text-xs text-gray-500 truncate">{user?.email}</p>
+                      {user?.role === "admin" && (
+                        <p className="text-xs text-yellow-600 font-semibold mt-0.5">관리자</p>
+                      )}
                     </div>
 
                     {/* 마이페이지 */}
@@ -258,6 +299,20 @@ export function Header() {
                       <User className="w-4 h-4" />
                       마이페이지
                     </Link>
+
+                    {/* Admin 전용: 내 매장 정보 */}
+                    {user?.role === "admin" && myStoreId && (
+                      <Link
+                        href={`/stores/${myStoreId}`}
+                        onClick={() => setIsDropdownOpen(false)}
+                        className="flex items-center gap-2 px-4 py-2.5 text-caption text-gray-700 hover:bg-gray-50 smooth-transition"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                        </svg>
+                        내 매장 정보
+                      </Link>
+                    )}
 
                     {/* 프로필 수정 */}
                     <Link

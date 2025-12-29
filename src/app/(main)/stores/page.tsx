@@ -53,8 +53,12 @@ function StoreImage({
     lg: "w-20 h-20",
   };
 
-  // URL 유효성 검사 - http:// 또는 https://로 시작하는지 확인
-  const isValidUrl = imageUrl && (imageUrl.startsWith("http://") || imageUrl.startsWith("https://"));
+  // URL 유효성 검사 - http://, https://, data: 로 시작하는지 확인 (base64 이미지 포함)
+  const isValidUrl = imageUrl && (
+    imageUrl.startsWith("http://") ||
+    imageUrl.startsWith("https://") ||
+    imageUrl.startsWith("data:")
+  );
 
   // 이미지가 없거나, 유효하지 않은 URL이거나, 로딩 실패 시 폴백 UI
   if (!imageUrl || !isValidUrl || imageError) {
@@ -67,14 +71,16 @@ function StoreImage({
     );
   }
 
-  // 정상 이미지 표시
+  // 정상 이미지 표시 (흰색 배경)
   return (
-    <img
-      src={imageUrl}
-      alt={storeName}
-      className={`${sizeClasses[size]} object-cover`}
-      onError={() => setImageError(true)}
-    />
+    <div className={`${sizeClasses[size]} bg-white flex items-center justify-center overflow-hidden`}>
+      <img
+        src={imageUrl}
+        alt={storeName}
+        className="w-full h-full object-cover"
+        onError={() => setImageError(true)}
+      />
+    </div>
   );
 }
 
@@ -230,19 +236,14 @@ export default function StoresPage() {
               console.log("  - User location:", userLocation);
               console.log("  - Store coords:", { lat, lng });
               console.log("  - Calculated distance:", distance);
+              console.log("  - Store image_url:", store.image_url);
             }
-
-            // 이미지 URL 검증 (http:// 또는 https://로 시작하지 않으면 null 처리)
-            const isValidImageUrl =
-              store.image_url &&
-              (store.image_url.startsWith("http://") || store.image_url.startsWith("https://"));
 
             // 영업 시간 확인
             const isOpen = checkIfOpen(store.open_time, store.close_time);
 
             return {
               ...store,
-              image_url: isValidImageUrl ? store.image_url : undefined,
               distance: distance || undefined,
               tags: store.tags || [],
               iconBg: colorSet.bg,
@@ -259,6 +260,10 @@ export default function StoresPage() {
           console.log(
             "🗺️ Stores with coordinates:",
             transformedStores.map((s) => ({ id: s.id, name: s.name, lat: s.lat, lng: s.lng }))
+          );
+          console.log(
+            "🖼️ Stores with images:",
+            transformedStores.map((s) => ({ id: s.id, name: s.name, image_url: s.image_url }))
           );
 
           setStores(transformedStores);

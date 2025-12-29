@@ -254,37 +254,37 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
     loadStore();
   }, [storeId, accessToken]);
 
-  // 상품 목록 로드
-  useEffect(() => {
-    if (!store) return;
+  // 상품 목록 로드 - 상품 기능 제거로 주석 처리
+  // useEffect(() => {
+  //   if (!store) return;
 
-    const loadProducts = async () => {
-      setIsLoadingProducts(true);
-      setProductsError(null);
+  //   const loadProducts = async () => {
+  //     setIsLoadingProducts(true);
+  //     setProductsError(null);
 
-      try {
-        const result = await getStoreProductsAction(store.id, {
-          page: 1,
-          page_size: 50,
-        });
+  //     try {
+  //       const result = await getStoreProductsAction(store.id, {
+  //         page: 1,
+  //         page_size: 50,
+  //       });
 
-        if (result.success && result.data) {
-          setProducts(result.data.products);
-        } else {
-          // 404 에러는 상품이 없는 것으로 처리 (에러 메시지 표시하지 않음)
-          console.log("상품 조회 실패:", result.error);
-          setProducts([]);
-        }
-      } catch (err) {
-        console.error("상품 조회 에러:", err);
-        setProducts([]);
-      } finally {
-        setIsLoadingProducts(false);
-      }
-    };
+  //       if (result.success && result.data) {
+  //         setProducts(result.data.products);
+  //       } else {
+  //         // 404 에러는 상품이 없는 것으로 처리 (에러 메시지 표시하지 않음)
+  //         console.log("상품 조회 실패:", result.error);
+  //         setProducts([]);
+  //       }
+  //     } catch (err) {
+  //       console.error("상품 조회 에러:", err);
+  //       setProducts([]);
+  //     } finally {
+  //       setIsLoadingProducts(false);
+  //     }
+  //   };
 
-    loadProducts();
-  }, [store]);
+  //   loadProducts();
+  // }, [store]);
 
   // 게시글 목록 로드 (홈 탭과 매장소식 탭에서 사용)
   useEffect(() => {
@@ -774,40 +774,40 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
           <div className="flex flex-col md:flex-row gap-4">
             {/* 매장 이미지 */}
             <div
-              className={`w-32 h-32 bg-gray-100 border border-gray-200 rounded-2xl flex items-center justify-center flex-shrink-0 overflow-hidden relative ${
+              className={`w-32 h-32 ${
+                store.image_url &&
+                (store.image_url.startsWith("http://") || store.image_url.startsWith("https://")) &&
+                !imageError
+                  ? "bg-white"
+                  : "bg-gray-100"
+              } border border-gray-200 rounded-2xl flex items-center justify-center flex-shrink-0 overflow-hidden relative ${
                 isMyStore ? "group cursor-pointer" : ""
               }`}
               onClick={handleImageClick}
             >
-              {/* 기본 아이콘 (항상 렌더링) */}
-              <StoreIcon
-                className={`w-16 h-16 text-gray-300 absolute inset-0 m-auto ${
-                  !imageError &&
-                  store.image_url &&
-                  (store.image_url.startsWith("http://") || store.image_url.startsWith("https://"))
-                    ? "opacity-0"
-                    : "opacity-100"
-                } transition-opacity`}
-              />
+              {/* 기본 아이콘 (이미지가 없거나 에러일 때만 표시) */}
+              {(!store.image_url ||
+                imageError ||
+                !(
+                  store.image_url.startsWith("http://") || store.image_url.startsWith("https://")
+                )) && (
+                <StoreIcon className="w-16 h-16 text-gray-300" />
+              )}
 
-              {/* 이미지 (유효한 URL인 경우에만 렌더링, 에러 시 숨김) */}
+              {/* 이미지 (유효한 URL인 경우에만 렌더링) */}
               {store.image_url &&
-                (store.image_url.startsWith("http://") || store.image_url.startsWith("https://")) && (
+                (store.image_url.startsWith("http://") || store.image_url.startsWith("https://")) &&
+                !imageError && (
                   <img
                     key={`${store.id}-${store.image_url}`}
                     src={store.image_url}
                     alt={store.name}
                     onError={(e) => {
-                      e.currentTarget.style.opacity = "0";
                       if (isMountedRef.current) {
                         setImageError(true);
                       }
                     }}
-                    onLoad={(e) => {
-                      e.currentTarget.style.opacity = "1";
-                    }}
-                    className="w-full h-full object-cover transition-opacity"
-                    style={{ opacity: 0 }}
+                    className="w-full h-full object-cover"
                   />
                 )}
 
@@ -1055,13 +1055,13 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
                     href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(store.address)}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className={`${!isMyStore && !store.phone_number ? "flex-1" : "flex-shrink-0"} flex items-center justify-center gap-2 ${!isMyStore && !store.phone_number ? "py-3" : "px-page py-3"} bg-white border-2 border-gray-200 hover:border-gray-900 text-gray-900 text-body font-semibold rounded-xl transition-colors`}
+                    className={`${!isMyStore && !store.phone_number ? "flex-1" : "flex-shrink-0"} flex items-center justify-center gap-2 ${!isMyStore && !store.phone_number ? "py-3" : "px-4 py-3"} bg-white border-2 border-gray-200 hover:border-gray-900 text-gray-900 text-body font-semibold rounded-xl transition-colors`}
                   >
                     <MapPin className="w-5 h-5" />
                     {!isMyStore && !store.phone_number ? "길찾기" : <span className="sr-only">길찾기</span>}
                   </a>
                 )}
-                <button className="flex items-center justify-center gap-2 px-page py-3 bg-white border-2 border-gray-200 hover:border-gray-900 text-gray-900 text-body font-semibold rounded-xl transition-colors">
+                <button className="flex items-center justify-center gap-2 px-4 py-3 bg-white border-2 border-gray-200 hover:border-gray-900 text-gray-900 text-body font-semibold rounded-xl transition-colors">
                   <Share2 className="w-5 h-5" />
                   <span className="sr-only">공유</span>
                 </button>

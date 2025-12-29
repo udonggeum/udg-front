@@ -278,7 +278,7 @@ function CommunityPageContent() {
               <div className="flex items-center gap-2 flex-wrap">
                 <button
                   onClick={() => setSelectedType(undefined)}
-                  className={`px-page py-2.5 text-caption font-semibold rounded-lg transition-all duration-200 ${
+                  className={`px-4 py-2.5 text-caption font-semibold rounded-lg transition-all duration-200 ${
                     !selectedType
                       ? "bg-gray-900 text-white shadow-sm"
                       : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
@@ -288,7 +288,7 @@ function CommunityPageContent() {
                 </button>
                 <button
                   onClick={() => setSelectedType("buy_gold")}
-                  className={`px-page py-2.5 text-caption font-semibold rounded-lg transition-all duration-200 ${
+                  className={`px-4 py-2.5 text-caption font-semibold rounded-lg transition-all duration-200 ${
                     selectedType === "buy_gold"
                       ? "bg-gray-900 text-white shadow-sm"
                       : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
@@ -298,7 +298,7 @@ function CommunityPageContent() {
                 </button>
                 <button
                   onClick={() => setSelectedType("sell_gold")}
-                  className={`px-page py-2.5 text-caption font-semibold rounded-lg transition-all duration-200 ${
+                  className={`px-4 py-2.5 text-caption font-semibold rounded-lg transition-all duration-200 ${
                     selectedType === "sell_gold"
                       ? "bg-gray-900 text-white shadow-sm"
                       : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
@@ -317,7 +317,7 @@ function CommunityPageContent() {
                     setSelectedCategory("gold_news");
                     setSelectedType(undefined);
                   }}
-                  className={`px-page py-2.5 text-caption font-semibold rounded-lg transition-all duration-200 ${
+                  className={`px-4 py-2.5 text-caption font-semibold rounded-lg transition-all duration-200 ${
                     selectedCategory === "gold_news" && !selectedType
                       ? "bg-gray-900 text-white shadow-sm"
                       : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
@@ -330,7 +330,7 @@ function CommunityPageContent() {
                     setSelectedCategory("gold_news");
                     setSelectedType("product_news");
                   }}
-                  className={`px-page py-2.5 text-caption font-semibold rounded-lg transition-all duration-200 ${
+                  className={`px-4 py-2.5 text-caption font-semibold rounded-lg transition-all duration-200 ${
                     selectedType === "product_news"
                       ? "bg-gray-900 text-white shadow-sm"
                       : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
@@ -343,7 +343,7 @@ function CommunityPageContent() {
                     setSelectedCategory("gold_news");
                     setSelectedType("store_news");
                   }}
-                  className={`px-page py-2.5 text-caption font-semibold rounded-lg transition-all duration-200 ${
+                  className={`px-4 py-2.5 text-caption font-semibold rounded-lg transition-all duration-200 ${
                     selectedType === "store_news"
                       ? "bg-gray-900 text-white shadow-sm"
                       : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
@@ -356,7 +356,7 @@ function CommunityPageContent() {
                     setSelectedCategory("qna");
                     setSelectedType("question");
                   }}
-                  className={`px-page py-2.5 text-caption font-semibold rounded-lg transition-all duration-200 ${
+                  className={`px-4 py-2.5 text-caption font-semibold rounded-lg transition-all duration-200 ${
                     selectedCategory === "qna"
                       ? "bg-gray-900 text-white shadow-sm"
                       : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"

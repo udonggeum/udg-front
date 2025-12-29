@@ -12,7 +12,7 @@ interface ContainerProps {
 
 export function Container({ children, className }: ContainerProps) {
   return (
-    <div className={cn("max-w-[1200px] mx-auto px-[--spacing-page-x]", className)}>
+    <div className={cn("max-w-[1200px] mx-auto px-5", className)}>
       {children}
     </div>
   );
@@ -38,7 +38,7 @@ export function Section({ children, className, background = "white" }: SectionPr
   return (
     <section
       className={cn(
-        "py-[--spacing-page-y] px-[--spacing-page-x]",
+        "py-12",
         backgroundClasses[background],
         className
       )}
@@ -63,11 +63,11 @@ export function PageHeader({ title, description, action, className }: PageHeader
   return (
     <div className={cn("flex flex-col md:flex-row md:items-center justify-between gap-6 mb-6", className)}>
       <div>
-        <h1 className="text-[--text-page-title-mobile] sm:text-[2rem] md:text-[--text-page-title] font-bold leading-tight tracking-[-0.02em] text-gray-900 mb-2">
+        <h1 className="text-[1.75rem] sm:text-[2rem] md:text-[2.5rem] font-bold leading-tight tracking-[-0.02em] text-gray-900 mb-2">
           {title}
         </h1>
         {description && (
-          <p className="text-[--text-body] text-gray-600">{description}</p>
+          <p className="text-[0.9375rem] text-gray-600">{description}</p>
         )}
       </div>
       {action && <div>{action}</div>}
@@ -90,9 +90,9 @@ export function SectionHeader({ title, description, action, className }: Section
   return (
     <div className={cn("flex items-center justify-between mb-6", className)}>
       <div>
-        <h2 className="text-[--text-section-title] font-bold text-gray-900 mb-1">{title}</h2>
+        <h2 className="text-[1.375rem] font-bold text-gray-900 mb-1">{title}</h2>
         {description && (
-          <p className="text-[--text-caption] text-gray-600">{description}</p>
+          <p className="text-[0.875rem] text-gray-600">{description}</p>
         )}
       </div>
       {action && <div>{action}</div>}
@@ -116,7 +116,7 @@ export function Card({ children, className, hover = false, onClick }: CardProps)
     <div
       onClick={onClick}
       className={cn(
-        "bg-white p-[--spacing-card] rounded-[--radius-card] card-shadow smooth-transition border-0",
+        "bg-white p-5 rounded-2xl card-shadow smooth-transition border-0",
         hover && "hover-lift cursor-pointer",
         onClick && "cursor-pointer",
         className

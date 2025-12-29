@@ -212,7 +212,7 @@ export default function Home() {
       </Section>
 
       {/* 빠른 메뉴 */}
-      <Section>
+      <Section className="pb-12">
         <Container>
           <div className={`grid gap-8 ${isAuthenticated ? 'grid-cols-3 sm:grid-cols-4 md:grid-cols-5' : 'grid-cols-3 sm:grid-cols-4'}`}>
             {/* 금시세 */}
@@ -301,7 +301,7 @@ export default function Home() {
       </Section>
 
       {/* 오늘의 금 시세 */}
-      <Section background="gray">
+      <Section background="gray" className="pt-12 pb-8">
         <Container>
           <SectionHeader
             title="오늘의 금 시세"
@@ -344,8 +344,9 @@ export default function Home() {
       </Section>
 
       {/* 내 주변 금은방 */}
-      <Section background="gray">
+      <Section background="gray" className="pt-8 pb-12">
         <Container>
+          <div className="border-t border-gray-200 mb-12"></div>
           <div className="flex items-center justify-between mb-6">
             <div>
               <h2 className="text-section-title font-bold text-gray-900 mb-1">내 주변 금은방</h2>
