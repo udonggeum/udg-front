@@ -22,7 +22,6 @@ import {
 import { useAuthStore } from "@/stores/useAuthStore";
 import { getLatestGoldPricesAction } from "@/actions/goldPrices";
 import { getStoresAction } from "@/actions/stores";
-import { getAddressesAction } from "@/actions/address";
 import type { GoldPrice } from "@/types/goldPrices";
 import type { StoreDetail } from "@/types/stores";
 import { Section, Container, SectionHeader } from "@/components/layout-primitives";
@@ -70,7 +69,7 @@ export default function Home() {
   // 사용자 주소 및 주변 매장 데이터 가져오기
   useEffect(() => {
     const fetchNearbyStores = async () => {
-      if (!isAuthenticated || !tokens?.access_token) {
+      if (!isAuthenticated || !user) {
         setNearbyStores([]);
         setUserAddress("");
         return;
@@ -78,31 +77,25 @@ export default function Home() {
 
       setIsLoadingStores(true);
 
-      // 사용자 주소 가져오기
-      const addressResult = await getAddressesAction(tokens.access_token);
-      if (addressResult.success && addressResult.data?.addresses && addressResult.data.addresses.length > 0) {
-        const defaultAddress = addressResult.data.addresses.find((addr) => addr.is_default);
-        const address = defaultAddress || addressResult.data.addresses[0];
+      // 사용자 주소 가져오기 (프로필에서)
+      if (user.address) {
+        setUserAddress(user.address);
 
-        if (address) {
-          setUserAddress(address.address || "주소 정보 없음");
+        // 주소에서 지역 정보 추출 (예: "서울특별시 강남구" -> region: "서울특별시", district: "강남구")
+        const addressParts = user.address.split(" ");
+        if (addressParts.length >= 2) {
+          setUserRegion(addressParts[0]);
+          setUserDistrict(addressParts[1]);
+        }
 
-          // 주소에서 지역 정보 추출 (예: "서울특별시 강남구" -> region: "서울특별시", district: "강남구")
-          const addressParts = address.address?.split(" ") || [];
-          if (addressParts.length >= 2) {
-            setUserRegion(addressParts[0]);
-            setUserDistrict(addressParts[1]);
-          }
+        // 주변 매장 검색 (일단 전체 매장 중 3개)
+        const storesResult = await getStoresAction({
+          page: 1,
+          page_size: 3,
+        });
 
-          // 주변 매장 검색 (일단 전체 매장 중 3개)
-          const storesResult = await getStoresAction({
-            page: 1,
-            page_size: 3,
-          });
-
-          if (storesResult.success && storesResult.data?.stores) {
-            setNearbyStores(storesResult.data.stores);
-          }
+        if (storesResult.success && storesResult.data?.stores) {
+          setNearbyStores(storesResult.data.stores);
         }
       } else {
         // 주소가 없으면 기본 주소 설정 유도
@@ -113,7 +106,7 @@ export default function Home() {
     };
 
     fetchNearbyStores();
-  }, [isAuthenticated, tokens]);
+  }, [isAuthenticated, user]);
 
   // 금 시세 데이터 매핑
   const goldPriceDisplay = goldPrices.length > 0
@@ -285,9 +278,9 @@ export default function Home() {
                 <span className="text-caption font-medium text-gray-700 text-center group-hover:text-gray-900">내매장</span>
               </Link>
             ) : (
-              // 로그인 + user - 관심매장 버튼
+              // 로그인 + user - 관심매장 버튼 (마이페이지에서 확인)
               <Link
-                href="/favorite-stores"
+                href="/mypage"
                 className="group flex flex-col items-center gap-3 smooth-transition"
               >
                 <div className="w-16 h-16 bg-pink-50 border-2 border-pink-200 rounded-2xl flex items-center justify-center md:group-hover:scale-110 transition-transform duration-200">
@@ -367,7 +360,7 @@ export default function Home() {
                 </Link>
               )}
               {isAuthenticated && (
-                <Link href="/mypage/addresses">
+                <Link href="/mypage/edit">
                   <Button variant="outline" className="flex items-center gap-1.5 px-4 py-3 min-h-[44px] bg-white border border-gray-200 rounded-lg text-small font-medium text-gray-700 hover:bg-gray-50 active:bg-gray-100">
                     <MapPin className="w-4 h-4" />
                     주소 변경

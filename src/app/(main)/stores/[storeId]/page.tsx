@@ -28,15 +28,12 @@ import {
   Sparkles,
 } from "lucide-react";
 import { getStoreDetailAction, toggleStoreLikeAction } from "@/actions/stores";
-import { getStoreProductsAction } from "@/actions/products";
 import { getTagsAction } from "@/actions/tags";
 import { createChatRoomAction } from "@/actions/chat";
 import { getPostsAction, getStoreGalleryAction, pinPostAction, unpinPostAction } from "@/actions/community";
 import type { CommunityPost, GalleryItem, PostType } from "@/types/community";
 import type { StoreDetail } from "@/types/stores";
-import type { Product } from "@/types/products";
 import type { Tag } from "@/types/tags";
-import ProductCard from "@/components/product-card";
 import TagEditModal from "@/components/tag-edit-modal";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { getPresignedUrlAction, uploadToS3 } from "@/actions/upload";
@@ -165,15 +162,12 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
   const { checkAndHandleUnauthorized } = useAuthenticatedAction();
 
   const [store, setStore] = useState<StoreDetail | null>(null);
-  const [products, setProducts] = useState<Product[]>([]);
   const [posts, setPosts] = useState<CommunityPost[]>([]);
   const [gallery, setGallery] = useState<GalleryItem[]>([]);
   const [isLoadingStore, setIsLoadingStore] = useState(true);
-  const [isLoadingProducts, setIsLoadingProducts] = useState(false);
   const [isLoadingPosts, setIsLoadingPosts] = useState(false);
   const [isLoadingGallery, setIsLoadingGallery] = useState(false);
   const [storeError, setStoreError] = useState<string | null>(null);
-  const [productsError, setProductsError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabType>("home");
   const [selectedNewsType, setSelectedNewsType] = useState<PostType | "all">("all");
   const [imageError, setImageError] = useState(false);
