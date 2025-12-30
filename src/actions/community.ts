@@ -431,3 +431,80 @@ export async function getStoreGalleryAction(
     return handleApiError(error, "갤러리 조회에 실패했습니다.");
   }
 }
+
+/**
+ * 금거래 게시글 예약하기
+ */
+export async function reservePostAction(
+  postId: number,
+  reservedByUserId: number,
+  accessToken: string
+): Promise<ApiResponse<void>> {
+  try {
+    await apiClient.post(
+      `/community/posts/${postId}/reserve`,
+      {
+        reserved_by_user_id: reservedByUserId,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+
+    return {
+      success: true,
+    };
+  } catch (error) {
+    return handleApiError(error, "게시글 예약에 실패했습니다.");
+  }
+}
+
+/**
+ * 금거래 예약 취소
+ */
+export async function cancelReservationAction(
+  postId: number,
+  accessToken: string
+): Promise<ApiResponse<void>> {
+  try {
+    await apiClient.delete(`/community/posts/${postId}/reserve`, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+
+    return {
+      success: true,
+    };
+  } catch (error) {
+    return handleApiError(error, "예약 취소에 실패했습니다.");
+  }
+}
+
+/**
+ * 금거래 완료 처리
+ */
+export async function completeTransactionAction(
+  postId: number,
+  accessToken: string
+): Promise<ApiResponse<void>> {
+  try {
+    await apiClient.post(
+      `/community/posts/${postId}/complete`,
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+
+    return {
+      success: true,
+    };
+  } catch (error) {
+    return handleApiError(error, "거래 완료 처리에 실패했습니다.");
+  }
+}

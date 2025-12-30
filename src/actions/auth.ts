@@ -9,6 +9,7 @@ import type {
   ResetPasswordRequest,
   UpdateProfileRequest,
   UpdateProfileResponse,
+  User,
 } from "@/types/auth";
 import { apiClient, handleApiError, type ApiResponse } from "@/lib/axios";
 
@@ -103,6 +104,29 @@ export async function logoutUserAction(
   } catch (error) {
     // 로그아웃은 서버 호출이 실패해도 클라이언트 측 정리는 진행해야 함
     return handleApiError(error, "로그아웃 API 호출에 실패했습니다.");
+  }
+}
+
+/**
+ * 현재 사용자 정보 조회 Server Action
+ * 토큰으로 사용자 정보를 가져옵니다.
+ */
+export async function getMeAction(
+  accessToken: string
+): Promise<ApiResponse<{ user: User }>> {
+  try {
+    const response = await apiClient.get<{ user: User }>("/auth/me", {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+
+    return {
+      success: true,
+      data: response.data,
+    };
+  } catch (error) {
+    return handleApiError(error, "사용자 정보 조회에 실패했습니다.");
   }
 }
 

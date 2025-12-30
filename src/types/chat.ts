@@ -1,9 +1,16 @@
 /**
  * 채팅 타입
- * 백엔드와 일치: SALE (판매글/금거래), STORE (매장 문의)
+ * STORE: 사용자가 매장에 일반 문의
+ * BUY_GOLD: 내 구매글에 사용자가 문의 (매장의 금 매입 홍보글)
+ * SELL_GOLD: 사용자 판매글에 내가 문의 (사용자의 금 판매글)
+ * SALE: Deprecated - SELL_GOLD 또는 BUY_GOLD 사용
  */
 
-export type ChatRoomType = "SALE" | "STORE";
+export type ChatRoomType =
+  | "STORE"
+  | "BUY_GOLD"
+  | "SELL_GOLD"
+  | "SALE";
 
 export type MessageType = "TEXT" | "IMAGE" | "FILE";
 
@@ -38,9 +45,19 @@ export interface ChatRoom {
   product?: {
     id: number;
     title: string;
+    type?: string;
     gold_type?: string;
     weight?: number;
     price?: number;
+    user_id?: number;
+    reservation_status?: string | null;
+    reserved_by_user_id?: number | null;
+    reserved_by_user?: {
+      id: number;
+      name: string;
+    } | null;
+    reserved_at?: string | null;
+    completed_at?: string | null;
   };
   store_id?: number;
   store?: {

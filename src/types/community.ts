@@ -55,6 +55,13 @@ export interface CommunityPost {
   store_id?: number | null;
   store?: PostStore | null;
 
+  // 예약 및 거래 완료 관련 (금거래만)
+  reservation_status?: string | null; // null=판매중, reserved=예약중, completed=거래완료
+  reserved_by_user_id?: number | null;
+  reserved_by_user?: PostAuthor | null;
+  reserved_at?: string | null;
+  completed_at?: string | null;
+
   // QnA 관련
   is_answered: boolean;
   accepted_answer_id?: number | null;

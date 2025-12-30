@@ -487,9 +487,11 @@ export default function Home() {
               <h3 className="text-[24px] md:text-[28px] font-bold text-white mb-2">금은방 사장님이신가요?</h3>
               <p className="text-body text-gray-400">무료로 매장을 등록하고 더 많은 고객을 만나보세요</p>
             </div>
-            <Button variant="outline" size="lg" className="px-8 py-4 flex-shrink-0 bg-white hover:bg-gray-100 text-gray-900">
-              매장 등록하기
-            </Button>
+            <Link href="/stores/register">
+              <Button variant="outline" size="lg" className="px-8 py-4 flex-shrink-0 bg-white hover:bg-gray-100 text-gray-900">
+                매장 등록하기
+              </Button>
+            </Link>
           </div>
         </Container>
       </Section>

@@ -193,10 +193,14 @@ export default function CommunityDetailPage() {
     const loadingToast = toast.loading("대화방을 생성하는 중...");
 
     try {
+      // 게시글 타입에 따라 채팅방 타입 결정
+      const chatRoomType = postData.type === 'sell_gold' ? 'SELL_GOLD' :
+                           postData.type === 'buy_gold' ? 'BUY_GOLD' : 'SALE';
+
       const result = await createChatRoomAction(
         {
           target_user_id: postData.user_id,
-          type: "SALE",
+          type: chatRoomType as "SELL_GOLD" | "BUY_GOLD" | "STORE" | "SALE",
           product_id: postData.id,
         },
         tokens.access_token
@@ -289,6 +293,21 @@ export default function CommunityDetailPage() {
             {/* Gold Trade Info */}
             {postData.category === "gold_trade" && (
               <div className="bg-white p-4 mb-4">
+                {/* 예약 상태 뱃지 (금 판매글만 - 금 구매글은 다수 대상 홍보글이므로 예약 불필요) */}
+                {postData.type === 'sell_gold' && postData.reservation_status && (
+                  <div className="mb-3">
+                    {postData.reservation_status === 'reserved' ? (
+                      <span className="inline-flex items-center px-3 py-1 bg-yellow-100 text-yellow-800 text-sm font-semibold rounded-full">
+                        🔒 예약중 - {postData.reserved_by_user?.name || '구매자'}님과 거래 예정
+                      </span>
+                    ) : postData.reservation_status === 'completed' ? (
+                      <span className="inline-flex items-center px-3 py-1 bg-gray-100 text-gray-600 text-sm font-semibold rounded-full">
+                        ✅ 거래완료
+                      </span>
+                    ) : null}
+                  </div>
+                )}
+
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   <div>
                     <span className="font-semibold">금 종류:</span>{" "}
@@ -387,13 +406,23 @@ export default function CommunityDetailPage() {
                 </p>
                 {user ? (
                   !isAuthor ? (
-                    <button
-                      onClick={handleContactSeller}
-                      className="px-8 py-4 bg-yellow-400 hover:bg-yellow-500 text-gray-900 text-base font-bold rounded-xl transition-all duration-200 transform hover:-translate-y-0.5 hover:shadow-lg flex items-center gap-2"
-                    >
-                      <MessageCircle className="w-5 h-5" />
-                      판매자에게 문의하기
-                    </button>
+                    // 권한별 문의 가능 여부 체크
+                    (postData.type === 'sell_gold' && user.role === 'admin') ||
+                    (postData.type === 'buy_gold' && user.role === 'user') ? (
+                      <button
+                        onClick={handleContactSeller}
+                        className="px-8 py-4 bg-yellow-400 hover:bg-yellow-500 text-gray-900 text-base font-bold rounded-xl transition-all duration-200 transform hover:-translate-y-0.5 hover:shadow-lg flex items-center gap-2"
+                      >
+                        <MessageCircle className="w-5 h-5" />
+                        {postData.type === 'sell_gold' ? '판매자에게 문의하기' : '매장에 문의하기'}
+                      </button>
+                    ) : (
+                      <div className="px-6 py-3 bg-gray-100 text-gray-600 rounded-xl text-sm">
+                        {postData.type === 'sell_gold'
+                          ? '금 판매 문의는 매장(관리자)만 가능합니다'
+                          : '금 구매 문의는 일반 사용자만 가능합니다'}
+                      </div>
+                    )
                   ) : (
                     <div className="px-6 py-3 bg-gray-100 text-gray-600 rounded-xl text-sm">
                       본인이 작성한 게시글입니다

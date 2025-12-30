@@ -7,6 +7,8 @@ import type {
   RegionsData,
   StoreDetailResponse,
   StoreLikeResponse,
+  StoreRegisterRequest,
+  StoreRegisterResponse,
 } from "@/types/stores";
 import type { UpdateStoreRequest } from "@/schemas/stores";
 import { apiClient, handleApiError, type ApiResponse } from "@/lib/axios";
@@ -188,5 +190,28 @@ export async function updateMyStoreAction(
     };
   } catch (error) {
     return handleApiError(error, "매장 정보 수정에 실패했습니다.");
+  }
+}
+
+/**
+ * 매장 등록 Server Action (사업자 인증 포함)
+ */
+export async function registerStoreAction(
+  data: StoreRegisterRequest,
+  accessToken: string
+): Promise<ApiResponse<StoreRegisterResponse>> {
+  try {
+    const response = await apiClient.post<StoreRegisterResponse>("/stores", data, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+
+    return {
+      success: true,
+      data: response.data,
+    };
+  } catch (error) {
+    return handleApiError(error, "매장 등록에 실패했습니다.");
   }
 }

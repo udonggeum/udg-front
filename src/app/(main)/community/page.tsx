@@ -552,9 +552,23 @@ function CommunityPageContent() {
                             alt={post.title}
                             className="w-full aspect-[16/9] object-cover"
                           />
+                          {/* 예약/완료 뱃지 (금 판매글만) */}
+                          {post.type === "sell_gold" && post.reservation_status && (
+                            <div className="absolute top-2 right-2">
+                              {post.reservation_status === 'reserved' ? (
+                                <span className="inline-flex items-center px-2.5 py-1 bg-yellow-500 text-white text-xs font-bold rounded-full shadow-md">
+                                  🔒 예약중
+                                </span>
+                              ) : post.reservation_status === 'completed' ? (
+                                <span className="inline-flex items-center px-2.5 py-1 bg-gray-700 text-white text-xs font-bold rounded-full shadow-md">
+                                  ✅ 거래완료
+                                </span>
+                              ) : null}
+                            </div>
+                          )}
                         </div>
                       ) : (
-                        <div className="w-full aspect-[16/9] bg-gradient-to-br from-yellow-400 to-yellow-500 flex items-center justify-center">
+                        <div className="relative w-full aspect-[16/9] bg-gradient-to-br from-yellow-400 to-yellow-500 flex items-center justify-center">
                           <svg
                             className="w-16 h-16 text-white/50"
                             fill="currentColor"
@@ -562,6 +576,20 @@ function CommunityPageContent() {
                           >
                             <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
                           </svg>
+                          {/* 예약/완료 뱃지 (이미지 없을 때, 금 판매글만) */}
+                          {post.type === "sell_gold" && post.reservation_status && (
+                            <div className="absolute top-2 right-2">
+                              {post.reservation_status === 'reserved' ? (
+                                <span className="inline-flex items-center px-2.5 py-1 bg-yellow-500 text-white text-xs font-bold rounded-full shadow-md">
+                                  🔒 예약중
+                                </span>
+                              ) : post.reservation_status === 'completed' ? (
+                                <span className="inline-flex items-center px-2.5 py-1 bg-gray-700 text-white text-xs font-bold rounded-full shadow-md">
+                                  ✅ 거래완료
+                                </span>
+                              ) : null}
+                            </div>
+                          )}
                         </div>
                       )}
 

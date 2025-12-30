@@ -125,3 +125,41 @@ export interface StoreDetailResponse {
 export interface StoreLikeResponse {
   is_liked: boolean;
 }
+
+/**
+ * Store register request type
+ * 매장 등록 요청 (사업자 인증 포함)
+ */
+export interface StoreRegisterRequest {
+  // 사업자 정보 (필수)
+  business_number: string;        // 사업자등록번호 (10자리, 하이픈 제외)
+  business_start_date: string;    // 개업일자 (YYYYMMDD)
+  representative_name: string;    // 대표자명
+
+  // 매장 기본 정보 (필수)
+  name: string;                   // 매장명
+  region: string;                 // 시/도
+  district: string;               // 구/군
+  address: string;                // 상세 주소
+  phone_number: string;           // 전화번호
+
+  // 위치 정보 (선택 - 주소 검색으로 자동 입력)
+  latitude?: number;              // 위도
+  longitude?: number;             // 경도
+
+  // 매장 상세 정보 (선택)
+  image_url?: string;             // 매장 이미지 URL
+  description?: string;           // 매장 소개
+  open_time?: string;             // 오픈 시간 (예: "09:00")
+  close_time?: string;            // 마감 시간 (예: "20:00")
+  tag_ids?: number[];             // 매장 태그 ID 배열
+}
+
+/**
+ * Store register response type
+ * 매장 등록 응답
+ */
+export interface StoreRegisterResponse {
+  message: string;
+  store: StoreDetail;
+}

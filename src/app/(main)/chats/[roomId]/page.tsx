@@ -15,6 +15,11 @@ import {
   updateMessageAction,
   deleteMessageAction,
 } from "@/actions/chat";
+import {
+  reservePostAction,
+  cancelReservationAction,
+  completeTransactionAction,
+} from "@/actions/community";
 import { uploadToS3 } from "@/actions/upload";
 import type { ChatRoom, Message } from "@/types/chat";
 import { Send, ArrowLeft, User, AlertCircle, RotateCw, X, Search, Paperclip, Image as ImageIcon, FileText, Download, Edit2, Trash2, MessageCircle } from "lucide-react";
@@ -43,12 +48,32 @@ export default function ChatRoomPage() {
   const [editingMessageId, setEditingMessageId] = useState<number | null>(null);
   const [editingContent, setEditingContent] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // 사용자가 맨 아래에 있는지 확인 (100px 이내면 맨 아래로 간주)
+  const isNearBottom = useCallback(() => {
+    const container = messagesContainerRef.current;
+    if (!container) return true; // 컨테이너가 없으면 스크롤 허용
+
+    const threshold = 100; // 맨 아래로부터 100px 이내
+    const distanceFromBottom =
+      container.scrollHeight - container.scrollTop - container.clientHeight;
+
+    return distanceFromBottom <= threshold;
+  }, []);
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, []);
+
+  // 조건부 스크롤: 맨 아래에 있을 때만 스크롤
+  const scrollToBottomIfNeeded = useCallback(() => {
+    if (isNearBottom()) {
+      scrollToBottom();
+    }
+  }, [isNearBottom, scrollToBottom]);
 
   // WebSocket connection
   const { isConnected, sendMessage } = useWebSocket({
@@ -68,7 +93,7 @@ export default function ChatRoomPage() {
               (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
             );
           });
-          scrollToBottom();
+          scrollToBottomIfNeeded();
 
           // Mark as read if not my message
           if (data.message.sender_id !== user?.id && tokens?.access_token) {
@@ -248,6 +273,7 @@ export default function ChatRoomPage() {
 
     setMessages((prev) => [...prev, tempMessage]);
     setNewMessage("");
+    // 내가 메시지를 보낼 때는 항상 스크롤 (사용자의 의도가 명확함)
     scrollToBottom();
 
     const result = await sendMessageAction(
@@ -559,6 +585,88 @@ export default function ChatRoomPage() {
     }
   };
 
+  // 예약하기 (판매자만)
+  const handleReserve = async () => {
+    if (!tokens?.access_token || !room?.product || !otherUser?.id) return;
+
+    if (!confirm(`${otherUser.name}님과 거래를 예약하시겠습니까?`)) return;
+
+    try {
+      const result = await reservePostAction(
+        room.product.id,
+        otherUser.id,
+        tokens.access_token
+      );
+
+      if (result.success) {
+        toast.success("게시글이 예약되었습니다.");
+        // 채팅방 정보 새로고침
+        const roomResult = await getChatRoomAction(roomId, tokens.access_token);
+        if (roomResult.success && roomResult.data) {
+          setRoom(roomResult.data.room);
+        }
+      } else {
+        toast.error(result.error || "예약에 실패했습니다.");
+      }
+    } catch (error) {
+      toast.error("예약 중 오류가 발생했습니다.");
+    }
+  };
+
+  // 예약 취소 (판매자만)
+  const handleCancelReservation = async () => {
+    if (!tokens?.access_token || !room?.product) return;
+
+    if (!confirm("예약을 취소하시겠습니까?")) return;
+
+    try {
+      const result = await cancelReservationAction(
+        room.product.id,
+        tokens.access_token
+      );
+
+      if (result.success) {
+        toast.success("예약이 취소되었습니다.");
+        // 채팅방 정보 새로고침
+        const roomResult = await getChatRoomAction(roomId, tokens.access_token);
+        if (roomResult.success && roomResult.data) {
+          setRoom(roomResult.data.room);
+        }
+      } else {
+        toast.error(result.error || "예약 취소에 실패했습니다.");
+      }
+    } catch (error) {
+      toast.error("예약 취소 중 오류가 발생했습니다.");
+    }
+  };
+
+  // 거래 완료 (판매자만)
+  const handleCompleteTransaction = async () => {
+    if (!tokens?.access_token || !room?.product) return;
+
+    if (!confirm("거래를 완료 처리하시겠습니까?")) return;
+
+    try {
+      const result = await completeTransactionAction(
+        room.product.id,
+        tokens.access_token
+      );
+
+      if (result.success) {
+        toast.success("거래가 완료되었습니다.");
+        // 채팅방 정보 새로고침
+        const roomResult = await getChatRoomAction(roomId, tokens.access_token);
+        if (roomResult.success && roomResult.data) {
+          setRoom(roomResult.data.room);
+        }
+      } else {
+        toast.error(result.error || "거래 완료 처리에 실패했습니다.");
+      }
+    } catch (error) {
+      toast.error("거래 완료 처리 중 오류가 발생했습니다.");
+    }
+  };
+
   // 검색 필터링된 메시지
   const filteredMessages = searchKeyword.trim()
     ? messages.filter((msg) =>
@@ -601,8 +709,12 @@ export default function ChatRoomPage() {
     switch (type) {
       case "STORE":
         return "매장 문의";
+      case "SELL_GOLD":
+        return "금 판매 문의";
+      case "BUY_GOLD":
+        return "금 구매 문의";
       case "SALE":
-        return "금 거래 문의";
+        return "금 거래 문의"; // 하위 호환성
       default:
         return "대화";
     }
@@ -610,10 +722,12 @@ export default function ChatRoomPage() {
 
   if (isLoading) {
     return (
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        <div className="animate-pulse space-y-4">
-          <div className="h-12 bg-gray-200 rounded-lg" />
-          <div className="h-96 bg-gray-200 rounded-lg" />
+      <div className="fixed inset-0 top-[80px] bg-gray-50 overflow-hidden">
+        <div className="max-w-4xl mx-auto h-full px-4 py-8">
+          <div className="animate-pulse space-y-4">
+            <div className="h-12 bg-gray-200 rounded-lg" />
+            <div className="h-96 bg-gray-200 rounded-lg" />
+          </div>
         </div>
       </div>
     );
@@ -622,9 +736,10 @@ export default function ChatRoomPage() {
   const otherUser = getOtherUser();
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-4 h-[calc(100vh-80px)] flex flex-col">
-      {/* Header */}
-      <div className="pb-4 border-b border-gray-200">
+    <div className="fixed inset-0 top-[80px] bg-gray-50 overflow-hidden">
+      <div className="max-w-4xl mx-auto h-full px-4 py-4 flex flex-col">
+        {/* Header */}
+        <div className="pb-4 border-b border-gray-200 flex-shrink-0">
         <div className="flex items-center gap-3">
           <Button
             variant="ghost"
@@ -678,6 +793,53 @@ export default function ChatRoomPage() {
                     </div>
                   </div>
                 </div>
+
+                {/* 예약/완료 버튼 (금 판매글의 판매자만 - 금 구매글은 다수 대상 홍보글이므로 예약 불필요) */}
+                {user && room.product.user_id === user.id && room.product.type === 'sell_gold' && (
+                  <div className="mt-2 flex gap-2">
+                    {!room.product.reservation_status || room.product.reservation_status === null ? (
+                      /* 판매중 */
+                      <button
+                        onClick={handleReserve}
+                        className="flex-1 px-3 py-1.5 bg-yellow-400 hover:bg-yellow-500 text-gray-900 text-xs font-bold rounded transition-colors"
+                      >
+                        예약하기
+                      </button>
+                    ) : room.product.reservation_status === 'reserved' ? (
+                      /* 예약중 */
+                      <>
+                        <button
+                          onClick={handleCancelReservation}
+                          className="flex-1 px-3 py-1.5 bg-gray-200 hover:bg-gray-300 text-gray-700 text-xs font-semibold rounded transition-colors"
+                        >
+                          예약 취소
+                        </button>
+                        <button
+                          onClick={handleCompleteTransaction}
+                          className="flex-1 px-3 py-1.5 bg-green-500 hover:bg-green-600 text-white text-xs font-bold rounded transition-colors"
+                        >
+                          거래완료
+                        </button>
+                      </>
+                    ) : null}
+
+                    {/* 상태 표시 */}
+                    {room.product.reservation_status === 'reserved' && (
+                      <div className="w-full mt-1 text-center">
+                        <span className="text-[10px] text-yellow-700">
+                          🔒 {room.product.reserved_by_user?.name || '구매자'}님과 거래 예약됨
+                        </span>
+                      </div>
+                    )}
+                    {room.product.reservation_status === 'completed' && (
+                      <div className="w-full text-center">
+                        <span className="text-[10px] text-gray-600">
+                          ✅ 거래완료
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -719,7 +881,7 @@ export default function ChatRoomPage() {
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto py-4 space-y-3">
+      <div ref={messagesContainerRef} className="flex-1 overflow-y-auto py-4 space-y-3">
         {filteredMessages.length === 0 ? (
           <div className="text-center py-16 text-gray-600">
             <p>{searchKeyword ? "검색 결과가 없습니다." : "메시지를 입력해 대화를 시작하세요."}</p>
@@ -912,7 +1074,7 @@ export default function ChatRoomPage() {
       </div>
 
       {/* Input */}
-      <div className="pt-4 border-t border-gray-200">
+      <div className="pt-4 border-t border-gray-200 flex-shrink-0">
         {/* File Preview */}
         {selectedFile && (
           <div className="mb-3 p-3 bg-gray-50 rounded-lg">
@@ -991,6 +1153,7 @@ export default function ChatRoomPage() {
             )}
           </Button>
         </form>
+      </div>
       </div>
     </div>
   );

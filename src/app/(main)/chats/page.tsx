@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 
-type ChatFilter = "all" | "STORE" | "SALE";
+type ChatFilter = "all" | "STORE" | "SELL_GOLD" | "BUY_GOLD" | "SALE";
 
 export default function ChatsPage() {
   const router = useRouter();
@@ -79,8 +79,12 @@ export default function ChatsPage() {
     switch (type) {
       case "STORE":
         return "매장 문의";
+      case "SELL_GOLD":
+        return "금 판매 문의";
+      case "BUY_GOLD":
+        return "금 구매 문의";
       case "SALE":
-        return "금 거래 문의";
+        return "금 거래 문의"; // 하위 호환성
       default:
         return "대화";
     }
@@ -126,6 +130,10 @@ export default function ChatsPage() {
   // 필터링된 채팅방 목록
   const filteredRooms = rooms.filter((room) => {
     if (selectedFilter === "all") return true;
+    // SALE 필터는 SELL_GOLD, BUY_GOLD, SALE 모두 포함 (하위 호환성)
+    if (selectedFilter === "SALE") {
+      return room.type === "SELL_GOLD" || room.type === "BUY_GOLD" || room.type === "SALE";
+    }
     return room.type === selectedFilter;
   });
 
@@ -133,7 +141,9 @@ export default function ChatsPage() {
   const roomCounts = {
     all: rooms.length,
     STORE: rooms.filter((r) => r.type === "STORE").length,
-    SALE: rooms.filter((r) => r.type === "SALE").length,
+    SELL_GOLD: rooms.filter((r) => r.type === "SELL_GOLD").length,
+    BUY_GOLD: rooms.filter((r) => r.type === "BUY_GOLD").length,
+    SALE: rooms.filter((r) => r.type === "SELL_GOLD" || r.type === "BUY_GOLD" || r.type === "SALE").length,
   };
 
   if (isLoading) {
@@ -160,8 +170,8 @@ export default function ChatsPage() {
         </p>
       </div>
 
-      {/* 필터 탭 */}
-      <div className="mb-6 bg-white rounded-xl border border-gray-200 p-1 inline-flex gap-1">
+      {/* 필터 탭 - 권한별로 다른 필터 표시 */}
+      <div className="mb-6 bg-white rounded-xl border border-gray-200 p-1 inline-flex gap-1 flex-wrap">
         <button
           onClick={() => setSelectedFilter("all")}
           className={`px-4 py-2.5 text-sm font-semibold rounded-lg transition-all duration-200 ${
@@ -193,22 +203,64 @@ export default function ChatsPage() {
             </span>
           )}
         </button>
-        <button
-          onClick={() => setSelectedFilter("SALE")}
-          className={`px-4 py-2.5 text-sm font-semibold rounded-lg transition-all duration-200 flex items-center gap-2 ${
-            selectedFilter === "SALE"
-              ? "bg-gray-900 text-white shadow-sm"
-              : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-          }`}
-        >
-          <MessageCircle className="w-4 h-4" />
-          금거래 문의
-          {roomCounts.SALE > 0 && (
-            <span className={`ml-1 ${selectedFilter === "SALE" ? "text-gray-300" : "text-gray-400"}`}>
-              {roomCounts.SALE}
-            </span>
-          )}
-        </button>
+
+        {/* 일반 사용자: 금 판매 문의만 표시 */}
+        {user?.role === "user" && (
+          <button
+            onClick={() => setSelectedFilter("SELL_GOLD")}
+            className={`px-4 py-2.5 text-sm font-semibold rounded-lg transition-all duration-200 flex items-center gap-2 ${
+              selectedFilter === "SELL_GOLD"
+                ? "bg-gray-900 text-white shadow-sm"
+                : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+            }`}
+          >
+            <MessageCircle className="w-4 h-4" />
+            금 판매 문의
+            {roomCounts.SELL_GOLD > 0 && (
+              <span className={`ml-1 ${selectedFilter === "SELL_GOLD" ? "text-gray-300" : "text-gray-400"}`}>
+                {roomCounts.SELL_GOLD}
+              </span>
+            )}
+          </button>
+        )}
+
+        {/* 매장 주인: 금 판매 문의 + 금 구매 문의 */}
+        {user?.role === "admin" && (
+          <>
+            <button
+              onClick={() => setSelectedFilter("SELL_GOLD")}
+              className={`px-4 py-2.5 text-sm font-semibold rounded-lg transition-all duration-200 flex items-center gap-2 ${
+                selectedFilter === "SELL_GOLD"
+                  ? "bg-gray-900 text-white shadow-sm"
+                  : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+              }`}
+            >
+              <MessageCircle className="w-4 h-4" />
+              금 판매 문의
+              {roomCounts.SELL_GOLD > 0 && (
+                <span className={`ml-1 ${selectedFilter === "SELL_GOLD" ? "text-gray-300" : "text-gray-400"}`}>
+                  {roomCounts.SELL_GOLD}
+                </span>
+              )}
+            </button>
+            <button
+              onClick={() => setSelectedFilter("BUY_GOLD")}
+              className={`px-4 py-2.5 text-sm font-semibold rounded-lg transition-all duration-200 flex items-center gap-2 ${
+                selectedFilter === "BUY_GOLD"
+                  ? "bg-gray-900 text-white shadow-sm"
+                  : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+              }`}
+            >
+              <MessageCircle className="w-4 h-4" />
+              금 구매 문의
+              {roomCounts.BUY_GOLD > 0 && (
+                <span className={`ml-1 ${selectedFilter === "BUY_GOLD" ? "text-gray-300" : "text-gray-400"}`}>
+                  {roomCounts.BUY_GOLD}
+                </span>
+              )}
+            </button>
+          </>
+        )}
       </div>
 
       {rooms.length === 0 ? (
@@ -221,7 +273,8 @@ export default function ChatsPage() {
           <MessageCircle className="w-16 h-16 text-gray-300 mx-auto mb-4" />
           <p className="text-gray-600">
             {selectedFilter === "STORE" && "매장 문의 대화가 없습니다."}
-            {selectedFilter === "SALE" && "금거래 문의 대화가 없습니다."}
+            {selectedFilter === "SELL_GOLD" && "금 판매 문의 대화가 없습니다."}
+            {selectedFilter === "BUY_GOLD" && "금 구매 문의 대화가 없습니다."}
           </p>
         </div>
       ) : (
