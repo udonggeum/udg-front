@@ -19,7 +19,7 @@ import {
   type CommunityComment,
 } from "@/types/community";
 import { toast } from "sonner";
-import { MessageCircle } from "lucide-react";
+import { MessageCircle, MoreVertical } from "lucide-react";
 
 export default function CommunityDetailPage() {
   const params = useParams();
@@ -31,6 +31,7 @@ export default function CommunityDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [commentContent, setCommentContent] = useState("");
   const [replyTo, setReplyTo] = useState<number | null>(null);
+  const [showMenu, setShowMenu] = useState(false);
 
   const postId = Number(params?.id);
 
@@ -269,23 +270,40 @@ export default function CommunityDetailPage() {
               {/* Action Buttons */}
               {canEdit && (
                 <div className="relative">
-                  <button className="px-3 py-2 text-gray-600 hover:text-gray-900 font-bold">
-                    ⋮
+                  <button
+                    onClick={() => setShowMenu(!showMenu)}
+                    className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                  >
+                    <MoreVertical className="w-5 h-5" />
                   </button>
-                  <div className="hidden group-hover:block absolute right-0 mt-2 w-32 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-10">
-                    <Link
-                      href={`/community/edit/${postData.id}`}
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                    >
-                      수정
-                    </Link>
-                    <button
-                      onClick={handleDelete}
-                      className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-50"
-                    >
-                      삭제
-                    </button>
-                  </div>
+                  {showMenu && (
+                    <>
+                      {/* Backdrop */}
+                      <div
+                        className="fixed inset-0 z-10"
+                        onClick={() => setShowMenu(false)}
+                      />
+                      {/* Menu */}
+                      <div className="absolute right-0 mt-2 w-40 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-20">
+                        <Link
+                          href={`/community/edit/${postData.id}`}
+                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                          onClick={() => setShowMenu(false)}
+                        >
+                          수정
+                        </Link>
+                        <button
+                          onClick={() => {
+                            setShowMenu(false);
+                            handleDelete();
+                          }}
+                          className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-50"
+                        >
+                          삭제
+                        </button>
+                      </div>
+                    </>
+                  )}
                 </div>
               )}
             </div>

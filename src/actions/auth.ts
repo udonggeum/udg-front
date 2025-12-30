@@ -10,6 +10,10 @@ import type {
   UpdateProfileRequest,
   UpdateProfileResponse,
   User,
+  SendEmailVerificationRequest,
+  VerifyEmailRequest,
+  SendPhoneVerificationRequest,
+  VerifyPhoneRequest,
 } from "@/types/auth";
 import { apiClient, handleApiError, type ApiResponse } from "@/lib/axios";
 
@@ -154,5 +158,105 @@ export async function updateProfileAction(
     };
   } catch (error) {
     return handleApiError(error, "프로필 업데이트에 실패했습니다.");
+  }
+}
+
+/**
+ * 이메일 인증 코드 전송 Server Action
+ * 회원가입 시 이메일 주소로 6자리 인증 코드를 전송합니다.
+ */
+export async function sendEmailVerificationAction(
+  data: SendEmailVerificationRequest
+): Promise<ApiResponse<MessageResponse>> {
+  try {
+    const response = await apiClient.post<MessageResponse>(
+      "/auth/send-email-verification",
+      data
+    );
+
+    return {
+      success: true,
+      data: response.data,
+    };
+  } catch (error) {
+    return handleApiError(error, "이메일 인증 코드 전송에 실패했습니다.");
+  }
+}
+
+/**
+ * 이메일 인증 코드 확인 Server Action
+ * 사용자가 입력한 인증 코드를 확인합니다.
+ */
+export async function verifyEmailAction(
+  data: VerifyEmailRequest
+): Promise<ApiResponse<MessageResponse>> {
+  try {
+    const response = await apiClient.post<MessageResponse>(
+      "/auth/verify-email",
+      data
+    );
+
+    return {
+      success: true,
+      data: response.data,
+    };
+  } catch (error) {
+    return handleApiError(error, "이메일 인증에 실패했습니다.");
+  }
+}
+
+/**
+ * 휴대폰 인증 코드 전송 Server Action
+ * 로그인한 사용자의 휴대폰 번호로 6자리 인증 코드를 전송합니다.
+ */
+export async function sendPhoneVerificationAction(
+  data: SendPhoneVerificationRequest,
+  accessToken: string
+): Promise<ApiResponse<MessageResponse>> {
+  try {
+    const response = await apiClient.post<MessageResponse>(
+      "/auth/send-phone-verification",
+      data,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+
+    return {
+      success: true,
+      data: response.data,
+    };
+  } catch (error) {
+    return handleApiError(error, "휴대폰 인증 코드 전송에 실패했습니다.");
+  }
+}
+
+/**
+ * 휴대폰 인증 코드 확인 Server Action
+ * 사용자가 입력한 인증 코드를 확인하고 휴대폰 번호를 인증합니다.
+ */
+export async function verifyPhoneAction(
+  data: VerifyPhoneRequest,
+  accessToken: string
+): Promise<ApiResponse<MessageResponse>> {
+  try {
+    const response = await apiClient.post<MessageResponse>(
+      "/auth/verify-phone",
+      data,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+
+    return {
+      success: true,
+      data: response.data,
+    };
+  } catch (error) {
+    return handleApiError(error, "휴대폰 인증에 실패했습니다.");
   }
 }

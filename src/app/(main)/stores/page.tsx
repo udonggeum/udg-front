@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, useMemo, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   Search,
   MapPin,
@@ -86,7 +86,20 @@ function StoreImage({
 
 const PAGE_SIZE = 50;
 
+// 페이지를 dynamic으로 설정 (useSearchParams 사용을 위해)
+export const dynamic = 'force-dynamic';
+
 type FilterTag = "all" | "open" | "24k" | "diamond" | "repair";
+
+/**
+ * 프론트엔드 필터 → 백엔드 태그 매핑
+ * UI는 5개 필터로 간결하게 유지하되, 백엔드의 세부 태그들을 그룹화하여 검색
+ */
+const filterTagMap: Record<string, string[]> = {
+  "24k": ["금 매입", "24K 취급", "18K 취급", "14K 취급", "24k", "18k", "14k"],
+  "diamond": ["다이아몬드", "diamond"],
+  "repair": ["수리가능", "수리", "리폼"],
+};
 
 /**
  * 현재 시간이 영업 시간 내인지 확인
@@ -135,15 +148,17 @@ interface StoreWithExtras extends StoreDetail {
  * 2. Right Map Area (flex-1): Kakao Map
  * 3. Right Detail Panel (slide): Store detail on selection
  */
-export default function StoresPage() {
+// useSearchParams를 사용하는 내부 컴포넌트
+function StoresPageContent() {
   // Kakao Maps SDK 로드
   useKakaoLoader();
 
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, tokens } = useAuthStore();
   const accessToken = tokens?.access_token;
   const { checkAndHandleUnauthorized } = useAuthenticatedAction();
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState(searchParams.get("search") || "");
   const [selectedFilter, setSelectedFilter] = useState<FilterTag>("all");
   const [selectedStore, setSelectedStore] = useState<StoreWithExtras | null>(null);
   const [isDetailPanelOpen, setIsDetailPanelOpen] = useState(false);
@@ -319,6 +334,38 @@ export default function StoresPage() {
     }
   }, [userLocation, stores.length]);
 
+  // URL 파라미터에서 검색어 처리 (메인 화면의 인기 검색어 클릭 시)
+  useEffect(() => {
+    const searchParam = searchParams.get("search");
+    if (searchParam && stores.length > 0) {
+      // 검색어가 있으면 자동으로 검색 실행
+      setSearchQuery(searchParam);
+
+      // 검색 결과의 첫 번째 매장으로 지도 이동
+      const filtered = stores.filter((store) => {
+        const query = searchParam.toLowerCase();
+        const searchableText = [
+          store.name,
+          store.address,
+          store.region,
+          store.district,
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+        return searchableText.includes(query);
+      });
+
+      if (filtered.length > 0) {
+        const firstStore = filtered[0];
+        if (firstStore.lat && firstStore.lng) {
+          setMapCenter({ lat: firstStore.lat, lng: firstStore.lng });
+          handleStoreClick(firstStore);
+        }
+      }
+    }
+  }, [searchParams, stores.length]);
+
   // 좋아요 토글 핸들러
   const handleStoreLike = async (storeId: number, e: React.MouseEvent) => {
     e.stopPropagation(); // 부모 클릭 이벤트 방지
@@ -390,17 +437,19 @@ export default function StoresPage() {
 
       // 태그 필터
       if (selectedFilter !== "all") {
-        switch (selectedFilter) {
-          case "open":
-            return store.isOpen === true;
-          case "24k":
-            return store.tags?.some((tag) => tag.name.includes("24K") || tag.name.includes("24k"));
-          case "diamond":
-            return store.tags?.some((tag) => tag.name.includes("다이아") || tag.name.includes("diamond"));
-          case "repair":
-            return store.tags?.some((tag) => tag.name.includes("수리") || tag.name.includes("리폼"));
-          default:
-            return true;
+        // 영업중 필터는 별도 처리
+        if (selectedFilter === "open") {
+          return store.isOpen === true;
+        }
+
+        // 나머지 필터는 filterTagMap을 사용하여 매칭
+        const tagKeywords = filterTagMap[selectedFilter];
+        if (tagKeywords) {
+          return store.tags?.some((tag) =>
+            tagKeywords.some((keyword) =>
+              tag.name.toLowerCase().includes(keyword.toLowerCase())
+            )
+          );
         }
       }
 
@@ -438,7 +487,7 @@ export default function StoresPage() {
   const filterTags: Array<{ id: FilterTag; label: string }> = [
     { id: "all", label: "전체" },
     { id: "open", label: "영업중" },
-    { id: "24k", label: "24K 취급" },
+    { id: "24k", label: "금 매입" },
     { id: "diamond", label: "다이아몬드" },
     { id: "repair", label: "수리가능" },
   ];
@@ -719,6 +768,14 @@ export default function StoresPage() {
                         </span>
                         <span className="text-gray-300">|</span>
                         <span className="text-gray-500">리뷰 {store.reviewCount || 0}</span>
+                        {store.distance && (
+                          <>
+                            <span className="text-gray-300">|</span>
+                            <span className="text-blue-600 font-semibold">
+                              {store.distance}
+                            </span>
+                          </>
+                        )}
                       </div>
                       <p className="text-small text-gray-500 mb-2 truncate">
                         {store.address || "주소 정보 없음"}
@@ -736,13 +793,6 @@ export default function StoresPage() {
                         </div>
                       )}
                     </div>
-                    {store.distance && (
-                      <div className="flex items-start">
-                        <span className="text-small font-semibold text-blue-600">
-                          {store.distance}
-                        </span>
-                      </div>
-                    )}
                   </div>
                 </div>
               ))
@@ -848,8 +898,12 @@ export default function StoresPage() {
                     <span className={selectedStore.isOpen ? "text-green-600 font-medium" : "text-gray-500"}>
                       {selectedStore.isOpen ? "영업중" : "준비중"}
                     </span>
-                    <span className="text-gray-400">·</span>
-                    <span className="text-gray-500">20:00 마감</span>
+                    {selectedStore.close_time && (
+                      <>
+                        <span className="text-gray-400">·</span>
+                        <span className="text-gray-500">{selectedStore.close_time} 마감</span>
+                      </>
+                    )}
                   </div>
                 </div>
 
@@ -895,12 +949,16 @@ export default function StoresPage() {
                     <div className="flex items-center gap-3">
                       <Phone className="w-5 h-5 text-gray-400 flex-shrink-0" />
                       <p className="text-caption text-gray-900">
-                        {selectedStore.phone_number || "02-1234-5678"}
+                        {selectedStore.phone_number || "전화번호 정보 없음"}
                       </p>
                     </div>
                     <div className="flex items-center gap-3">
                       <Clock className="w-5 h-5 text-gray-400 flex-shrink-0" />
-                      <p className="text-caption text-gray-900">10:00 - 20:00</p>
+                      <p className="text-caption text-gray-900">
+                        {selectedStore.open_time && selectedStore.close_time
+                          ? `${selectedStore.open_time} - ${selectedStore.close_time}`
+                          : "영업시간 정보 없음"}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -921,5 +979,21 @@ export default function StoresPage() {
         </div>
       </div>
     </>
+  );
+}
+
+// Suspense로 감싼 메인 export 컴포넌트
+export default function StoresPage() {
+  return (
+    <Suspense fallback={
+      <div className="fixed inset-0 top-[60px] flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="inline-block w-8 h-8 border-4 border-gray-200 border-t-gray-900 rounded-full animate-spin mb-4"></div>
+          <p className="text-gray-600">매장 정보를 불러오는 중...</p>
+        </div>
+      </div>
+    }>
+      <StoresPageContent />
+    </Suspense>
   );
 }

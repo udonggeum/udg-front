@@ -2,10 +2,10 @@
 
 import { useState, useEffect, useRef, type FormEvent, type ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
-import { User as UserIcon, ArrowLeft, Save, Mail, Phone, MapPin, Camera } from "lucide-react";
+import { User as UserIcon, ArrowLeft, Save, Mail, Phone, MapPin, Camera, CheckCircle2 } from "lucide-react";
 import AddressSearchInput from "@/components/AddressSearchInput";
 import { useAuthStore } from "@/stores/useAuthStore";
-import { updateProfileAction } from "@/actions/auth";
+import { updateProfileAction, sendPhoneVerificationAction, verifyPhoneAction, getMeAction } from "@/actions/auth";
 import { getPresignedUrlAction, uploadToS3 } from "@/actions/upload";
 import { UpdateProfileRequestSchema } from "@/schemas/auth";
 import type { UpdateProfileRequest } from "@/types/auth";
@@ -28,6 +28,11 @@ export default function ProfileEditPage() {
   const [isPending, setIsPending] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
+
+  // 휴대폰 인증 상태
+  const [isPhoneVerificationSent, setIsPhoneVerificationSent] = useState(false);
+  const [phoneVerificationCode, setPhoneVerificationCode] = useState("");
+  const [isVerifyingPhone, setIsVerifyingPhone] = useState(false);
 
   const [formData, setFormData] = useState<UpdateProfileRequest>({
     name: user?.name || "",
@@ -250,6 +255,91 @@ export default function ProfileEditPage() {
   };
 
   /**
+   * 휴대폰 인증 코드 전송
+   */
+  const handleSendPhoneVerification = async () => {
+    // 휴대폰 번호 유효성 검사
+    if (!formData.phone || !/^01[0-9]-?[0-9]{3,4}-?[0-9]{4}$/.test(formData.phone)) {
+      toast.error("올바른 휴대폰 번호를 입력해주세요.");
+      return;
+    }
+
+    if (!tokens?.access_token) {
+      toast.error("인증 토큰이 없습니다. 다시 로그인해주세요.");
+      router.push("/login");
+      return;
+    }
+
+    setIsVerifyingPhone(true);
+
+    try {
+      const result = await sendPhoneVerificationAction(
+        { phone: formData.phone },
+        tokens.access_token
+      );
+
+      if (result.success) {
+        setIsPhoneVerificationSent(true);
+        toast.success("인증 코드가 휴대폰으로 전송되었습니다.");
+      } else {
+        toast.error(result.error || "인증 코드 전송에 실패했습니다.");
+      }
+    } catch (error) {
+      toast.error("인증 코드 전송 중 오류가 발생했습니다.");
+    } finally {
+      setIsVerifyingPhone(false);
+    }
+  };
+
+  /**
+   * 휴대폰 인증 코드 확인
+   */
+  const handleVerifyPhone = async () => {
+    if (!phoneVerificationCode || phoneVerificationCode.length !== 6) {
+      toast.error("6자리 인증 코드를 입력해주세요.");
+      return;
+    }
+
+    if (!tokens?.access_token) {
+      toast.error("인증 토큰이 없습니다. 다시 로그인해주세요.");
+      router.push("/login");
+      return;
+    }
+
+    setIsVerifyingPhone(true);
+
+    try {
+      const result = await verifyPhoneAction(
+        {
+          phone: formData.phone || "",
+          code: phoneVerificationCode,
+        },
+        tokens.access_token
+      );
+
+      if (result.success) {
+        toast.success("휴대폰 인증이 완료되었습니다.");
+
+        // 사용자 정보 새로고침 (phone_verified 상태 업데이트)
+        const userResult = await getMeAction(tokens.access_token);
+        if (userResult.success && userResult.data?.user) {
+          updateUser(userResult.data.user);
+        }
+
+        // 인증 성공 후 상태 초기화
+        setIsPhoneVerificationSent(false);
+        setPhoneVerificationCode("");
+      } else {
+        toast.error(result.error || "인증 코드가 올바르지 않습니다.");
+      }
+    } catch (error) {
+      toast.error("인증 확인 중 오류가 발생했습니다.");
+    } finally {
+      setIsVerifyingPhone(false);
+    }
+  };
+
+  /**
    * 폼 제출 핸들러
    */
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
@@ -404,26 +494,86 @@ export default function ProfileEditPage() {
                     <Label htmlFor="phone" className="flex items-center gap-2 mb-2">
                       <Phone className="w-4 h-4" />
                       전화번호
+                      {user?.phone_verified && (
+                        <span className="flex items-center gap-1 text-xs text-green-600 font-normal">
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          인증완료
+                        </span>
+                      )}
                     </Label>
-                    <Input
-                      type="tel"
-                      id="phone"
-                      name="phone"
-                      value={formData.phone || ""}
-                      onChange={handleChange}
-                      onBlur={handleBlur}
-                      className={`h-12 ${
-                        touched.phone && formErrors.phone ? "border-red-500" : ""
-                      }`}
-                      placeholder="010-1234-5678"
-                      disabled={isPending}
-                    />
+
+                    {/* 전화번호 입력 및 인증 요청 */}
+                    <div className="flex gap-2">
+                      <Input
+                        type="tel"
+                        id="phone"
+                        name="phone"
+                        value={formData.phone || ""}
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        className={`h-12 ${
+                          touched.phone && formErrors.phone ? "border-red-500" : ""
+                        } ${user?.phone_verified ? "bg-green-50 border-green-200" : ""}`}
+                        placeholder="010-1234-5678"
+                        disabled={isPending || user?.phone_verified}
+                      />
+                      {!user?.phone_verified && (
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          disabled={isPending || isVerifyingPhone || !formData.phone || isPhoneVerificationSent}
+                          onClick={handleSendPhoneVerification}
+                          className="px-4 h-12 whitespace-nowrap"
+                        >
+                          {isPhoneVerificationSent ? "전송완료" : "인증요청"}
+                        </Button>
+                      )}
+                    </div>
+
+                    {/* 인증 코드 입력 필드 (인증 코드 전송 후 표시) */}
+                    {isPhoneVerificationSent && !user?.phone_verified && (
+                      <div className="flex gap-2 mt-3">
+                        <Input
+                          type="text"
+                          placeholder="6자리 인증 코드"
+                          value={phoneVerificationCode}
+                          onChange={(e) => setPhoneVerificationCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                          disabled={isVerifyingPhone}
+                          maxLength={6}
+                          className="h-12"
+                        />
+                        <Button
+                          type="button"
+                          variant="default"
+                          disabled={isVerifyingPhone || phoneVerificationCode.length !== 6}
+                          onClick={handleVerifyPhone}
+                          className="px-4 h-12 whitespace-nowrap bg-gray-900 hover:bg-gray-800 text-white"
+                        >
+                          {isVerifyingPhone ? "확인 중..." : "인증확인"}
+                        </Button>
+                      </div>
+                    )}
+
                     {touched.phone && formErrors.phone && (
                       <p className="text-sm text-red-500 mt-1">{formErrors.phone}</p>
                     )}
-                    <p className="text-xs text-gray-500 mt-1">
-                      형식: 010-1234-5678 또는 01012345678
-                    </p>
+                    {!user?.phone_verified && !isPhoneVerificationSent && (
+                      <p className="text-xs text-gray-500 mt-1">
+                        형식: 010-1234-5678 또는 01012345678<br />
+                        매장 등록 시 휴대폰 인증이 필요합니다
+                      </p>
+                    )}
+                    {isPhoneVerificationSent && !user?.phone_verified && (
+                      <p className="text-xs text-gray-500 mt-1">
+                        휴대폰으로 전송된 6자리 인증 코드를 입력해주세요
+                      </p>
+                    )}
+                    {user?.phone_verified && (
+                      <p className="text-xs text-green-600 mt-1 flex items-center">
+                        <CheckCircle2 className="w-3.5 h-3.5 mr-1" />
+                        휴대폰 인증이 완료되었습니다
+                      </p>
+                    )}
                   </div>
 
                   {/* Address */}

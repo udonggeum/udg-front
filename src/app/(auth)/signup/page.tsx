@@ -9,10 +9,10 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Eye, EyeOff, AlertCircle } from "lucide-react";
+import { Eye, EyeOff, AlertCircle, CheckCircle2 } from "lucide-react";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useUIStore } from "@/stores/useUIStore";
-import { registerUserAction } from "@/actions/auth";
+import { registerUserAction, sendEmailVerificationAction, verifyEmailAction } from "@/actions/auth";
 
 interface FormErrors {
   email?: string;
@@ -32,6 +32,12 @@ export default function SignupPage() {
 
   const [showPassword, setShowPassword] = useState(false);
   const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
+
+  // 이메일 인증 상태
+  const [isEmailVerificationSent, setIsEmailVerificationSent] = useState(false);
+  const [emailVerificationCode, setEmailVerificationCode] = useState("");
+  const [isEmailVerified, setIsEmailVerified] = useState(false);
+  const [isVerifyingEmail, setIsVerifyingEmail] = useState(false);
 
   // 이미 로그인된 경우 메인 페이지로 리다이렉트
   useEffect(() => {
@@ -95,6 +101,11 @@ export default function SignupPage() {
   const isFormValid = (): boolean => {
     // 필수 필드 입력 확인
     if (!formData.email || !formData.password || !formData.passwordConfirm || !formData.name || !formData.phone) {
+      return false;
+    }
+
+    // 이메일 인증 확인
+    if (!isEmailVerified) {
       return false;
     }
 
@@ -252,6 +263,96 @@ export default function SignupPage() {
   const handleBlur = (field: keyof FormErrors) => {
     setTouched((prev) => ({ ...prev, [field]: true }));
     validateField(field);
+  };
+
+  /**
+   * 이메일 인증 코드 전송
+   */
+  const handleSendEmailVerification = async () => {
+    // 이메일 유효성 검사
+    if (!formData.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      showToast({
+        message: "올바른 이메일 주소를 입력해주세요.",
+        type: "error",
+        duration: 3000,
+      });
+      return;
+    }
+
+    setIsVerifyingEmail(true);
+
+    try {
+      const result = await sendEmailVerificationAction({ email: formData.email });
+
+      if (result.success) {
+        setIsEmailVerificationSent(true);
+        showToast({
+          message: "인증 코드가 이메일로 전송되었습니다.",
+          type: "success",
+          duration: 3000,
+        });
+      } else {
+        showToast({
+          message: result.error || "인증 코드 전송에 실패했습니다.",
+          type: "error",
+          duration: 3000,
+        });
+      }
+    } catch (error) {
+      showToast({
+        message: "인증 코드 전송 중 오류가 발생했습니다.",
+        type: "error",
+        duration: 3000,
+      });
+    } finally {
+      setIsVerifyingEmail(false);
+    }
+  };
+
+  /**
+   * 이메일 인증 코드 확인
+   */
+  const handleVerifyEmail = async () => {
+    if (!emailVerificationCode || emailVerificationCode.length !== 6) {
+      showToast({
+        message: "6자리 인증 코드를 입력해주세요.",
+        type: "error",
+        duration: 3000,
+      });
+      return;
+    }
+
+    setIsVerifyingEmail(true);
+
+    try {
+      const result = await verifyEmailAction({
+        email: formData.email,
+        code: emailVerificationCode,
+      });
+
+      if (result.success) {
+        setIsEmailVerified(true);
+        showToast({
+          message: "이메일 인증이 완료되었습니다.",
+          type: "success",
+          duration: 3000,
+        });
+      } else {
+        showToast({
+          message: result.error || "인증 코드가 올바르지 않습니다.",
+          type: "error",
+          duration: 3000,
+        });
+      }
+    } catch (error) {
+      showToast({
+        message: "인증 확인 중 오류가 발생했습니다.",
+        type: "error",
+        duration: 3000,
+      });
+    } finally {
+      setIsVerifyingEmail(false);
+    }
   };
 
   /**
@@ -508,26 +609,72 @@ export default function SignupPage() {
                     value={formData.email}
                     onChange={handleChange}
                     onBlur={() => handleBlur("email")}
-                    disabled={isPending}
+                    disabled={isPending || isEmailVerified}
                     className={`px-4 py-6 bg-gray-100 border-transparent focus:border-gray-900 focus:bg-white rounded-xl text-body placeholder-gray-400 smooth-transition ${
                       touched.email && formErrors.email ? "border-red-500 focus:border-red-500" : ""
-                    }`}
+                    } ${isEmailVerified ? "bg-green-50 border-green-200" : ""}`}
                   />
                   {touched.email && formErrors.email && (
                     <p className="mt-1.5 text-[12px] text-red-500">{formErrors.email}</p>
                   )}
                 </div>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  disabled={isPending}
-                  className="px-5 py-6 bg-gray-200 hover:bg-gray-300 text-gray-700 text-caption font-semibold rounded-xl whitespace-nowrap"
-                >
-                  인증요청
-                </Button>
+                {!isEmailVerified && (
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    disabled={isPending || isVerifyingEmail || !formData.email || isEmailVerificationSent}
+                    onClick={handleSendEmailVerification}
+                    className="px-5 py-6 bg-gray-200 hover:bg-gray-300 text-gray-700 text-caption font-semibold rounded-xl whitespace-nowrap"
+                  >
+                    {isEmailVerificationSent ? "전송완료" : "인증요청"}
+                  </Button>
+                )}
+                {isEmailVerified && (
+                  <div className="flex items-center px-4 py-6 bg-green-50 rounded-xl">
+                    <CheckCircle2 className="w-5 h-5 text-green-600" />
+                    <span className="ml-2 text-caption font-semibold text-green-700">인증완료</span>
+                  </div>
+                )}
               </div>
-              {!(touched.email && formErrors.email) && (
-                <p className="mt-2 text-[12px] text-gray-500">로그인 및 주요 알림에 사용됩니다</p>
+
+              {/* 인증 코드 입력 필드 (인증 코드 전송 후 표시) */}
+              {isEmailVerificationSent && !isEmailVerified && (
+                <div className="flex gap-2 mt-3">
+                  <div className="flex-1">
+                    <Input
+                      type="text"
+                      placeholder="6자리 인증 코드"
+                      value={emailVerificationCode}
+                      onChange={(e) => setEmailVerificationCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                      disabled={isVerifyingEmail}
+                      maxLength={6}
+                      className="px-4 py-6 bg-gray-100 border-transparent focus:border-gray-900 focus:bg-white rounded-xl text-body placeholder-gray-400 smooth-transition"
+                    />
+                  </div>
+                  <Button
+                    type="button"
+                    variant="brand-primary"
+                    disabled={isVerifyingEmail || emailVerificationCode.length !== 6}
+                    onClick={handleVerifyEmail}
+                    className="px-5 py-6 text-caption font-semibold rounded-xl whitespace-nowrap"
+                  >
+                    {isVerifyingEmail ? "확인 중..." : "인증확인"}
+                  </Button>
+                </div>
+              )}
+
+              {!(touched.email && formErrors.email) && !isEmailVerified && (
+                <p className="mt-2 text-[12px] text-gray-500">
+                  {isEmailVerificationSent
+                    ? "이메일로 전송된 6자리 인증 코드를 입력해주세요"
+                    : "로그인 및 주요 알림에 사용됩니다"}
+                </p>
+              )}
+              {isEmailVerified && (
+                <p className="mt-2 text-[12px] text-green-600 flex items-center">
+                  <CheckCircle2 className="w-3.5 h-3.5 mr-1" />
+                  이메일 인증이 완료되었습니다
+                </p>
               )}
             </div>
 
@@ -658,33 +805,25 @@ export default function SignupPage() {
               <Label className="block text-small font-semibold text-gray-900 mb-2">
                 휴대폰 번호 <span className="text-red-500">*</span>
               </Label>
-              <div className="flex gap-2">
-                <div className="flex-1">
-                  <Input
-                    type="tel"
-                    name="phone"
-                    placeholder="'-' 없이 숫자만 입력"
-                    value={formData.phone}
-                    onChange={handleChange}
-                    onBlur={() => handleBlur("phone")}
-                    disabled={isPending}
-                    className={`px-4 py-6 bg-gray-100 border-transparent focus:border-gray-900 focus:bg-white rounded-xl text-body placeholder-gray-400 smooth-transition ${
-                      touched.phone && formErrors.phone ? "border-red-500 focus:border-red-500" : ""
-                    }`}
-                  />
-                  {touched.phone && formErrors.phone && (
-                    <p className="mt-1.5 text-[12px] text-red-500">{formErrors.phone}</p>
-                  )}
-                </div>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  disabled={isPending}
-                  className="px-5 py-6 bg-gray-200 hover:bg-gray-300 text-gray-700 text-caption font-semibold rounded-xl whitespace-nowrap"
-                >
-                  인증요청
-                </Button>
-              </div>
+              <Input
+                type="tel"
+                name="phone"
+                placeholder="'-' 없이 숫자만 입력"
+                value={formData.phone}
+                onChange={handleChange}
+                onBlur={() => handleBlur("phone")}
+                disabled={isPending}
+                className={`w-full px-4 py-6 bg-gray-100 border-transparent focus:border-gray-900 focus:bg-white rounded-xl text-body placeholder-gray-400 smooth-transition ${
+                  touched.phone && formErrors.phone ? "border-red-500 focus:border-red-500" : ""
+                }`}
+              />
+              {touched.phone && formErrors.phone ? (
+                <p className="mt-1.5 text-[12px] text-red-500">{formErrors.phone}</p>
+              ) : (
+                <p className="mt-2 text-[12px] text-gray-500">
+                  매장 등록 시 휴대폰 인증이 필요합니다
+                </p>
+              )}
             </div>
 
             {/* 구분선 */}

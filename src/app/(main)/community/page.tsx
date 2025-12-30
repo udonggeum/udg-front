@@ -49,16 +49,34 @@ function CommunityPageContent() {
   // Infinite scroll observer
   const observerTarget = useRef<HTMLDivElement>(null);
 
-  // 지역 데이터 로드
+  // 지역 데이터 로드 및 사용자 현재 위치 기본값 설정
   useEffect(() => {
     const fetchLocations = async () => {
       const result = await getStoreLocationsAction();
       if (result.success && result.data) {
         setRegions(result.data.regions);
+
+        // 사용자의 현재 위치를 기본값으로 설정 (메인 카테고리가 금시장일 때만)
+        if (user?.address && mainCategory === "market") {
+          const addressParts = user.address.split(" ");
+          if (addressParts.length >= 2) {
+            const userRegion = addressParts[0];
+            const userDistrict = addressParts[1];
+
+            // 지역 데이터에 해당 지역이 있는지 확인
+            const regionExists = result.data.regions.find(r => r.region === userRegion);
+            if (regionExists) {
+              setSelectedRegion(userRegion);
+              if (regionExists.districts.includes(userDistrict)) {
+                setSelectedDistrict(userDistrict);
+              }
+            }
+          }
+        }
       }
     };
     fetchLocations();
-  }, []);
+  }, [user?.address, mainCategory]);
 
   // URL 쿼리 파라미터로 초기 state 설정
   useEffect(() => {
@@ -237,19 +255,17 @@ function CommunityPageContent() {
   // 뷰 모드 결정 (금시장=그리드, 금소식=리스트)
   const viewMode = mainCategory === "market" ? "grid" : "list";
 
+  // 지역 선택 모달 상태
+  const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
+
   return (
     <div className="min-h-screen bg-white">
       {/* Hero Section */}
-      <Section background="gradient" className="pt-12">
+      <Section background="gradient" className="pt-8 pb-6">
         <Container>
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-6">
-            <div>
-              <h1 className="text-[24px] sm:text-[32px] md:text-[40px] font-bold leading-tight tracking-[-0.02em] text-gray-900 mb-2">
-                금광산
-              </h1>
-              <p className="text-[16px] text-gray-600">{getSubtitle()}</p>
-            </div>
-            {user && (
+          {/* 상단 우측 글쓰기 버튼 */}
+          {user && (
+            <div className="flex justify-end mb-4">
               <Link href="/community/write">
                 <Button variant="brand-primary" size="lg">
                   <svg
@@ -268,11 +284,11 @@ function CommunityPageContent() {
                   {getWriteButtonText()}
                 </Button>
               </Link>
-            )}
-          </div>
+            </div>
+          )}
 
-          {/* Main Category Toggle - 1단계: 페이지 성격 선택 */}
-          <div className="mb-8 inline-flex bg-white rounded-2xl p-1.5 border-2 border-gray-200 shadow-sm">
+          {/* Main Category Toggle */}
+          <div className="mb-5 inline-flex bg-white rounded-2xl p-1.5 border-2 border-gray-200 shadow-sm">
             <button
               onClick={() => handleMainCategoryChange("market")}
               className={`px-8 py-3 text-[16px] font-bold rounded-xl transition-all duration-200 ${
@@ -295,143 +311,226 @@ function CommunityPageContent() {
             </button>
           </div>
 
-          {/* Divider */}
-          <div className="mb-6 border-t-2 border-gray-100"></div>
-
-          {/* 2단계: 세부 필터 + 정렬 */}
-          <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            {/* Type Filters - 금시장 */}
-            {mainCategory === "market" && (
-              <div className="flex items-center gap-2 flex-wrap">
-                <button
-                  onClick={() => setSelectedType(undefined)}
-                  className={`px-4 py-2.5 text-caption font-semibold rounded-lg transition-all duration-200 ${
-                    !selectedType
-                      ? "bg-gray-900 text-white shadow-sm"
-                      : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
-                  }`}
-                >
-                  전체
-                </button>
-                <button
-                  onClick={() => setSelectedType("buy_gold")}
-                  className={`px-4 py-2.5 text-caption font-semibold rounded-lg transition-all duration-200 ${
-                    selectedType === "buy_gold"
-                      ? "bg-gray-900 text-white shadow-sm"
-                      : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
-                  }`}
-                >
-                  금 구매
-                </button>
-                <button
-                  onClick={() => setSelectedType("sell_gold")}
-                  className={`px-4 py-2.5 text-caption font-semibold rounded-lg transition-all duration-200 ${
-                    selectedType === "sell_gold"
-                      ? "bg-gray-900 text-white shadow-sm"
-                      : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
-                  }`}
-                >
-                  금 판매
-                </button>
-              </div>
-            )}
-
-            {/* Type Filters - 금소식 (커뮤니티) */}
-            {mainCategory === "community" && (
-              <div className="flex items-center gap-2 flex-wrap">
-                <button
-                  onClick={() => {
-                    setSelectedCategory("gold_news");
-                    setSelectedType(undefined);
-                  }}
-                  className={`px-4 py-2.5 text-caption font-semibold rounded-lg transition-all duration-200 ${
-                    selectedCategory === "gold_news" && !selectedType
-                      ? "bg-gray-900 text-white shadow-sm"
-                      : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
-                  }`}
-                >
-                  전체
-                </button>
-                <button
-                  onClick={() => {
-                    setSelectedCategory("gold_news");
-                    setSelectedType("product_news");
-                  }}
-                  className={`px-4 py-2.5 text-caption font-semibold rounded-lg transition-all duration-200 ${
-                    selectedType === "product_news"
-                      ? "bg-gray-900 text-white shadow-sm"
-                      : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
-                  }`}
-                >
-                  상품소식
-                </button>
-                <button
-                  onClick={() => {
-                    setSelectedCategory("gold_news");
-                    setSelectedType("store_news");
-                  }}
-                  className={`px-4 py-2.5 text-caption font-semibold rounded-lg transition-all duration-200 ${
-                    selectedType === "store_news"
-                      ? "bg-gray-900 text-white shadow-sm"
-                      : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
-                  }`}
-                >
-                  매장소식
-                </button>
-                <button
-                  onClick={() => {
-                    setSelectedCategory("qna");
-                    setSelectedType("question");
-                  }}
-                  className={`px-4 py-2.5 text-caption font-semibold rounded-lg transition-all duration-200 ${
-                    selectedCategory === "qna"
-                      ? "bg-gray-900 text-white shadow-sm"
-                      : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
-                  }`}
-                >
-                  Q&A
-                </button>
-              </div>
-            )}
-
-            {/* Region Filter + Sort - 오른쪽 정렬 */}
-            <div className="flex items-center gap-2 flex-wrap">
-              {/* 지역 선택 */}
-              <select
-                value={selectedRegion}
-                onChange={(e) => {
-                  setSelectedRegion(e.target.value);
-                  setSelectedDistrict("");
-                }}
-                className="px-4 py-2.5 text-caption font-medium border border-gray-300 rounded-lg bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition-all duration-200 cursor-pointer"
+          {/* 지역 선택 영역 */}
+          <div className="mb-5 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-2xl p-4 border border-yellow-200">
+            <div className="flex items-center justify-between">
+              <button
+                onClick={() => setIsLocationModalOpen(true)}
+                className="flex items-center gap-2 text-left flex-1"
               >
-                <option value="">전체 지역</option>
-                {regions.map((region) => (
-                  <option key={region.region} value={region.region}>
-                    {region.region}
-                  </option>
-                ))}
-              </select>
-
-              {/* 구/군 선택 */}
-              {selectedRegion && (
-                <select
-                  value={selectedDistrict}
-                  onChange={(e) => setSelectedDistrict(e.target.value)}
-                  className="px-4 py-2.5 text-caption font-medium border border-gray-300 rounded-lg bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition-all duration-200 cursor-pointer"
+                <svg
+                  className="w-5 h-5 text-yellow-600"
+                  fill="currentColor"
+                  viewBox="0 0 24 24"
                 >
-                  <option value="">전체 구/군</option>
-                  {regions
-                    .find((r) => r.region === selectedRegion)
-                    ?.districts.map((district) => (
-                      <option key={district} value={district}>
-                        {district}
-                      </option>
-                    ))}
-                </select>
-              )}
+                  <path
+                    fillRule="evenodd"
+                    d="M11.54 22.351l.07.04.028.016a.76.76 0 00.723 0l.028-.015.071-.041a16.975 16.975 0 001.144-.742 19.58 19.58 0 002.683-2.282c1.944-1.99 3.963-4.98 3.963-8.827a8.25 8.25 0 00-16.5 0c0 3.846 2.02 6.837 3.963 8.827a19.58 19.58 0 002.682 2.282 16.975 16.975 0 001.145.742zM12 13.5a3 3 0 100-6 3 3 0 000 6z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                <div>
+                  <div className="text-[17px] font-bold text-gray-900">
+                    {selectedRegion && selectedDistrict
+                      ? `${selectedRegion} ${selectedDistrict}`
+                      : selectedRegion
+                      ? selectedRegion
+                      : "전체 지역"}
+                  </div>
+                  <div className="text-[13px] text-gray-600">
+                    {mainCategory === "market"
+                      ? "지역을 선택하여 주변 금은방 게시글을 확인하세요"
+                      : "지역을 선택하여 해당 지역 매장의 소식을 확인하세요"}
+                  </div>
+                </div>
+              </button>
+              <button
+                onClick={() => setIsLocationModalOpen(true)}
+                className="px-4 py-2 text-[14px] font-semibold text-gray-700 bg-white rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors"
+              >
+                변경
+              </button>
+            </div>
+          </div>
 
-              {/* 정렬 */}
+          {/* 지역 선택 모달 (간단 버전) */}
+          {isLocationModalOpen && (
+            <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center" onClick={() => setIsLocationModalOpen(false)}>
+              <div className="bg-white rounded-t-3xl sm:rounded-2xl w-full sm:max-w-md p-6 max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-[18px] font-bold text-gray-900">지역 선택</h3>
+                  <button
+                    onClick={() => setIsLocationModalOpen(false)}
+                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+
+                {/* 전체 지역 */}
+                <button
+                  onClick={() => {
+                    setSelectedRegion("");
+                    setSelectedDistrict("");
+                    setIsLocationModalOpen(false);
+                  }}
+                  className={`w-full text-left px-4 py-3 rounded-lg mb-2 transition-colors ${
+                    !selectedRegion ? "bg-yellow-50 text-gray-900 font-semibold" : "hover:bg-gray-50 text-gray-700"
+                  }`}
+                >
+                  전체 지역
+                </button>
+
+                {/* 지역 목록 */}
+                {regions.map((region) => (
+                  <div key={region.region} className="mb-3">
+                    <button
+                      onClick={() => {
+                        setSelectedRegion(region.region);
+                        setSelectedDistrict("");
+                      }}
+                      className={`w-full text-left px-4 py-3 rounded-lg transition-colors ${
+                        selectedRegion === region.region ? "bg-yellow-50 text-gray-900 font-semibold" : "hover:bg-gray-50 text-gray-700"
+                      }`}
+                    >
+                      {region.region}
+                    </button>
+
+                    {/* 선택된 지역의 구/군 */}
+                    {selectedRegion === region.region && region.districts.length > 0 && (
+                      <div className="ml-4 mt-2 space-y-1">
+                        <button
+                          onClick={() => {
+                            setSelectedDistrict("");
+                            setIsLocationModalOpen(false);
+                          }}
+                          className={`w-full text-left px-4 py-2 rounded-lg text-[14px] transition-colors ${
+                            !selectedDistrict ? "bg-gray-100 text-gray-900 font-medium" : "hover:bg-gray-50 text-gray-600"
+                          }`}
+                        >
+                          전체 구/군
+                        </button>
+                        {region.districts.map((district) => (
+                          <button
+                            key={district}
+                            onClick={() => {
+                              setSelectedDistrict(district);
+                              setIsLocationModalOpen(false);
+                            }}
+                            className={`w-full text-left px-4 py-2 rounded-lg text-[14px] transition-colors ${
+                              selectedDistrict === district ? "bg-gray-100 text-gray-900 font-medium" : "hover:bg-gray-50 text-gray-600"
+                            }`}
+                          >
+                            {district}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* 타입 필터 + 정렬 */}
+          <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            {/* 타입 필터 */}
+            <div className="flex items-center gap-2 flex-wrap">
+              {mainCategory === "market" ? (
+                <>
+                  <button
+                    onClick={() => setSelectedType(undefined)}
+                    className={`px-4 py-2.5 text-caption font-semibold rounded-lg transition-all duration-200 ${
+                      !selectedType
+                        ? "bg-gray-900 text-white shadow-sm"
+                        : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
+                    }`}
+                  >
+                    전체
+                  </button>
+                  <button
+                    onClick={() => setSelectedType("buy_gold")}
+                    className={`px-4 py-2.5 text-caption font-semibold rounded-lg transition-all duration-200 ${
+                      selectedType === "buy_gold"
+                        ? "bg-gray-900 text-white shadow-sm"
+                        : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
+                    }`}
+                  >
+                    금 구매
+                  </button>
+                  <button
+                    onClick={() => setSelectedType("sell_gold")}
+                    className={`px-4 py-2.5 text-caption font-semibold rounded-lg transition-all duration-200 ${
+                      selectedType === "sell_gold"
+                        ? "bg-gray-900 text-white shadow-sm"
+                        : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
+                    }`}
+                  >
+                    금 판매
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    onClick={() => {
+                      setSelectedCategory("gold_news");
+                      setSelectedType(undefined);
+                    }}
+                    className={`px-4 py-2.5 text-caption font-semibold rounded-lg transition-all duration-200 ${
+                      selectedCategory === "gold_news" && !selectedType
+                        ? "bg-gray-900 text-white shadow-sm"
+                        : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
+                    }`}
+                  >
+                    전체
+                  </button>
+                  <button
+                    onClick={() => {
+                      setSelectedCategory("gold_news");
+                      setSelectedType("product_news");
+                    }}
+                    className={`px-4 py-2.5 text-caption font-semibold rounded-lg transition-all duration-200 ${
+                      selectedType === "product_news"
+                        ? "bg-gray-900 text-white shadow-sm"
+                        : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
+                    }`}
+                  >
+                    상품소식
+                  </button>
+                  <button
+                    onClick={() => {
+                      setSelectedCategory("gold_news");
+                      setSelectedType("store_news");
+                    }}
+                    className={`px-4 py-2.5 text-caption font-semibold rounded-lg transition-all duration-200 ${
+                      selectedType === "store_news"
+                        ? "bg-gray-900 text-white shadow-sm"
+                        : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
+                    }`}
+                  >
+                    매장소식
+                  </button>
+                  <button
+                    onClick={() => {
+                      setSelectedCategory("qna");
+                      setSelectedType("question");
+                    }}
+                    className={`px-4 py-2.5 text-caption font-semibold rounded-lg transition-all duration-200 ${
+                      selectedCategory === "qna"
+                        ? "bg-gray-900 text-white shadow-sm"
+                        : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
+                    }`}
+                  >
+                    Q&A
+                  </button>
+                </>
+              )}
+            </div>
+
+            {/* 정렬 */}
+            <div className="flex items-center gap-2">
               <select
                 value={currentSort}
                 onChange={(e) => setCurrentSort(e.target.value as "latest" | "popular")}
@@ -442,9 +541,6 @@ function CommunityPageContent() {
               </select>
             </div>
           </div>
-
-          {/* Divider */}
-          <div className="mb-6 border-t-2 border-gray-100"></div>
 
           {/* FAQ Section - 필터 아래에 표시 */}
           {faqData && faqData.data.length > 0 && selectedType !== "faq" && (

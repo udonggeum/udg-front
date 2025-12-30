@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
-import { createPostAction, generateContentAction } from "@/actions/community";
+import { updatePostAction, getPostDetailAction, generateContentAction } from "@/actions/community";
 import { getMyStoreAction } from "@/actions/stores";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { toast } from "sonner";
@@ -19,10 +19,13 @@ import {
   type CreatePostRequest,
 } from "@/types/community";
 
-export default function CommunityWritePage() {
+export default function CommunityEditPage() {
   const router = useRouter();
+  const params = useParams();
   const { user, tokens } = useAuthStore();
+  const postId = Number(params?.id);
 
+  const [isLoading, setIsLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] =
     useState<PostCategory>("gold_trade");
   const [selectedType, setSelectedType] = useState<PostType>("sell_gold");
@@ -42,12 +45,56 @@ export default function CommunityWritePage() {
   const [showAdditionalNotes, setShowAdditionalNotes] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  // 기존 게시글 데이터 로드
+  useEffect(() => {
+    const loadPost = async () => {
+      if (!tokens?.access_token || !postId) return;
+
+      setIsLoading(true);
+      const result = await getPostDetailAction(postId, tokens.access_token);
+
+      if (result.success && result.data) {
+        const post = result.data.data;
+        setSelectedCategory(post.category);
+        setSelectedType(post.type);
+        setTitle(post.title);
+        setContent(post.content);
+        setImageUrls(post.image_urls || []);
+
+        if (post.category === "gold_trade") {
+          setGoldType(post.gold_type || "");
+          setGoldTypeUnknown(post.gold_type === "알 수 없음");
+          setWeight(post.weight ? String(post.weight) : "");
+          setWeightUnknown(!post.weight);
+          setPrice(post.price ? String(post.price) : "");
+          setPriceNegotiable(post.price === 0);
+          setLocation(post.location || "");
+        }
+      } else {
+        toast.error("게시글을 불러오는데 실패했습니다.");
+        router.push("/community");
+      }
+
+      setIsLoading(false);
+    };
+
+    loadPost();
+  }, [postId, tokens?.access_token, router]);
+
   if (!user || !tokens?.access_token) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="bg-yellow-50 border border-yellow-200 text-yellow-700 px-6 py-4 rounded-xl max-w-md">
           <span>로그인이 필요합니다.</span>
         </div>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="inline-block w-8 h-8 border-4 border-gray-200 border-t-gray-900 rounded-full animate-spin"></div>
       </div>
     );
   }
@@ -83,28 +130,6 @@ export default function CommunityWritePage() {
     }
   };
 
-  // Admin 사용자가 금거래 게시글 작성 시 매장 주소 자동 입력
-  useEffect(() => {
-    const loadStoreLocation = async () => {
-      // Admin이고 금거래 카테고리일 때만
-      if (user.role === "admin" && selectedCategory === "gold_trade" && tokens?.access_token) {
-        try {
-          const result = await getMyStoreAction(tokens.access_token);
-          if (result.success && result.data?.store) {
-            const { region, district } = result.data.store;
-            // region과 district를 조합해서 location에 설정
-            const storeLocation = `${region} ${district}`;
-            setLocation(storeLocation);
-          }
-        } catch (error) {
-          // 에러는 조용히 무시 (매장이 없을 수도 있음)
-          console.error("Failed to load store location:", error);
-        }
-      }
-    };
-
-    loadStoreLocation();
-  }, [user.role, selectedCategory, tokens?.access_token]);
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -201,11 +226,9 @@ export default function CommunityWritePage() {
 
     setIsSubmitting(true);
 
-    const requestData: CreatePostRequest = {
+    const requestData: any = {
       title,
       content,
-      category: selectedCategory,
-      type: selectedType,
     };
 
     // 금거래 관련 정보 추가
@@ -237,12 +260,13 @@ export default function CommunityWritePage() {
       requestData.image_urls = imageUrls;
     }
 
-    const result = await createPostAction(requestData, tokens.access_token);
+    const result = await updatePostAction(postId, requestData, tokens.access_token);
 
     if (result.success && result.data) {
-      router.push(`/community/posts/${result.data.id}`);
+      toast.success("게시글이 수정되었습니다.");
+      router.push(`/community/posts/${postId}`);
     } else {
-      alert(result.error || "게시글 작성에 실패했습니다.");
+      toast.error(result.error || "게시글 수정에 실패했습니다.");
       setIsSubmitting(false);
     }
   };
@@ -252,7 +276,7 @@ export default function CommunityWritePage() {
       <div className="container mx-auto px-4 py-8 max-w-[900px]">
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100">
           <div className="p-6">
-            <h2 className="text-2xl font-bold mb-8">게시글 작성</h2>
+            <h2 className="text-2xl font-bold mb-8">게시글 수정</h2>
 
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Category Selection */}

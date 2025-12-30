@@ -12,6 +12,13 @@ export interface User {
   longitude?: number; // 경도 (주소 기반)
   profile_image?: string;
   role: 'user' | 'admin';
+
+  // 인증 관련 필드
+  email_verified?: boolean;
+  email_verified_at?: string;
+  phone_verified?: boolean;
+  phone_verified_at?: string;
+
   created_at?: string;
   updated_at?: string;
 }
@@ -113,3 +120,37 @@ export interface OAuthCallbackRequest {
  * 지원하는 OAuth 제공자
  */
 export type OAuthProvider = 'kakao' | 'google' | 'naver' | 'apple';
+
+/**
+ * Send email verification request type
+ * 이메일 인증 코드 전송 요청
+ */
+export interface SendEmailVerificationRequest {
+  email: string;
+}
+
+/**
+ * Verify email request type
+ * 이메일 인증 코드 확인 요청
+ */
+export interface VerifyEmailRequest {
+  email: string;
+  code: string;
+}
+
+/**
+ * Send phone verification request type
+ * 휴대폰 인증 코드 전송 요청
+ */
+export interface SendPhoneVerificationRequest {
+  phone: string;
+}
+
+/**
+ * Verify phone request type
+ * 휴대폰 인증 코드 확인 요청
+ */
+export interface VerifyPhoneRequest {
+  phone: string;
+  code: string;
+}

@@ -17,7 +17,7 @@ import type { StoreRegisterRequest } from "@/types/stores";
 
 export default function StoreRegisterPage() {
   const router = useRouter();
-  const { tokens, isAuthenticated, updateUser } = useAuthStore();
+  const { user, tokens, isAuthenticated, updateUser } = useAuthStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // 폼 데이터 상태
@@ -195,6 +195,32 @@ export default function StoreRegisterPage() {
           <Button onClick={() => router.push("/login")}>
             로그인하기
           </Button>
+        </Card>
+      </div>
+    );
+  }
+
+  // 휴대폰 인증 체크
+  if (!user?.phone_verified) {
+    return (
+      <div className="max-w-2xl mx-auto px-4 py-16">
+        <Card className="p-12 text-center">
+          <Phone className="w-16 h-16 text-blue-500 mx-auto mb-4" />
+          <h2 className="text-xl font-bold text-gray-900 mb-2">
+            휴대폰 인증이 필요합니다
+          </h2>
+          <p className="text-gray-600 mb-6">
+            매장 등록을 위해서는 휴대폰 인증이 필요합니다.<br />
+            마이페이지에서 휴대폰 인증을 완료해주세요.
+          </p>
+          <div className="flex gap-3 justify-center">
+            <Button variant="outline" onClick={() => router.push("/")}>
+              홈으로
+            </Button>
+            <Button onClick={() => router.push("/mypage/edit")}>
+              휴대폰 인증하러 가기
+            </Button>
+          </div>
         </Card>
       </div>
     );

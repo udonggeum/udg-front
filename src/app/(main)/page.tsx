@@ -458,7 +458,26 @@ export default function Home() {
                 </Link>
               ))}
             </div>
+          ) : !user?.address ? (
+            // 주소가 등록되지 않은 경우
+            <div className="bg-white rounded-2xl p-12 text-center">
+              <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <MapPin className="w-8 h-8 text-yellow-600" />
+              </div>
+              <h3 className="text-[18px] font-semibold text-gray-900 mb-2">
+                주소를 등록해주세요
+              </h3>
+              <p className="text-caption text-gray-600 mb-6">
+                주소를 등록하시면 내 주변 금은방을 확인할 수 있습니다
+              </p>
+              <Link href="/mypage/edit">
+                <Button variant="brand-primary" size="lg" className="px-8 py-3">
+                  주소 등록하기
+                </Button>
+              </Link>
+            </div>
           ) : (
+            // 주소는 있지만 주변 매장이 없는 경우
             <div className="bg-white rounded-2xl p-12 text-center">
               <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Store className="w-8 h-8 text-gray-400" />
