@@ -141,6 +141,8 @@ export interface PostListQuery {
   search?: string;
   page?: number;
   page_size?: number;
+  region?: string;
+  district?: string;
   sort_by?: 'created_at' | 'view_count' | 'like_count' | 'comment_count';
   sort_order?: 'asc' | 'desc';
 }

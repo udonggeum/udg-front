@@ -6,7 +6,6 @@ import {
   MapPin,
   Phone,
   Clock,
-  ArrowLeft,
   Share2,
   Store as StoreIcon,
   Heart,
@@ -23,6 +22,10 @@ import {
   Eye,
   ThumbsUp,
   MessageSquare,
+  PenSquare,
+  Newspaper,
+  Copy,
+  Sparkles,
 } from "lucide-react";
 import { getStoreDetailAction, toggleStoreLikeAction } from "@/actions/stores";
 import { getStoreProductsAction } from "@/actions/products";
@@ -400,6 +403,14 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
 
   const status = getStoreStatus();
 
+  // 24시간 이내 작성된 글인지 확인
+  const isNewPost = (createdAt: string) => {
+    const postDate = new Date(createdAt);
+    const now = new Date();
+    const diffInHours = (now.getTime() - postDate.getTime()) / (1000 * 60 * 60);
+    return diffInHours <= 24;
+  };
+
   // 자기 매장인지 확인 (user_id가 있고, store의 user_id와 일치하는 경우)
   const isMyStore = user?.id && store.user_id && user.id === store.user_id;
   const isAnyEditing = Object.values(editSections).some(Boolean);
@@ -638,6 +649,19 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
     }
   };
 
+  // 전화번호 복사 핸들러
+  const handleCopyPhoneNumber = async () => {
+    if (!store.phone_number) return;
+
+    try {
+      await navigator.clipboard.writeText(store.phone_number);
+      toast.success(`${store.phone_number}가 복사되었습니다.`);
+    } catch (error) {
+      console.error("Copy phone number error:", error);
+      toast.error("전화번호 복사에 실패했습니다.");
+    }
+  };
+
   const handleSaveTags = async (tagIds: number[]) => {
     const { tokens } = useAuthStore.getState();
     if (!tokens?.access_token || !store) return;
@@ -757,15 +781,6 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
             <rect width="100" height="100" fill="url(#grid)" />
           </svg>
         </div>
-
-        {/* 뒤로가기 버튼 */}
-        <button
-          onClick={() => router.back()}
-          className="absolute top-4 left-4 z-10 flex items-center gap-2 px-4 py-2 bg-white/90 backdrop-blur-sm hover:bg-white rounded-lg transition-colors shadow-sm"
-        >
-          <ArrowLeft className="w-5 h-5 text-gray-900" />
-          <span className="text-caption font-semibold text-gray-900">뒤로가기</span>
-        </button>
       </div>
 
       {/* 매장 메인 정보 */}
@@ -999,7 +1014,11 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
               {(store.tags && store.tags.length > 0) || isMyStore ? (
                 <div
                   className={`mb-4 ml-3 p-3 rounded-lg transition-all ${
-                    isMyStore ? "group hover:bg-gray-50" : ""
+                    isMyStore && (isEditMode || isAnyEditing)
+                      ? "bg-yellow-50 border-2 border-yellow-200"
+                      : isMyStore
+                      ? "group hover:bg-gray-50"
+                      : ""
                   }`}
                 >
                   <div className="flex items-start justify-between gap-3">
@@ -1020,7 +1039,9 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
                     {isMyStore && (
                       <button
                         onClick={handleOpenTagModal}
-                        className="transition-opacity p-1.5 hover:bg-gray-100 rounded-lg flex-shrink-0 opacity-0 group-hover:opacity-100"
+                        className={`transition-opacity p-1.5 hover:bg-gray-100 rounded-lg flex-shrink-0 ${
+                          isEditMode || isAnyEditing ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                        }`}
                       >
                         <Pencil className="w-4 h-4 text-gray-600" />
                       </button>
@@ -1031,34 +1052,56 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
 
               {/* 빠른 액션 버튼 */}
               <div className="flex gap-3">
-                {/* 자기 매장이 아닐 때만 문의하기 버튼 표시 */}
-                {!isMyStore && (
-                  <button
-                    onClick={handleInquiry}
-                    className="flex-1 flex items-center justify-center gap-2 py-3 bg-yellow-400 hover:bg-yellow-500 text-gray-900 text-body font-semibold rounded-xl transition-colors shadow-md hover:shadow-lg"
-                  >
-                    <MessageCircle className="w-5 h-5" />
-                    문의하기
-                  </button>
+                {isMyStore ? (
+                  <>
+                    {/* 내 매장: 구매글 작성, 매장소식 작성 */}
+                    <button
+                      onClick={() => router.push(`/community/write?category=gold_trade&store_id=${store.id}`)}
+                      className="flex-1 flex items-center justify-center gap-2 py-3 bg-gray-900 hover:bg-gray-800 text-white text-body font-semibold rounded-xl transition-colors"
+                    >
+                      <PenSquare className="w-5 h-5" />
+                      구매글 작성
+                    </button>
+                    <button
+                      onClick={() => router.push(`/community/write?type=store_news&store_id=${store.id}`)}
+                      className="flex-1 flex items-center justify-center gap-2 py-3 bg-gray-900 hover:bg-gray-800 text-white text-body font-semibold rounded-xl transition-colors"
+                    >
+                      <Newspaper className="w-5 h-5" />
+                      매장소식 작성
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    {/* 다른 매장: 문의하기, 전화번호 복사 */}
+                    <button
+                      onClick={handleInquiry}
+                      className="flex-1 flex items-center justify-center gap-2 py-3 bg-yellow-400 hover:bg-yellow-500 text-gray-900 text-body font-semibold rounded-xl transition-colors shadow-md hover:shadow-lg"
+                    >
+                      <MessageCircle className="w-5 h-5" />
+                      문의하기
+                    </button>
+                    {store.phone_number && (
+                      <button
+                        onClick={handleCopyPhoneNumber}
+                        className="flex-1 flex items-center justify-center gap-2 py-3 bg-gray-900 hover:bg-gray-800 text-white text-body font-semibold rounded-xl transition-colors"
+                      >
+                        <Copy className="w-5 h-5" />
+                        전화번호 복사
+                      </button>
+                    )}
+                  </>
                 )}
-                {store.phone_number && (
-                  <a
-                    href={`tel:${store.phone_number.replace(/[^0-9]/g, '')}`}
-                    className="flex-1 flex items-center justify-center gap-2 py-3 bg-gray-900 hover:bg-gray-800 text-white text-body font-semibold rounded-xl transition-colors"
-                  >
-                    <Phone className="w-5 h-5" />
-                    전화하기
-                  </a>
-                )}
+
+                {/* 공통: 길찾기, 공유 */}
                 {store.address && (
                   <a
                     href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(store.address)}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className={`${!isMyStore && !store.phone_number ? "flex-1" : "flex-shrink-0"} flex items-center justify-center gap-2 ${!isMyStore && !store.phone_number ? "py-3" : "px-4 py-3"} bg-white border-2 border-gray-200 hover:border-gray-900 text-gray-900 text-body font-semibold rounded-xl transition-colors`}
+                    className="flex items-center justify-center gap-2 px-4 py-3 bg-white border-2 border-gray-200 hover:border-gray-900 text-gray-900 text-body font-semibold rounded-xl transition-colors"
                   >
                     <MapPin className="w-5 h-5" />
-                    {!isMyStore && !store.phone_number ? "길찾기" : <span className="sr-only">길찾기</span>}
+                    <span className="sr-only">길찾기</span>
                   </a>
                 )}
                 <button className="flex items-center justify-center gap-2 px-4 py-3 bg-white border-2 border-gray-200 hover:border-gray-900 text-gray-900 text-body font-semibold rounded-xl transition-colors">
@@ -1119,18 +1162,23 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
                       <div className="flex items-center justify-center py-page">
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
                       </div>
-                    ) : posts.length === 0 ? (
-                      <div className="text-center py-page">
-                        <p className="text-gray-500">아직 작성된 게시글이 없습니다.</p>
-                      </div>
-                    ) : (
-                      <>
-                        {/* 고정된 게시글 */}
-                        {posts.filter(post => post.is_pinned).map((post) => (
+                    ) : (() => {
+                      const pinnedPosts = posts.filter(post => post.is_pinned);
+                      const newPosts = posts.filter(post => !post.is_pinned && isNewPost(post.created_at));
+                      const hasContent = pinnedPosts.length > 0 || newPosts.length > 0;
+
+                      return !hasContent ? (
+                        <div className="text-center py-page">
+                          <p className="text-gray-500">아직 작성된 게시글이 없습니다.</p>
+                        </div>
+                      ) : (
+                        <>
+                          {/* 고정된 게시글 */}
+                          {pinnedPosts.map((post) => (
                           <div
                             key={post.id}
                             className="group border border-gray-200 rounded-xl p-5 hover:shadow-md transition-shadow cursor-pointer bg-yellow-50 border-yellow-200"
-                            onClick={() => router.push(`/community/${post.id}`)}
+                            onClick={() => router.push(`/community/posts/${post.id}`)}
                           >
                             <div className="flex items-start justify-between gap-3 mb-3">
                               <div className="flex items-center gap-2">
@@ -1193,15 +1241,19 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
                           </div>
                         ))}
 
-                        {/* 일반 게시글 */}
-                        {posts.filter(post => !post.is_pinned).map((post) => (
+                        {/* 24시간 이내 작성된 게시글 */}
+                        {newPosts.map((post) => (
                           <div
                             key={post.id}
                             className="group border border-gray-200 rounded-xl p-5 hover:shadow-md transition-shadow cursor-pointer"
-                            onClick={() => router.push(`/community/${post.id}`)}
+                            onClick={() => router.push(`/community/posts/${post.id}`)}
                           >
                             <div className="flex items-start justify-between gap-3 mb-3">
                               <div className="flex items-center gap-2">
+                                <span className="flex items-center gap-1 px-2 py-1 text-xs font-bold bg-gradient-to-r from-green-400 to-emerald-500 text-white rounded-full shadow-sm">
+                                  <Sparkles className="w-3 h-3" />
+                                  NEW
+                                </span>
                                 {post.category === 'gold_trade' && (
                                   <span className="px-2 py-1 text-xs font-medium bg-amber-100 text-amber-700 rounded">
                                     금거래
@@ -1274,7 +1326,8 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
                           </div>
                         ))}
                       </>
-                    )}
+                      );
+                    })()}
                   </div>
                 )}
 
@@ -1331,7 +1384,7 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
                       </div>
                     ) : (() => {
                       const filteredPosts = selectedNewsType === "all"
-                        ? posts.filter(p => p.category === 'gold_news')
+                        ? posts
                         : posts.filter(p => p.type === selectedNewsType);
 
                       return filteredPosts.length === 0 ? (
@@ -1345,12 +1398,18 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
                             <div
                               key={post.id}
                               className="group border border-gray-200 rounded-xl p-5 hover:shadow-md transition-shadow cursor-pointer bg-yellow-50 border-yellow-200"
-                              onClick={() => router.push(`/community/${post.id}`)}
+                              onClick={() => router.push(`/community/posts/${post.id}`)}
                             >
                               <div className="flex items-start justify-between gap-3 mb-3">
                                 <div className="flex items-center gap-2">
                                   <Pin className="w-4 h-4 text-yellow-600 fill-yellow-600" />
                                   <span className="text-xs font-medium text-yellow-700">고정됨</span>
+                                  {isNewPost(post.created_at) && (
+                                    <span className="flex items-center gap-1 px-2 py-1 text-xs font-bold bg-gradient-to-r from-green-400 to-emerald-500 text-white rounded-full shadow-sm">
+                                      <Sparkles className="w-3 h-3" />
+                                      NEW
+                                    </span>
+                                  )}
                                   {post.type === 'product_news' && (
                                     <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-700 rounded">
                                       상품
@@ -1428,10 +1487,16 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
                             <div
                               key={post.id}
                               className="group border border-gray-200 rounded-xl p-5 hover:shadow-md transition-shadow cursor-pointer"
-                              onClick={() => router.push(`/community/${post.id}`)}
+                              onClick={() => router.push(`/community/posts/${post.id}`)}
                             >
                               <div className="flex items-start justify-between gap-3 mb-3">
                                 <div className="flex items-center gap-2">
+                                  {isNewPost(post.created_at) && (
+                                    <span className="flex items-center gap-1 px-2 py-1 text-xs font-bold bg-gradient-to-r from-green-400 to-emerald-500 text-white rounded-full shadow-sm">
+                                      <Sparkles className="w-3 h-3" />
+                                      NEW
+                                    </span>
+                                  )}
                                   {post.type === 'product_news' && (
                                     <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-700 rounded">
                                       상품
@@ -1525,7 +1590,7 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
                           <div
                             key={`${item.post_id}-${item.image_url}`}
                             className="group relative aspect-square rounded-lg overflow-hidden cursor-pointer"
-                            onClick={() => router.push(`/community/${item.post_id}`)}
+                            onClick={() => router.push(`/community/posts/${item.post_id}`)}
                           >
                             <img
                               src={item.image_url}
@@ -1644,9 +1709,9 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
                               placeholder="전화번호"
                             />
                           ) : store.phone_number ? (
-                            <a href={`tel:${store.phone_number}`} className="text-blue-600 hover:underline">
+                            <div className="text-caption text-gray-600">
                               {store.phone_number}
-                            </a>
+                            </div>
                           ) : (
                             <div className="text-gray-400 italic">전화번호를 입력해주세요</div>
                           )}
@@ -1692,22 +1757,27 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
                     >
                       <div className="flex gap-3">
                         <Clock className="w-5 h-5 text-gray-400 flex-shrink-0 mt-0.5" />
-                        <div className="flex-1">
+                        <div className="flex-1 min-w-0">
                           {isMyStore && editSections.hours ? (
-                            <div className="flex items-center gap-2">
-                              <input
-                                type="time"
-                                value={formData.open_time}
-                                onChange={(e) => setFormData({ ...formData, open_time: e.target.value })}
-                                className="text-caption text-gray-900 bg-transparent border border-gray-300 rounded px-2 py-1 outline-none focus:border-yellow-400"
-                              />
-                              <span className="text-gray-500">-</span>
-                              <input
-                                type="time"
-                                value={formData.close_time}
-                                onChange={(e) => setFormData({ ...formData, close_time: e.target.value })}
-                                className="text-caption text-gray-900 bg-transparent border border-gray-300 rounded px-2 py-1 outline-none focus:border-yellow-400"
-                              />
+                            <div className="flex flex-col gap-2">
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs text-gray-500 w-12 flex-shrink-0">오픈</span>
+                                <input
+                                  type="time"
+                                  value={formData.open_time}
+                                  onChange={(e) => setFormData({ ...formData, open_time: e.target.value })}
+                                  className="flex-1 text-sm text-gray-900 bg-white border border-gray-300 rounded px-3 py-1.5 outline-none focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400"
+                                />
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs text-gray-500 w-12 flex-shrink-0">마감</span>
+                                <input
+                                  type="time"
+                                  value={formData.close_time}
+                                  onChange={(e) => setFormData({ ...formData, close_time: e.target.value })}
+                                  className="flex-1 text-sm text-gray-900 bg-white border border-gray-300 rounded px-3 py-1.5 outline-none focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400"
+                                />
+                              </div>
                             </div>
                           ) : (
                             <div className="text-caption text-gray-900 font-medium">
