@@ -8,6 +8,8 @@ export interface User {
   name: string;
   phone?: string;
   address?: string;
+  latitude?: number;  // 위도 (주소 기반)
+  longitude?: number; // 경도 (주소 기반)
   profile_image?: string;
   role: 'user' | 'admin';
   created_at?: string;

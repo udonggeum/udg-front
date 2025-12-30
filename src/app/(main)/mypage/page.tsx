@@ -29,7 +29,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { logoutUserAction, updateProfileAction } from "@/actions/auth";
 import { getPostsAction } from "@/actions/community";
 import { getPresignedUrlAction, uploadToS3 } from "@/actions/upload";
-import { getUserLikedStoresAction, getMyStoreAction, getStoresAction } from "@/actions/stores";
+import { getUserLikedStoresAction, getMyStoreAction } from "@/actions/stores";
 import { Container } from "@/components/layout-primitives";
 import type { CommunityPost } from "@/types/community";
 import type { StoreDetail } from "@/types/stores";
@@ -102,28 +102,16 @@ export default function MyPage() {
   // admin 사용자의 매장 불러오기
   useEffect(() => {
     const fetchMyStore = async () => {
-      if (!isAdmin || !tokens?.access_token || !user?.id) return;
+      if (!isAdmin || !tokens?.access_token) return;
 
       setIsLoadingMyStore(true);
       try {
-        // 먼저 /users/me/store API 시도
         const result = await getMyStoreAction(tokens.access_token);
 
         if (result.success && result.data?.store) {
           setMyStore(result.data.store);
         } else {
-          // API가 실패하면 전체 매장 목록에서 현재 사용자의 매장 찾기
-          const storesResult = await getStoresAction({}, tokens.access_token);
-
-          if (storesResult.success && storesResult.data?.stores) {
-            const myStoreFound = storesResult.data.stores.find(
-              (store: StoreDetail) => store.user_id === user.id
-            );
-
-            if (myStoreFound) {
-              setMyStore(myStoreFound);
-            }
-          }
+          console.error("Failed to fetch my store:", result.error);
         }
       } catch (error) {
         console.error("Failed to fetch my store:", error);
@@ -132,10 +120,10 @@ export default function MyPage() {
       }
     };
 
-    if (isAuthenticated && isAdmin && tokens?.access_token && user?.id) {
+    if (isAuthenticated && isAdmin && tokens?.access_token) {
       fetchMyStore();
     }
-  }, [isAuthenticated, isAdmin, user?.id, tokens?.access_token]);
+  }, [isAuthenticated, isAdmin, tokens?.access_token]);
 
   // 좋아요한 매장 불러오기 (일반 사용자만)
   useEffect(() => {

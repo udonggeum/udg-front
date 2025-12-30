@@ -105,6 +105,8 @@ export interface StoresRequest {
   category?: string;
   page?: number;
   page_size?: number;
+  user_lat?: number; // 사용자 위도 (거리순 정렬용)
+  user_lng?: number; // 사용자 경도 (거리순 정렬용)
 }
 
 /**

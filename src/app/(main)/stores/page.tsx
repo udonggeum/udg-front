@@ -172,9 +172,17 @@ export default function StoresPage() {
         },
         (error) => {
           console.log("❌ Failed to get user location:", error.message);
-          console.log("ℹ️ Use '현재 위치로 검색' button to retry");
-          // 실패 시 조용히 무시 (사용자에게 알림 X)
-          // 전체 매장 bounds fit으로 fallback
+          console.log("ℹ️ Trying user profile location as fallback");
+
+          // GPS 실패 시 사용자 프로필의 위경도 사용
+          if (user?.latitude !== undefined && user?.longitude !== undefined) {
+            const location = { lat: user.latitude, lng: user.longitude };
+            console.log("✅ Using user profile location:", location);
+            setUserLocation(location);
+            setMapCenter(location);
+          } else {
+            console.log("ℹ️ No user profile location available");
+          }
         },
         {
           enableHighAccuracy: false, // 빠른 응답 우선
@@ -182,8 +190,14 @@ export default function StoresPage() {
           maximumAge: 300000, // 5분간 캐시 허용
         }
       );
+    } else if (user?.latitude !== undefined && user?.longitude !== undefined) {
+      // Geolocation API가 없으면 프로필 위치 사용
+      const location = { lat: user.latitude, lng: user.longitude };
+      console.log("✅ Using user profile location (no geolocation API):", location);
+      setUserLocation(location);
+      setMapCenter(location);
     }
-  }, []);
+  }, [user?.latitude, user?.longitude]);
 
   // 페이지 스크롤 방지 (매장찾기는 고정 레이아웃)
   useEffect(() => {

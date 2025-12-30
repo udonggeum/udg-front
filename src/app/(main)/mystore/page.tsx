@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Store, ArrowLeft, Save, Phone, Clock, MapPin, FileText, Camera, Image as ImageIcon, Tags } from "lucide-react";
 import AddressSearchInput from "@/components/AddressSearchInput";
 import { useAuthStore } from "@/stores/useAuthStore";
-import { getMyStoreAction, updateMyStoreAction, getStoreLocationsAction, getStoresAction } from "@/actions/stores";
+import { getMyStoreAction, updateMyStoreAction, getStoreLocationsAction } from "@/actions/stores";
 import { getPresignedUrlAction, uploadToS3 } from "@/actions/upload";
 import { getTagsAction } from "@/actions/tags";
 import { UpdateStoreRequestSchema } from "@/schemas/stores";
@@ -155,60 +155,8 @@ export default function MyStoreEditPage() {
             }
           }
         } else {
-          console.error("Failed to load store from /users/me/store, trying fallback");
-          // Fallback: 전체 매장 목록에서 현재 사용자의 매장 찾기
-          const storesResult = await getStoresAction({}, tokens.access_token);
-          if (storesResult.success && storesResult.data?.stores) {
-            const myStoreFound = storesResult.data.stores.find(
-              (store: StoreDetail) => store.user_id === user?.id
-            );
-            if (myStoreFound) {
-              console.log("Found store from fallback:", myStoreFound);
-              setMyStore(myStoreFound);
-
-              // 폼 데이터 초기화
-              const storeTagIds = myStoreFound.tags?.map(tag => tag.id) || [];
-              setSelectedTagIds(storeTagIds);
-              setFormData({
-                name: myStoreFound.name || "",
-                region: myStoreFound.region || "",
-                district: myStoreFound.district || "",
-                address: myStoreFound.address || "",
-                phone_number: myStoreFound.phone_number || "",
-                open_time: myStoreFound.open_time || "",
-                close_time: myStoreFound.close_time || "",
-                description: myStoreFound.description || "",
-                image_url: myStoreFound.image_url || "",
-                tag_ids: storeTagIds,
-              });
-
-              // 지역/구군 초기화
-              if (myStoreFound.region) {
-                setSelectedRegion(myStoreFound.region);
-                const regionData = locationsResult.data?.regions.find(
-                  (r) => r.region === myStoreFound.region
-                );
-                if (regionData) {
-                  setAvailableDistricts(regionData.districts);
-                }
-              }
-
-              // 주소 파싱
-              if (myStoreFound.address) {
-                const match = myStoreFound.address.match(/^\[(\d+)\]\s*(.+)$/);
-                if (match) {
-                  setZipCode(match[1]);
-                  setBaseAddress(match[2]);
-                } else {
-                  setBaseAddress(myStoreFound.address);
-                }
-              }
-            } else {
-              toast.error("매장 정보를 찾을 수 없습니다.");
-            }
-          } else {
-            toast.error(result.error || "매장 정보를 불러올 수 없습니다.");
-          }
+          console.error("Failed to load store from /users/me/store:", result.error);
+          toast.error(result.error || "매장 정보를 불러올 수 없습니다.");
         }
       } catch (error) {
         console.error("Failed to load store data:", error);

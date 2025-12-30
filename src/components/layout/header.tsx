@@ -9,12 +9,11 @@ import { useLocationStore } from "@/stores/useLocationStore";
 import { useApiErrorHandler } from "@/hooks/useApiCall";
 import { logoutUserAction } from "@/actions/auth";
 import { getChatRoomsAction } from "@/actions/chat";
-import { getMyStoreAction, getStoresAction } from "@/actions/stores";
+import { getMyStoreAction } from "@/actions/stores";
 import { useWebSocket } from "@/hooks/useWebSocket";
 import { toast } from "sonner";
 import { User, Settings, LogOut, ChevronDown, MapPin, Menu, X } from "lucide-react";
 import LocationSettingModal from "@/components/LocationSettingModal";
-import type { StoreDetail } from "@/types/stores";
 import {
   Tooltip,
   TooltipContent,
@@ -94,21 +93,11 @@ export function Header() {
       }
 
       try {
-        // 먼저 /users/me/store API 시도
         const result = await getMyStoreAction(tokens.access_token);
         if (result.success && result.data?.store) {
           setMyStoreId(result.data.store.id);
         } else {
-          // API가 실패하면 전체 매장 목록에서 현재 사용자의 매장 찾기
-          const storesResult = await getStoresAction({}, tokens.access_token);
-          if (storesResult.success && storesResult.data?.stores) {
-            const myStore = storesResult.data.stores.find(
-              (store: StoreDetail) => store.user_id === user?.id
-            );
-            if (myStore) {
-              setMyStoreId(myStore.id);
-            }
-          }
+          console.error("Failed to fetch my store ID:", result.error);
         }
       } catch (error) {
         console.error("Failed to fetch my store ID:", error);
@@ -118,7 +107,7 @@ export function Header() {
     if (user?.role === "admin" && tokens?.access_token) {
       fetchMyStoreId();
     }
-  }, [user?.role, user?.id, tokens?.access_token]);
+  }, [user?.role, tokens?.access_token]);
 
   // WebSocket으로 실시간 메시지 수신
   useWebSocket({

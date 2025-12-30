@@ -18,6 +18,7 @@ import {
   LogIn,
   Mountain,
   BookHeart,
+  MessageCircle,
 } from "lucide-react";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { getLatestGoldPricesAction } from "@/actions/goldPrices";
@@ -25,6 +26,7 @@ import { getStoresAction } from "@/actions/stores";
 import type { GoldPrice } from "@/types/goldPrices";
 import type { StoreDetail } from "@/types/stores";
 import { Section, Container, SectionHeader } from "@/components/layout-primitives";
+import { formatDistance, calculateDistance } from "@/utils/distance";
 
 export default function Home() {
   const router = useRouter();
@@ -35,7 +37,7 @@ export default function Home() {
   const [isLoadingPrices, setIsLoadingPrices] = useState(true);
 
   // 매장 상태
-  const [nearbyStores, setNearbyStores] = useState<StoreDetail[]>([]);
+  const [nearbyStores, setNearbyStores] = useState<(StoreDetail & { distance?: string })[]>([]);
   const [isLoadingStores, setIsLoadingStores] = useState(false);
   const [userAddress, setUserAddress] = useState<string>("");
   const [userRegion, setUserRegion] = useState<string>("");
@@ -88,14 +90,35 @@ export default function Home() {
           setUserDistrict(addressParts[1]);
         }
 
-        // 주변 매장 검색 (일단 전체 매장 중 3개)
+        // 주변 매장 검색 (사용자 위경도 기반 거리순 정렬)
         const storesResult = await getStoresAction({
           page: 1,
-          page_size: 3,
+          page_size: 6,
+          user_lat: user.latitude,
+          user_lng: user.longitude,
         });
 
         if (storesResult.success && storesResult.data?.stores) {
-          setNearbyStores(storesResult.data.stores);
+          // 사용자 위경도가 있으면 각 매장까지의 거리 계산
+          const storesWithDistance = storesResult.data.stores.map(store => {
+            let distance: string | undefined = undefined;
+
+            if (user.latitude !== undefined && user.longitude !== undefined &&
+                store.latitude !== undefined && store.longitude !== undefined) {
+              const distanceKm = calculateDistance(
+                user.latitude, user.longitude,
+                store.latitude, store.longitude
+              );
+              distance = formatDistance(distanceKm);
+            }
+
+            return {
+              ...store,
+              distance
+            };
+          });
+
+          setNearbyStores(storesWithDistance);
         }
       } else {
         // 주소가 없으면 기본 주소 설정 유도
@@ -207,7 +230,7 @@ export default function Home() {
       {/* 빠른 메뉴 */}
       <Section className="pb-12">
         <Container>
-          <div className={`grid gap-8 ${isAuthenticated ? 'grid-cols-3 sm:grid-cols-4 md:grid-cols-5' : 'grid-cols-3 sm:grid-cols-4'}`}>
+          <div className={`grid gap-8 ${isAuthenticated ? 'grid-cols-3 sm:grid-cols-4 md:grid-cols-6' : 'grid-cols-3 sm:grid-cols-4'}`}>
             {/* 금시세 */}
             <Link
               href="/prices"
@@ -240,6 +263,19 @@ export default function Home() {
               </div>
               <span className="text-caption font-medium text-gray-700 text-center group-hover:text-gray-900">금광산</span>
             </Link>
+
+            {/* 메시지 - 로그인 시에만 표시 */}
+            {isAuthenticated && (
+              <Link
+                href="/chats"
+                className="group flex flex-col items-center gap-3 smooth-transition"
+              >
+                <div className="w-16 h-16 bg-emerald-50 border-2 border-emerald-200 rounded-2xl flex items-center justify-center md:group-hover:scale-110 transition-transform duration-200">
+                  <MessageCircle className="w-8 h-8 text-emerald-600" />
+                </div>
+                <span className="text-caption font-medium text-gray-700 text-center group-hover:text-gray-900">메시지</span>
+              </Link>
+            )}
 
             {/* 관심글 - 로그인 시에만 표시 */}
             {isAuthenticated && (
@@ -405,6 +441,9 @@ export default function Home() {
                       <span className="text-[16px] font-semibold text-gray-900">{store.name}</span>
                       {store.business_hours && (
                         <Badge className="px-1.5 py-0.5 bg-green-100 text-green-700 text-[11px] font-medium rounded">영업중</Badge>
+                      )}
+                      {store.distance && (
+                        <Badge className="px-1.5 py-0.5 bg-blue-100 text-blue-700 text-[11px] font-medium rounded">{store.distance}</Badge>
                       )}
                     </div>
                     <div className="text-small text-gray-500 mb-2">{store.address || `${store.region || ""} ${store.district || ""}`.trim()}</div>
