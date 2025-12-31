@@ -162,6 +162,28 @@ export async function updateProfileAction(
 }
 
 /**
+ * 이메일 사용 가능 여부 확인 Server Action
+ * 회원가입 전에 이메일이 이미 사용 중인지 확인합니다.
+ */
+export async function checkEmailAvailabilityAction(
+  email: string
+): Promise<ApiResponse<{ is_available: boolean }>> {
+  try {
+    const response = await apiClient.post<{ is_available: boolean }>(
+      "/auth/check-email",
+      { email }
+    );
+
+    return {
+      success: true,
+      data: response.data,
+    };
+  } catch (error) {
+    return handleApiError(error, "이메일 확인에 실패했습니다.");
+  }
+}
+
+/**
  * 이메일 인증 코드 전송 Server Action
  * 회원가입 시 이메일 주소로 6자리 인증 코드를 전송합니다.
  */

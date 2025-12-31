@@ -12,7 +12,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Eye, EyeOff, AlertCircle, CheckCircle2 } from "lucide-react";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useUIStore } from "@/stores/useUIStore";
-import { registerUserAction, sendEmailVerificationAction, verifyEmailAction } from "@/actions/auth";
+import { registerUserAction, sendEmailVerificationAction, verifyEmailAction, checkEmailAvailabilityAction } from "@/actions/auth";
 
 interface FormErrors {
   email?: string;
@@ -282,6 +282,28 @@ export default function SignupPage() {
     setIsVerifyingEmail(true);
 
     try {
+      // 먼저 이메일 사용 가능 여부 확인
+      const availabilityResult = await checkEmailAvailabilityAction(formData.email);
+
+      if (!availabilityResult.success) {
+        showToast({
+          message: availabilityResult.error || "이메일 확인에 실패했습니다.",
+          type: "error",
+          duration: 3000,
+        });
+        return;
+      }
+
+      if (!availabilityResult.data?.is_available) {
+        showToast({
+          message: "이미 사용 중인 이메일입니다.",
+          type: "error",
+          duration: 3000,
+        });
+        return;
+      }
+
+      // 사용 가능한 이메일이면 인증 코드 전송
       const result = await sendEmailVerificationAction({ email: formData.email });
 
       if (result.success) {
@@ -630,7 +652,7 @@ export default function SignupPage() {
                   </Button>
                 )}
                 {isEmailVerified && (
-                  <div className="flex items-center px-4 py-6 bg-green-50 rounded-xl">
+                  <div className="flex items-center justify-center px-5 py-3 bg-green-50 rounded-xl min-h-[48px]">
                     <CheckCircle2 className="w-5 h-5 text-green-600" />
                     <span className="ml-2 text-caption font-semibold text-green-700">인증완료</span>
                   </div>
@@ -653,10 +675,10 @@ export default function SignupPage() {
                   </div>
                   <Button
                     type="button"
-                    variant="brand-primary"
+                    variant="secondary"
                     disabled={isVerifyingEmail || emailVerificationCode.length !== 6}
                     onClick={handleVerifyEmail}
-                    className="px-5 py-6 text-caption font-semibold rounded-xl whitespace-nowrap"
+                    className="px-5 py-6 bg-gray-900 hover:bg-gray-800 text-white text-caption font-semibold rounded-xl whitespace-nowrap"
                   >
                     {isVerifyingEmail ? "확인 중..." : "인증확인"}
                   </Button>

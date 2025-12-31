@@ -11,7 +11,6 @@ import {
   Store as StoreIcon,
   Phone,
   Clock,
-  Star,
 } from "lucide-react";
 import { getStoresAction, toggleStoreLikeAction } from "@/actions/stores";
 import type { StoreDetail, Tag } from "@/types/stores";
@@ -130,8 +129,6 @@ interface StoreWithExtras extends StoreDetail {
   distance?: string;
   iconBg?: string;
   iconColor?: string;
-  rating?: number;
-  reviewCount?: number;
   isOpen?: boolean;
   lat?: number;
   lng?: number;
@@ -163,7 +160,7 @@ function StoresPageContent() {
   const [selectedStore, setSelectedStore] = useState<StoreWithExtras | null>(null);
   const [isDetailPanelOpen, setIsDetailPanelOpen] = useState(false);
   const [isMobileMapOpen, setIsMobileMapOpen] = useState(false);
-  const [sortBy, setSortBy] = useState<"distance" | "rating" | "reviews">("distance");
+  const [sortBy, setSortBy] = useState<"distance">("distance");
   const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number }>({
     lat: 37.5665,
     lng: 126.978,
@@ -277,8 +274,6 @@ function StoresPageContent() {
               tags: store.tags || [],
               iconBg: colorSet.bg,
               iconColor: colorSet.color,
-              rating: 0, // 실제 리뷰 평점 없음
-              reviewCount: 0, // 실제 리뷰 수 없음
               isOpen,
               lat,
               lng,
@@ -469,12 +464,6 @@ function StoresPageContent() {
           const distA = parseFloat(a.distance.replace("km", "").replace("m", "")) / (a.distance.includes("m") && !a.distance.includes("km") ? 1000 : 1);
           const distB = parseFloat(b.distance.replace("km", "").replace("m", "")) / (b.distance.includes("m") && !b.distance.includes("km") ? 1000 : 1);
           return distA - distB;
-
-        case "rating":
-          return (b.rating || 0) - (a.rating || 0);
-
-        case "reviews":
-          return (b.reviewCount || 0) - (a.reviewCount || 0);
 
         default:
           return 0;
@@ -677,8 +666,6 @@ function StoresPageContent() {
                 className="appearance-none text-small font-medium text-gray-600 pr-5 cursor-pointer bg-transparent focus:outline-none"
               >
                 <option value="distance">거리순</option>
-                <option value="rating">별점순</option>
-                <option value="reviews">리뷰많은순</option>
               </select>
               <svg
                 className="w-4 h-4 absolute right-0 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
@@ -762,21 +749,13 @@ function StoresPageContent() {
                           />
                         </button>
                       </div>
-                      <div className="flex items-center gap-1.5 text-small mb-2">
-                        <span className="text-yellow-500 font-semibold">
-                          ★ {store.rating?.toFixed(1) || "4.5"}
-                        </span>
-                        <span className="text-gray-300">|</span>
-                        <span className="text-gray-500">리뷰 {store.reviewCount || 0}</span>
-                        {store.distance && (
-                          <>
-                            <span className="text-gray-300">|</span>
-                            <span className="text-blue-600 font-semibold">
-                              {store.distance}
-                            </span>
-                          </>
-                        )}
-                      </div>
+                      {store.distance && (
+                        <div className="flex items-center gap-1.5 text-small mb-2">
+                          <span className="text-blue-600 font-semibold">
+                            {store.distance}
+                          </span>
+                        </div>
+                      )}
                       <p className="text-small text-gray-500 mb-2 truncate">
                         {store.address || "주소 정보 없음"}
                       </p>
@@ -868,18 +847,10 @@ function StoresPageContent() {
                         onClick={() => router.push(`/stores/${selectedStore.id}`)}
                         className="hover:underline"
                       >
-                        <h3 className="text-[20px] font-bold text-gray-900 mb-1">
+                        <h3 className="text-[20px] font-bold text-gray-900">
                           {selectedStore.name}
                         </h3>
                       </button>
-                      <div className="flex items-center gap-2 text-caption">
-                        <span className="text-yellow-500 font-semibold flex items-center gap-1">
-                          <Star className="w-4 h-4 fill-current" />
-                          {selectedStore.rating?.toFixed(1) || "4.5"}
-                        </span>
-                        <span className="text-gray-300">·</span>
-                        <span className="text-gray-500">리뷰 {selectedStore.reviewCount || 0}</span>
-                      </div>
                     </div>
                     <button
                       type="button"

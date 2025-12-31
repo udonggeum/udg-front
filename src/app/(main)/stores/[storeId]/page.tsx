@@ -10,7 +10,6 @@ import {
   Store as StoreIcon,
   Heart,
   Edit3,
-  Star,
   Pencil,
   Settings,
   X,
@@ -905,18 +904,6 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
                       </button>
                     </div>
                   )}
-
-                  {/* 별점 + 리뷰 수 */}
-                  <div className="flex items-center gap-3 text-body mb-3 ml-3">
-                    <span className="flex items-center gap-1 text-yellow-500 font-semibold">
-                      <Star className="w-5 h-5 fill-current" />
-                      4.8
-                    </span>
-                    <span className="text-gray-300">|</span>
-                    <a href="#reviews" className="text-gray-600 hover:text-gray-900 transition-colors">
-                      리뷰 128개
-                    </a>
-                  </div>
 
                   {/* 매장 한줄 소개 */}
                   {(store.description || isMyStore) && (

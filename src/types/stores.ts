@@ -116,6 +116,8 @@ export interface StoresRequest {
 export interface StoreDetailResponse {
   store: StoreDetail;
   is_liked?: boolean;
+  average_rating?: number;
+  review_count?: number;
 }
 
 /**
