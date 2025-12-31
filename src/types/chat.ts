@@ -23,6 +23,7 @@ export interface ChatUser {
   id: number;
   email: string;
   name: string;
+  nickname?: string;
   profile_image_url?: string;
   role?: "user" | "admin";
   store?: {

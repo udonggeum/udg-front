@@ -500,6 +500,14 @@ export default function MyPage() {
                   </div>
 
                   <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
+                    <User className="w-5 h-5 text-gray-500 flex-shrink-0" />
+                    <div className="flex-1">
+                      <p className="text-sm text-gray-600 mb-1">닉네임</p>
+                      <p className="font-semibold text-gray-900">{user?.nickname || "-"}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
                     <Mail className="w-5 h-5 text-gray-500 flex-shrink-0" />
                     <div className="flex-1">
                       <p className="text-sm text-gray-600 mb-1">이메일</p>

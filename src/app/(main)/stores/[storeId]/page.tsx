@@ -38,6 +38,7 @@ import { useAuthStore } from "@/stores/useAuthStore";
 import { getPresignedUrlAction, uploadToS3 } from "@/actions/upload";
 import { toast } from "sonner";
 import { useAuthenticatedAction } from "@/hooks/useAuthenticatedAction";
+import { apiClient } from "@/lib/axios";
 
 type TabType = "home" | "news" | "gallery";
 
@@ -406,6 +407,17 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
 
   // 자기 매장인지 확인 (user_id가 있고, store의 user_id와 일치하는 경우)
   const isMyStore = user?.id && store.user_id && user.id === store.user_id;
+
+  // 디버깅: 매장 소유권 확인
+  useEffect(() => {
+    if (store && user) {
+      console.log("매장 소유권 체크:", {
+        userId: user.id,
+        storeUserId: store.user_id,
+        isMyStore,
+      });
+    }
+  }, [store, user, isMyStore]);
   const isAnyEditing = Object.values(editSections).some(Boolean);
 
   // 찜하기 토글 핸들러
@@ -659,16 +671,10 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
     const { tokens } = useAuthStore.getState();
     if (!tokens?.access_token || !store) return;
 
-    const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://43.200.249.22:8080';
-
     try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/stores/${store.id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${tokens.access_token}`,
-        },
-        body: JSON.stringify({
+      const response = await apiClient.put(
+        `/stores/${store.id}`,
+        {
           name: store.name,
           region: store.region || "",
           district: store.district || "",
@@ -679,16 +685,15 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
           open_time: store.open_time,
           close_time: store.close_time,
           tag_ids: tagIds,
-        }),
-      });
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${tokens.access_token}`,
+          },
+        }
+      );
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "태그 저장 실패");
-      }
-
-      const result = await response.json();
-      setStore(result.store);
+      setStore(response.data.store);
       toast.success("태그가 저장되었습니다.");
     } catch (error) {
       console.error("Save tags error:", error);
@@ -702,16 +707,10 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
     const { tokens } = useAuthStore.getState();
     if (!tokens?.access_token || !store) return;
 
-    const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://43.200.249.22:8080';
-
     try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/stores/${store.id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${tokens.access_token}`,
-        },
-        body: JSON.stringify({
+      const response = await apiClient.put(
+        `/stores/${store.id}`,
+        {
           name: data.name || store.name,
           region: store.region || "",
           district: store.district || "",
@@ -721,17 +720,16 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
           description: data.description !== undefined ? data.description : store.description,
           open_time: data.open_time !== undefined ? data.open_time : store.open_time,
           close_time: data.close_time !== undefined ? data.close_time : store.close_time,
-        }),
-      });
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${tokens.access_token}`,
+          },
+        }
+      );
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "매장 정보 수정 실패");
-      }
-
-      const result = await response.json();
-      setStore(result.store);
-      return result.store;
+      setStore(response.data.store);
+      return response.data.store;
     } catch (error) {
       console.error("Update store error:", error);
       throw error;

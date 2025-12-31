@@ -526,7 +526,7 @@ export default function CommunityDetailPage() {
                 >
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex items-center gap-2">
-                      <span className="font-semibold">{comment.user.name}</span>
+                      <span className="font-semibold">{comment.user.nickname}</span>
                       <span className="text-sm text-gray-500">
                         {new Date(comment.created_at).toLocaleString()}
                       </span>
@@ -598,7 +598,7 @@ export default function CommunityDetailPage() {
                           <div className="flex items-start justify-between mb-2">
                             <div className="flex items-center gap-2">
                               <span className="font-semibold">
-                                {reply.user.name}
+                                {reply.user.nickname}
                               </span>
                               <span className="text-sm text-gray-500">
                                 {new Date(reply.created_at).toLocaleString()}

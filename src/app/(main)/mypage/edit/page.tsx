@@ -36,6 +36,7 @@ export default function ProfileEditPage() {
 
   const [formData, setFormData] = useState<UpdateProfileRequest>({
     name: user?.name || "",
+    nickname: user?.nickname || "",
     phone: user?.phone || "",
     address: user?.address || "",
   });
@@ -487,6 +488,27 @@ export default function ProfileEditPage() {
                     {touched.name && formErrors.name && (
                       <p className="text-sm text-red-500 mt-1">{formErrors.name}</p>
                     )}
+                  </div>
+
+                  {/* Nickname */}
+                  <div>
+                    <Label htmlFor="nickname" className="flex items-center gap-2 mb-2">
+                      <UserIcon className="w-4 h-4" />
+                      닉네임
+                    </Label>
+                    <Input
+                      type="text"
+                      id="nickname"
+                      name="nickname"
+                      value={formData.nickname || ""}
+                      onChange={handleChange}
+                      className="h-12"
+                      placeholder="닉네임을 입력하세요"
+                      disabled={isPending}
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      입력하지 않으면 자동으로 생성됩니다
+                    </p>
                   </div>
 
                   {/* Phone */}

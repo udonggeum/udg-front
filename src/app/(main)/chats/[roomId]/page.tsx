@@ -589,7 +589,7 @@ export default function ChatRoomPage() {
   const handleReserve = async () => {
     if (!tokens?.access_token || !room?.product || !otherUser?.id) return;
 
-    if (!confirm(`${otherUser.name}님과 거래를 예약하시겠습니까?`)) return;
+    if (!confirm(`${otherUser.nickname || otherUser.name}님과 거래를 예약하시겠습니까?`)) return;
 
     try {
       const result = await reservePostAction(
@@ -695,13 +695,13 @@ export default function ChatRoomPage() {
     return room.user1_id === user.id ? room.user2 : room.user1;
   };
 
-  // 사용자 표시명 가져오기 (admin이고 매장명이 있으면 매장명, 아니면 이름)
+  // 사용자 표시명 가져오기 (admin이고 매장명이 있으면 매장명, 아니면 닉네임)
   const getDisplayName = (chatUser: ChatRoom["user1"] | null) => {
     if (!chatUser) return "알 수 없음";
     if (chatUser.role === "admin" && chatUser.store?.name) {
       return chatUser.store.name;
     }
-    return chatUser.name;
+    return chatUser.nickname || chatUser.name;
   };
 
   // 채팅 타입 레이블 가져오기
@@ -827,7 +827,7 @@ export default function ChatRoomPage() {
                     {room.product.reservation_status === 'reserved' && (
                       <div className="w-full mt-1 text-center">
                         <span className="text-[10px] text-yellow-700">
-                          🔒 {room.product.reserved_by_user?.name || '구매자'}님과 거래 예약됨
+                          🔒 {room.product.reserved_by_user?.nickname || room.product.reserved_by_user?.name || '구매자'}님과 거래 예약됨
                         </span>
                       </div>
                     )}

@@ -75,7 +75,7 @@ export function NotificationDropdown() {
 
     // WebSocket 연결
     const wsProtocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    const wsUrl = `${wsProtocol}//${window.location.host}/api/ws?token=${tokens.access_token}`;
+    const wsUrl = `${wsProtocol}//${window.location.host}/api/v1/chats/ws?token=${tokens.access_token}`;
 
     let ws: WebSocket | null = null;
     let reconnectTimeout: NodeJS.Timeout;

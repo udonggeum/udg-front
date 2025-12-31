@@ -51,6 +51,7 @@ export default function SignupPage() {
     password: "",
     passwordConfirm: "",
     name: "",
+    nickname: "",
     phone: "",
   });
 
@@ -670,15 +671,14 @@ export default function SignupPage() {
                       onChange={(e) => setEmailVerificationCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
                       disabled={isVerifyingEmail}
                       maxLength={6}
-                      className="px-4 py-6 bg-gray-100 border-transparent focus:border-gray-900 focus:bg-white rounded-xl text-body placeholder-gray-400 smooth-transition"
+                      className="px-4 py-6 bg-gray-100 border-transparent focus:border-gray-900 focus:bg-white rounded-xl text-body text-gray-900 placeholder-gray-400 smooth-transition"
                     />
                   </div>
                   <Button
                     type="button"
-                    variant="secondary"
                     disabled={isVerifyingEmail || emailVerificationCode.length !== 6}
                     onClick={handleVerifyEmail}
-                    className="px-5 py-6 bg-gray-900 hover:bg-gray-800 text-white text-caption font-semibold rounded-xl whitespace-nowrap"
+                    className="px-5 py-6 bg-gray-900 hover:bg-gray-800 disabled:bg-gray-400 disabled:cursor-not-allowed text-white text-caption font-semibold rounded-xl whitespace-nowrap"
                   >
                     {isVerifyingEmail ? "확인 중..." : "인증확인"}
                   </Button>
@@ -820,6 +820,25 @@ export default function SignupPage() {
               {touched.name && formErrors.name && (
                 <p className="mt-2 text-[12px] text-red-500">{formErrors.name}</p>
               )}
+            </div>
+
+            {/* 닉네임 */}
+            <div>
+              <Label className="block text-small font-semibold text-gray-900 mb-2">
+                닉네임
+              </Label>
+              <Input
+                type="text"
+                name="nickname"
+                placeholder="닉네임을 입력하세요 (선택)"
+                value={formData.nickname}
+                onChange={handleChange}
+                disabled={isPending}
+                className="w-full px-4 py-6 bg-gray-100 border-transparent focus:border-gray-900 focus:bg-white rounded-xl text-body placeholder-gray-400 smooth-transition"
+              />
+              <p className="mt-2 text-[12px] text-gray-500">
+                입력하지 않으면 자동으로 생성됩니다
+              </p>
             </div>
 
             {/* 휴대폰 번호 */}

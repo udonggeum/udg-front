@@ -6,6 +6,7 @@ export interface User {
   id: number;
   email: string;
   name: string;
+  nickname?: string;
   phone?: string;
   address?: string;
   latitude?: number;  // 위도 (주소 기반)
@@ -59,6 +60,7 @@ export interface RegisterRequest {
   email: string;
   password: string;
   name: string;
+  nickname?: string;
   phone?: string;
 }
 
@@ -93,6 +95,7 @@ export interface ResetPasswordRequest {
  */
 export interface UpdateProfileRequest {
   name: string;
+  nickname?: string;
   phone?: string;
   address?: string;
   profile_image?: string;
