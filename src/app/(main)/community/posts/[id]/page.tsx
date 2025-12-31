@@ -379,12 +379,13 @@ export default function CommunityDetailPage() {
             {postData.image_urls && postData.image_urls.length > 0 && (
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
                 {postData.image_urls.map((url, index) => (
-                  <img
-                    key={index}
-                    src={url}
-                    alt={`이미지 ${index + 1}`}
-                    className="w-full h-48 object-cover rounded-lg"
-                  />
+                  <div key={index} className="bg-gray-50 rounded-lg overflow-hidden border border-gray-200">
+                    <img
+                      src={url}
+                      alt={`이미지 ${index + 1}`}
+                      className="w-full h-48 object-contain"
+                    />
+                  </div>
                 ))}
               </div>
             )}

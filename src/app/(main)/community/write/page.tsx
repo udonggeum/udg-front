@@ -9,6 +9,7 @@ import { useAuthStore } from "@/stores/useAuthStore";
 import { toast } from "sonner";
 import { Sparkles } from "lucide-react";
 import { ImageUploader } from "@/components/image-uploader";
+import { KOREA_REGIONS } from "@/lib/regions";
 import {
   POST_CATEGORY_LABELS,
   POST_TYPE_LABELS,
@@ -35,6 +36,8 @@ export default function CommunityWritePage() {
   const [price, setPrice] = useState("");
   const [priceNegotiable, setPriceNegotiable] = useState(false);
   const [location, setLocation] = useState("");
+  const [region, setRegion] = useState("");
+  const [district, setDistrict] = useState("");
   const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -83,17 +86,23 @@ export default function CommunityWritePage() {
     }
   };
 
-  // Admin 사용자가 금거래 게시글 작성 시 매장 주소 자동 입력
+  // Admin 사용자가 매장 관련 게시글 작성 시 매장 주소 자동 입력
   useEffect(() => {
     const loadStoreLocation = async () => {
-      // Admin이고 금거래 카테고리일 때만
-      if (user.role === "admin" && selectedCategory === "gold_trade" && tokens?.access_token) {
+      // Admin이고 매장 주인만 작성 가능한 타입일 때
+      if (user.role === "admin" && ADMIN_ONLY_TYPES.includes(selectedType) && tokens?.access_token) {
         try {
           const result = await getMyStoreAction(tokens.access_token);
           if (result.success && result.data?.store) {
-            const { region, district } = result.data.store;
-            // region과 district를 조합해서 location에 설정
-            const storeLocation = `${region} ${district}`;
+            const storeRegion = result.data.store.region || "";
+            const storeDistrict = result.data.store.district || "";
+
+            // region과 district를 각각 저장
+            setRegion(storeRegion);
+            setDistrict(storeDistrict);
+
+            // location에도 설정 (금거래용)
+            const storeLocation = `${storeRegion} ${storeDistrict}`;
             setLocation(storeLocation);
           }
         } catch (error) {
@@ -104,7 +113,16 @@ export default function CommunityWritePage() {
     };
 
     loadStoreLocation();
-  }, [user.role, selectedCategory, tokens?.access_token]);
+  }, [user.role, selectedType, tokens?.access_token]);
+
+  // region과 district가 변경되면 location 자동 업데이트
+  useEffect(() => {
+    if (region && district) {
+      setLocation(`${region} ${district}`);
+    } else {
+      setLocation("");
+    }
+  }, [region, district]);
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -230,6 +248,18 @@ export default function CommunityWritePage() {
       }
 
       if (location) requestData.location = location;
+
+      // sell_gold의 경우 알림을 위해 region, district도 전송
+      if (selectedType === "sell_gold" && region && district) {
+        requestData.region = region;
+        requestData.district = district;
+      }
+    }
+
+    // 매장 관련 게시글(ADMIN_ONLY_TYPES)의 경우 region, district 추가
+    if (ADMIN_ONLY_TYPES.includes(selectedType)) {
+      if (region) requestData.region = region;
+      if (district) requestData.district = district;
     }
 
     // 이미지 추가
@@ -337,23 +367,6 @@ export default function CommunityWritePage() {
                     금 거래 정보 <span className="text-red-500">*</span>
                   </h3>
 
-                  {/* 이미지 업로드 */}
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      이미지 <span className="text-red-500">*</span>
-                    </label>
-                    <ImageUploader
-                      imageUrls={imageUrls}
-                      onImagesChange={setImageUrls}
-                      maxImages={5}
-                      accessToken={tokens.access_token}
-                      folder="community"
-                    />
-                    {errors.images && (
-                      <p className="mt-2 text-sm text-red-500">{errors.images}</p>
-                    )}
-                  </div>
-
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {/* 금 종류 */}
                     <div>
@@ -456,15 +469,52 @@ export default function CommunityWritePage() {
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         거래 지역 <span className="text-red-500">*</span>
                       </label>
-                      <input
-                        type="text"
-                        className={`w-full p-3 rounded-lg border ${errors.location ? "border-red-500" : "border-gray-200"} focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent`}
-                        placeholder="예: 서울 강남구"
-                        value={location}
-                        onChange={(e) => setLocation(e.target.value)}
-                      />
+                      <div className="grid grid-cols-2 gap-3">
+                        <select
+                          value={region}
+                          onChange={(e) => {
+                            setRegion(e.target.value);
+                            setDistrict(""); // 시/도 변경 시 구/군 초기화
+                          }}
+                          disabled={user.role === "admin" && ADMIN_ONLY_TYPES.includes(selectedType)}
+                          className={`w-full p-3 rounded-lg border ${
+                            errors.location ? "border-red-500" : "border-gray-200"
+                          } focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed`}
+                        >
+                          <option value="">시/도 선택</option>
+                          {KOREA_REGIONS.map(({ region: regionName }) => (
+                            <option key={regionName} value={regionName}>
+                              {regionName}
+                            </option>
+                          ))}
+                        </select>
+
+                        <select
+                          value={district}
+                          onChange={(e) => setDistrict(e.target.value)}
+                          disabled={!region || (user.role === "admin" && ADMIN_ONLY_TYPES.includes(selectedType))}
+                          className={`w-full p-3 rounded-lg border ${
+                            errors.location ? "border-red-500" : "border-gray-200"
+                          } focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed`}
+                        >
+                          <option value="">구/군 선택</option>
+                          {region &&
+                            KOREA_REGIONS.find((r) => r.region === region)?.districts.map(
+                              (districtName) => (
+                                <option key={districtName} value={districtName}>
+                                  {districtName}
+                                </option>
+                              )
+                            )}
+                        </select>
+                      </div>
                       {errors.location && (
                         <p className="mt-1 text-sm text-red-500">{errors.location}</p>
+                      )}
+                      {user.role === "admin" && ADMIN_ONLY_TYPES.includes(selectedType) && (
+                        <p className="mt-1 text-xs text-gray-500">
+                          * 매장 주인은 자동으로 매장 주소가 설정됩니다
+                        </p>
                       )}
                     </div>
                   </div>
@@ -556,6 +606,23 @@ export default function CommunityWritePage() {
                 />
                 {errors.content && (
                   <p className="mt-2 text-sm text-red-500">{errors.content}</p>
+                )}
+              </div>
+
+              {/* 이미지 업로드 - 모든 카테고리에서 사용 가능 */}
+              <div className="border-t pt-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  이미지 {selectedCategory === "gold_trade" && selectedType === "sell_gold" && <span className="text-red-500">*</span>}
+                </label>
+                <ImageUploader
+                  imageUrls={imageUrls}
+                  onImagesChange={setImageUrls}
+                  maxImages={5}
+                  accessToken={tokens.access_token}
+                  folder="community"
+                />
+                {errors.images && (
+                  <p className="mt-2 text-sm text-red-500">{errors.images}</p>
                 )}
               </div>
 

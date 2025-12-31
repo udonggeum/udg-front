@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { X, Upload, Image as ImageIcon } from "lucide-react";
 import { generatePresignedURLAction, uploadFileToS3 } from "@/actions/upload";
 import { toast } from "sonner";
@@ -24,7 +24,19 @@ export function ImageUploader({
   const [uploadProgress, setUploadProgress] = useState<{
     [key: string]: number;
   }>({});
+  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // 컴포넌트 언마운트 시 미리보기 URL 정리
+  useEffect(() => {
+    return () => {
+      previewUrls.forEach((url) => {
+        if (url.startsWith('blob:')) {
+          URL.revokeObjectURL(url);
+        }
+      });
+    };
+  }, [previewUrls]);
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -49,12 +61,22 @@ export function ImageUploader({
       }
     }
 
+    // 로컬 미리보기 생성
+    const localPreviews: string[] = [];
+    for (const file of files) {
+      const objectUrl = URL.createObjectURL(file);
+      localPreviews.push(objectUrl);
+    }
+    setPreviewUrls([...previewUrls, ...localPreviews]);
+    onImagesChange([...imageUrls, ...localPreviews]);
+
     setUploading(true);
 
     try {
       const uploadedUrls: string[] = [];
 
-      for (const file of files) {
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
         setUploadProgress((prev) => ({ ...prev, [file.name]: 0 }));
 
         const presignedResult = await generatePresignedURLAction(
@@ -89,7 +111,19 @@ export function ImageUploader({
       }
 
       if (uploadedUrls.length > 0) {
-        onImagesChange([...imageUrls, ...uploadedUrls]);
+        // 로컬 미리보기를 실제 URL로 교체
+        const newImageUrls = imageUrls.filter(url => !url.startsWith('blob:'));
+        const newPreviewUrls = previewUrls.filter(url => !url.startsWith('blob:'));
+
+        // 이전 미리보기 URL 정리
+        previewUrls.forEach(url => {
+          if (url.startsWith('blob:')) {
+            URL.revokeObjectURL(url);
+          }
+        });
+
+        setPreviewUrls(newPreviewUrls);
+        onImagesChange([...newImageUrls, ...uploadedUrls]);
         toast.success(`${uploadedUrls.length}개 이미지가 업로드되었습니다.`);
       }
     } catch (error) {
@@ -105,6 +139,14 @@ export function ImageUploader({
   };
 
   const handleRemoveImage = (index: number) => {
+    const urlToRemove = imageUrls[index];
+
+    // blob URL이면 메모리에서 해제
+    if (urlToRemove.startsWith('blob:')) {
+      URL.revokeObjectURL(urlToRemove);
+      setPreviewUrls(previewUrls.filter((_, i) => i !== index));
+    }
+
     const newUrls = imageUrls.filter((_, i) => i !== index);
     onImagesChange(newUrls);
   };
@@ -168,18 +210,24 @@ export function ImageUploader({
           {imageUrls.map((url, index) => (
             <div
               key={url}
-              className="relative aspect-square rounded-lg overflow-hidden border border-gray-200 group"
+              className="relative aspect-square rounded-lg overflow-hidden border border-gray-200 bg-gray-50 group"
             >
               <img
                 src={url}
                 alt={`업로드 이미지 ${index + 1}`}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-contain"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.onerror = null;
+                  target.src = '';
+                }}
               />
+              {/* 삭제 버튼 */}
               <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all flex items-center justify-center">
                 <button
                   type="button"
                   onClick={() => handleRemoveImage(index)}
-                  className="opacity-0 group-hover:opacity-100 transition-opacity p-2 bg-red-500 hover:bg-red-600 text-white rounded-full"
+                  className="opacity-0 group-hover:opacity-100 transition-opacity p-2 bg-red-500 hover:bg-red-600 text-white rounded-full shadow-lg"
                 >
                   <X className="w-4 h-4" />
                 </button>

@@ -19,6 +19,7 @@ import {
   Eye,
   ThumbsUp,
   Camera,
+  Bell,
 } from "lucide-react";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { Button } from "@/components/ui/button";
@@ -30,10 +31,18 @@ import { logoutUserAction, updateProfileAction } from "@/actions/auth";
 import { getPostsAction } from "@/actions/community";
 import { getPresignedUrlAction, uploadToS3 } from "@/actions/upload";
 import { getUserLikedStoresAction, getMyStoreAction } from "@/actions/stores";
+import {
+  getNotificationSettingsAction,
+  updateNotificationSettingsAction,
+} from "@/actions/notifications";
 import { Container } from "@/components/layout-primitives";
 import type { CommunityPost } from "@/types/community";
 import type { StoreDetail } from "@/types/stores";
+import type { NotificationSettings, NotificationRange } from "@/types/notification";
+import { NOTIFICATION_RANGE_LABELS } from "@/types/notification";
+import { KOREA_REGIONS } from "@/lib/regions";
 import { toast } from "sonner";
+import { X } from "lucide-react";
 
 export default function MyPage() {
   const router = useRouter();
@@ -57,6 +66,17 @@ export default function MyPage() {
   // admin 사용자의 매장 상태
   const [myStore, setMyStore] = useState<StoreDetail | null>(null);
   const [isLoadingMyStore, setIsLoadingMyStore] = useState(false);
+
+  // 알림 설정 상태 (admin 전용)
+  const [notificationSettings, setNotificationSettings] = useState<NotificationSettings | null>(
+    null
+  );
+  const [isLoadingSettings, setIsLoadingSettings] = useState(false);
+  const [isSavingSettings, setIsSavingSettings] = useState(false);
+
+  // 지역 선택 상태 (알림 설정용)
+  const [selectedRegion, setSelectedRegion] = useState<string>("");
+  const [selectedDistrict, setSelectedDistrict] = useState<string>("");
 
   // admin 권한 확인
   const isAdmin = user?.role === "admin";
@@ -124,6 +144,102 @@ export default function MyPage() {
       fetchMyStore();
     }
   }, [isAuthenticated, isAdmin, tokens?.access_token]);
+
+  // 알림 설정 불러오기 (admin 전용)
+  useEffect(() => {
+    const fetchNotificationSettings = async () => {
+      if (!isAdmin || !tokens?.access_token) return;
+
+      setIsLoadingSettings(true);
+      try {
+        const result = await getNotificationSettingsAction(tokens.access_token);
+
+        if (result.success && result.data?.settings) {
+          // selected_regions가 없으면 빈 배열로 초기화
+          const settings = {
+            ...result.data.settings,
+            selected_regions: result.data.settings.selected_regions || [],
+          };
+          setNotificationSettings(settings);
+        } else {
+          console.error("Failed to fetch notification settings:", result.error);
+        }
+      } catch (error) {
+        console.error("Failed to fetch notification settings:", error);
+      } finally {
+        setIsLoadingSettings(false);
+      }
+    };
+
+    if (isAuthenticated && isAdmin && tokens?.access_token) {
+      fetchNotificationSettings();
+    }
+  }, [isAuthenticated, isAdmin, tokens?.access_token]);
+
+  // 지역 추가
+  const addRegion = () => {
+    if (!notificationSettings || !selectedRegion || !selectedDistrict) return;
+
+    const locationStr = `${selectedRegion} ${selectedDistrict}`;
+    const currentSelections = notificationSettings.selected_regions || [];
+
+    // 이미 선택된 지역인지 확인
+    if (currentSelections.includes(locationStr)) {
+      toast.error("이미 선택된 지역입니다.");
+      return;
+    }
+
+    setNotificationSettings({
+      ...notificationSettings,
+      selected_regions: [...currentSelections, locationStr],
+    });
+
+    // 선택 초기화
+    setSelectedRegion("");
+    setSelectedDistrict("");
+    toast.success(`${locationStr} 추가되었습니다.`);
+  };
+
+  // 지역 제거
+  const removeRegion = (location: string) => {
+    if (!notificationSettings) return;
+
+    const currentSelections = notificationSettings.selected_regions || [];
+    setNotificationSettings({
+      ...notificationSettings,
+      selected_regions: currentSelections.filter((loc) => loc !== location),
+    });
+  };
+
+  // 알림 설정 저장
+  const handleSaveNotificationSettings = async () => {
+    if (!notificationSettings || !tokens?.access_token) return;
+
+    setIsSavingSettings(true);
+    try {
+      const result = await updateNotificationSettingsAction(
+        notificationSettings,
+        tokens.access_token
+      );
+
+      if (result.success && result.data?.settings) {
+        // selected_regions가 없으면 빈 배열로 초기화
+        const settings = {
+          ...result.data.settings,
+          selected_regions: result.data.settings.selected_regions || [],
+        };
+        setNotificationSettings(settings);
+        toast.success("알림 설정이 저장되었습니다.");
+      } else {
+        toast.error(result.error || "알림 설정 저장에 실패했습니다.");
+      }
+    } catch (error) {
+      console.error("Failed to save notification settings:", error);
+      toast.error("알림 설정 저장에 실패했습니다.");
+    } finally {
+      setIsSavingSettings(false);
+    }
+  };
 
   // 좋아요한 매장 불러오기 (일반 사용자만)
   useEffect(() => {
@@ -372,7 +488,7 @@ export default function MyPage() {
 
           {/* 회원정보 탭 */}
           <TabsContent value="info">
-            <Card className="border-0 shadow-sm">
+            <Card className="border-0 shadow-sm mb-4">
               <CardContent className="p-6">
                 <div className="space-y-4">
                   <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
@@ -409,6 +525,210 @@ export default function MyPage() {
                 </div>
               </CardContent>
             </Card>
+
+            {/* 알림 설정 (Admin 전용) */}
+            {isAdmin && (
+              <Card className="border-0 shadow-sm">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                      <Bell className="w-5 h-5 text-gray-700" />
+                      <h3 className="text-lg font-bold text-gray-900">알림 설정</h3>
+                    </div>
+                    {notificationSettings && (
+                      <Button
+                        onClick={handleSaveNotificationSettings}
+                        disabled={isSavingSettings}
+                        size="sm"
+                        className="bg-gray-900 hover:bg-gray-800 text-white"
+                      >
+                        {isSavingSettings ? "저장 중..." : "저장"}
+                      </Button>
+                    )}
+                  </div>
+
+                  {isLoadingSettings ? (
+                    <div className="text-center py-8">
+                      <div className="w-6 h-6 border-2 border-gray-200 border-t-gray-900 rounded-full animate-spin mx-auto mb-2"></div>
+                      <p className="text-sm text-gray-600">설정 불러오는 중...</p>
+                    </div>
+                  ) : !notificationSettings ? (
+                    <div className="text-center py-8">
+                      <p className="text-sm text-gray-600">알림 설정을 불러올 수 없습니다.</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {/* 금 판매글 알림 */}
+                      <div className="p-4 bg-gray-50 rounded-lg">
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex-1">
+                            <h4 className="font-semibold text-gray-900 mb-1">
+                              📢 금 판매글 알림
+                            </h4>
+                            <p className="text-sm text-gray-600">
+                              설정한 지역에 금 판매글이 올라오면 알림을 받습니다
+                            </p>
+                          </div>
+                          <label className="relative inline-flex items-center cursor-pointer ml-4">
+                            <input
+                              type="checkbox"
+                              checked={notificationSettings.sell_post_notification}
+                              onChange={(e) =>
+                                setNotificationSettings({
+                                  ...notificationSettings,
+                                  sell_post_notification: e.target.checked,
+                                })
+                              }
+                              className="sr-only peer"
+                            />
+                            <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gray-700"></div>
+                          </label>
+                        </div>
+
+                        {notificationSettings.sell_post_notification && (
+                          <div className="mt-3 pt-3 border-t border-gray-200">
+                            <p className="text-sm text-gray-700 mb-3 font-medium">
+                              알림 받을 지역 선택
+                            </p>
+
+                            {/* 지역 선택 드롭다운 */}
+                            <div className="flex gap-2 mb-3">
+                              <select
+                                value={selectedRegion}
+                                onChange={(e) => {
+                                  setSelectedRegion(e.target.value);
+                                  setSelectedDistrict("");
+                                }}
+                                className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              >
+                                <option value="">시/도 선택</option>
+                                {KOREA_REGIONS.map(({ region }) => (
+                                  <option key={region} value={region}>
+                                    {region}
+                                  </option>
+                                ))}
+                              </select>
+
+                              <select
+                                value={selectedDistrict}
+                                onChange={(e) => setSelectedDistrict(e.target.value)}
+                                disabled={!selectedRegion}
+                                className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                              >
+                                <option value="">구/군 선택</option>
+                                {selectedRegion &&
+                                  KOREA_REGIONS.find((r) => r.region === selectedRegion)?.districts.map(
+                                    (district) => (
+                                      <option key={district} value={district}>
+                                        {district}
+                                      </option>
+                                    )
+                                  )}
+                              </select>
+
+                              <Button
+                                onClick={addRegion}
+                                disabled={!selectedRegion || !selectedDistrict}
+                                size="sm"
+                                className="px-4 bg-gray-900 hover:bg-gray-800 text-white"
+                              >
+                                추가
+                              </Button>
+                            </div>
+
+                            {/* 선택된 지역 목록 */}
+                            {(notificationSettings.selected_regions || []).length > 0 ? (
+                              <div className="mt-3 pt-3 border-t border-gray-200">
+                                <p className="text-xs text-gray-600 mb-2">
+                                  선택된 지역 ({notificationSettings.selected_regions.length}개)
+                                </p>
+                                <div className="flex flex-wrap gap-2">
+                                  {notificationSettings.selected_regions.map((location) => (
+                                    <Badge
+                                      key={location}
+                                      variant="secondary"
+                                      className="text-xs pr-1 flex items-center gap-1"
+                                    >
+                                      {location}
+                                      <button
+                                        onClick={() => removeRegion(location)}
+                                        className="ml-1 hover:bg-gray-300 rounded-full p-0.5"
+                                      >
+                                        <X className="w-3 h-3" />
+                                      </button>
+                                    </Badge>
+                                  ))}
+                                </div>
+                              </div>
+                            ) : (
+                              <p className="text-xs text-gray-500 text-center py-3 bg-gray-50 rounded">
+                                알림을 받을 지역을 선택해주세요
+                              </p>
+                            )}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* 댓글 알림 */}
+                      <div className="p-4 bg-gray-50 rounded-lg">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <h4 className="font-semibold text-gray-900 mb-1">
+                              💭 댓글 알림
+                            </h4>
+                            <p className="text-sm text-gray-600">
+                              내 게시글에 댓글이 달리면 알림을 받습니다
+                            </p>
+                          </div>
+                          <label className="relative inline-flex items-center cursor-pointer ml-4">
+                            <input
+                              type="checkbox"
+                              checked={notificationSettings.comment_notification}
+                              onChange={(e) =>
+                                setNotificationSettings({
+                                  ...notificationSettings,
+                                  comment_notification: e.target.checked,
+                                })
+                              }
+                              className="sr-only peer"
+                            />
+                            <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gray-700"></div>
+                          </label>
+                        </div>
+                      </div>
+
+                      {/* 매장 찜 알림 */}
+                      <div className="p-4 bg-gray-50 rounded-lg">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <h4 className="font-semibold text-gray-900 mb-1">
+                              ❤️ 매장 찜 알림
+                            </h4>
+                            <p className="text-sm text-gray-600">
+                              누군가 내 매장을 찜하면 알림을 받습니다
+                            </p>
+                          </div>
+                          <label className="relative inline-flex items-center cursor-pointer ml-4">
+                            <input
+                              type="checkbox"
+                              checked={notificationSettings.like_notification}
+                              onChange={(e) =>
+                                setNotificationSettings({
+                                  ...notificationSettings,
+                                  like_notification: e.target.checked,
+                                })
+                              }
+                              className="sr-only peer"
+                            />
+                            <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gray-700"></div>
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
 
           {/* 매장 탭 (admin: 내 매장, 일반: 관심 매장) */}

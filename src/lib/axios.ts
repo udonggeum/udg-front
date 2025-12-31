@@ -2,7 +2,7 @@ import axios, { AxiosError, InternalAxiosRequestConfig, AxiosResponse } from "ax
 
 /**
  * Shared axios instance for all API calls
- * Includes automatic 401 error detection
+ * Includes automatic 401 error detection and token refresh
  */
 export const apiClient = axios.create({
   baseURL: `${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://43.200.249.22:8080'}/api/v1`,
@@ -12,37 +12,129 @@ export const apiClient = axios.create({
   },
 });
 
+// 토큰 갱신 중인지 추적
+let isRefreshing = false;
+let failedQueue: Array<{
+  resolve: (value?: any) => void;
+  reject: (reason?: any) => void;
+}> = [];
+
+const processQueue = (error: any = null) => {
+  failedQueue.forEach((prom) => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve();
+    }
+  });
+
+  failedQueue = [];
+};
+
 /**
- * Response interceptor to detect 401 Unauthorized errors
+ * Response interceptor to detect 401 Unauthorized errors and auto-refresh tokens
  */
 apiClient.interceptors.response.use(
   (response: AxiosResponse) => response,
-  (error: AxiosError) => {
+  async (error: AxiosError) => {
+    const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
+
     // Handle 401 Unauthorized errors
-    if (error.response?.status === 401) {
-      // Client-side only: clear auth and redirect
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      // refresh 엔드포인트 자체에서 401이 나면 즉시 로그아웃
+      if (originalRequest.url?.includes('/auth/refresh')) {
+        if (typeof window !== "undefined") {
+          import("@/stores/useAuthStore").then(({ useAuthStore }) => {
+            const { clearAuth } = useAuthStore.getState();
+            clearAuth();
+
+            import("sonner").then(({ toast }) => {
+              toast.error("로그인이 만료되었습니다. 다시 로그인해주세요.");
+            });
+
+            setTimeout(() => {
+              window.location.href = "/login";
+            }, 1000);
+          });
+        }
+        return Promise.reject(error);
+      }
+
+      // 토큰 갱신 시도
+      if (isRefreshing) {
+        // 이미 갱신 중이면 대기열에 추가
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        })
+          .then(() => {
+            return apiClient(originalRequest);
+          })
+          .catch((err) => {
+            return Promise.reject(err);
+          });
+      }
+
+      originalRequest._retry = true;
+      isRefreshing = true;
+
       if (typeof window !== "undefined") {
-        // Dynamically import to avoid circular dependencies
-        import("@/stores/useAuthStore").then(({ useAuthStore }) => {
+        try {
+          const { useAuthStore } = await import("@/stores/useAuthStore");
+          const { tokens, updateTokens, clearAuth } = useAuthStore.getState();
+
+          if (!tokens?.refresh_token) {
+            throw new Error("No refresh token available");
+          }
+
+          // 리프레시 토큰으로 새 액세스 토큰 요청
+          const response = await axios.post(
+            `${apiClient.defaults.baseURL}/auth/refresh`,
+            { refresh_token: tokens.refresh_token }
+          );
+
+          if (response.data.tokens) {
+            const newTokens = {
+              access_token: response.data.tokens.access_token,
+              refresh_token: response.data.tokens.refresh_token || tokens.refresh_token,
+            };
+
+            // 새 토큰 저장
+            updateTokens(newTokens);
+
+            // 원래 요청 헤더에 새 토큰 적용
+            if (originalRequest.headers) {
+              originalRequest.headers.Authorization = `Bearer ${newTokens.access_token}`;
+            }
+
+            processQueue(null);
+            isRefreshing = false;
+
+            // 원래 요청 재시도
+            return apiClient(originalRequest);
+          } else {
+            throw new Error("Token refresh failed");
+          }
+        } catch (refreshError) {
+          processQueue(refreshError);
+          isRefreshing = false;
+
+          // 갱신 실패 시 로그아웃
+          const { useAuthStore } = await import("@/stores/useAuthStore");
           const { clearAuth } = useAuthStore.getState();
           clearAuth();
 
-          // Show toast message
-          import("sonner").then(({ toast }) => {
-            toast.error("로그인이 만료되었습니다. 다시 로그인해주세요.");
-          });
+          const { toast } = await import("sonner");
+          toast.error("로그인이 만료되었습니다. 다시 로그인해주세요.");
 
-          // Redirect to login after a short delay
           setTimeout(() => {
             window.location.href = "/login";
           }, 1000);
-        });
-      }
 
-      // AxiosError의 prototype을 유지하면서 속성 추가
-      (error as any).isUnauthorized = true;
-      return Promise.reject(error);
+          return Promise.reject(refreshError);
+        }
+      }
     }
+
     return Promise.reject(error);
   }
 );

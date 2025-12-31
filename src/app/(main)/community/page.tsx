@@ -642,11 +642,11 @@ function CommunityPageContent() {
                     >
                       {/* Thumbnail */}
                       {post.image_urls && post.image_urls.length > 0 ? (
-                        <div className="relative overflow-hidden bg-gray-100">
+                        <div className="relative overflow-hidden bg-gray-50">
                           <img
                             src={post.image_urls[0]}
                             alt={post.title}
-                            className="w-full aspect-[16/9] object-cover"
+                            className="w-full aspect-[16/9] object-contain"
                           />
                           {/* 예약/완료 뱃지 (금 판매글만) */}
                           {post.type === "sell_gold" && post.reservation_status && (

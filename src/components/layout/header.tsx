@@ -14,6 +14,7 @@ import { useWebSocket } from "@/hooks/useWebSocket";
 import { toast } from "sonner";
 import { User, Settings, LogOut, ChevronDown, MapPin, Menu, X } from "lucide-react";
 import LocationSettingModal from "@/components/LocationSettingModal";
+import { NotificationDropdown } from "@/components/notification-dropdown";
 import {
   Tooltip,
   TooltipContent,
@@ -248,6 +249,9 @@ export function Header() {
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
+
+              {/* 알림 아이콘 (Admin 전용) */}
+              {user?.role === "admin" && <NotificationDropdown />}
 
               {/* 사용자 드롭다운 메뉴 */}
               <div className="relative">

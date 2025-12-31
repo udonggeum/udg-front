@@ -111,6 +111,8 @@ export interface CreatePostRequest {
   weight?: number;
   price?: number;
   location?: string;
+  region?: string;
+  district?: string;
   image_urls?: string[];
 }
 
