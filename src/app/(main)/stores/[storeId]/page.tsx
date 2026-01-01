@@ -49,34 +49,6 @@ function KakaoMap({ address, storeName }: { address: string; storeName: string }
   const [error, setError] = useState(false);
 
   useEffect(() => {
-    const loadKakaoMap = async () => {
-      try {
-        // 카카오맵 스크립트가 이미 로드되었는지 확인
-        if (window.kakao && window.kakao.maps) {
-          initMap();
-          return;
-        }
-
-        // 카카오맵 스크립트 동적 로드
-        const script = document.createElement('script');
-        script.src = `//dapi.kakao.com/v2/maps/sdk.js?appkey=${process.env.NEXT_PUBLIC_KAKAO_MAP_KEY}&libraries=services&autoload=false`;
-        script.async = true;
-        script.onload = () => {
-          window.kakao.maps.load(() => {
-            initMap();
-          });
-        };
-        script.onerror = () => {
-          setError(true);
-          setIsLoading(false);
-        };
-        document.head.appendChild(script);
-      } catch (err) {
-        setError(true);
-        setIsLoading(false);
-      }
-    };
-
     const initMap = () => {
       if (!mapRef.current || !window.kakao || !window.kakao.maps) return;
 
@@ -111,6 +83,34 @@ function KakaoMap({ address, storeName }: { address: string; storeName: string }
           setIsLoading(false);
         }
       });
+    };
+
+    const loadKakaoMap = () => {
+      try {
+        // 카카오맵 스크립트가 이미 로드되었는지 확인
+        if (window.kakao && window.kakao.maps) {
+          initMap();
+          return;
+        }
+
+        // 카카오맵 스크립트 동적 로드
+        const script = document.createElement('script');
+        script.src = `//dapi.kakao.com/v2/maps/sdk.js?appkey=${process.env.NEXT_PUBLIC_KAKAO_MAP_KEY}&libraries=services&autoload=false`;
+        script.async = true;
+        script.onload = () => {
+          window.kakao.maps.load(() => {
+            initMap();
+          });
+        };
+        script.onerror = () => {
+          setError(true);
+          setIsLoading(false);
+        };
+        document.head.appendChild(script);
+      } catch (err) {
+        setError(true);
+        setIsLoading(false);
+      }
     };
 
     loadKakaoMap();
@@ -193,6 +193,10 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
   const [isTagModalOpen, setIsTagModalOpen] = useState(false);
   const [allTags, setAllTags] = useState<Tag[]>([]);
   const [isLoadingTags, setIsLoadingTags] = useState(false);
+
+  // 자기 매장인지 확인 (user_id가 있고, store의 user_id와 일치하는 경우)
+  const isMyStore = user?.id && store?.user_id && user.id === store.user_id;
+  const isAnyEditing = Object.values(editSections).some(Boolean);
 
   // store가 변경되면 imageError 초기화 및 formData 설정
   useEffect(() => {
@@ -404,21 +408,6 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
     const diffInHours = (now.getTime() - postDate.getTime()) / (1000 * 60 * 60);
     return diffInHours <= 24;
   };
-
-  // 자기 매장인지 확인 (user_id가 있고, store의 user_id와 일치하는 경우)
-  const isMyStore = user?.id && store.user_id && user.id === store.user_id;
-
-  // 디버깅: 매장 소유권 확인
-  useEffect(() => {
-    if (store && user) {
-      console.log("매장 소유권 체크:", {
-        userId: user.id,
-        storeUserId: store.user_id,
-        isMyStore,
-      });
-    }
-  }, [store, user, isMyStore]);
-  const isAnyEditing = Object.values(editSections).some(Boolean);
 
   // 찜하기 토글 핸들러
   const handleWishlistToggle = async () => {

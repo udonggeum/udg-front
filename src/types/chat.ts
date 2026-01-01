@@ -56,6 +56,7 @@ export interface ChatRoom {
     reserved_by_user?: {
       id: number;
       name: string;
+      nickname?: string;
     } | null;
     reserved_at?: string | null;
     completed_at?: string | null;

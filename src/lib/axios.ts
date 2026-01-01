@@ -2,7 +2,7 @@ import axios, { AxiosError, InternalAxiosRequestConfig, AxiosResponse } from "ax
 
 /**
  * Shared axios instance for all API calls
- * Includes automatic 401 error detection and token refresh
+ * Includes automatic token injection and 401 error detection with token refresh
  */
 export const apiClient = axios.create({
   baseURL: `${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://43.200.249.22:8080'}/api/v1`,
@@ -18,6 +18,41 @@ let failedQueue: Array<{
   resolve: (value?: any) => void;
   reject: (reason?: any) => void;
 }> = [];
+
+/**
+ * Request interceptor to automatically inject access token
+ */
+apiClient.interceptors.request.use(
+  (config: InternalAxiosRequestConfig) => {
+    // refresh 엔드포인트는 토큰 자동 추가 제외 (수동으로 refresh_token 전달)
+    if (config.url?.includes('/auth/refresh')) {
+      return config;
+    }
+
+    // 브라우저 환경에서만 실행
+    if (typeof window !== "undefined") {
+      try {
+        // localStorage에서 토큰 가져오기
+        const authStorage = localStorage.getItem('auth-storage');
+        if (authStorage) {
+          const parsed = JSON.parse(authStorage);
+          const accessToken = parsed.state?.tokens?.access_token;
+
+          if (accessToken && !config.headers.Authorization) {
+            config.headers.Authorization = `Bearer ${accessToken}`;
+          }
+        }
+      } catch (error) {
+        console.error('[Axios] Failed to inject token:', error);
+      }
+    }
+
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
 
 const processQueue = (error: any = null) => {
   failedQueue.forEach((prom) => {
