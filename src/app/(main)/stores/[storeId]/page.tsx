@@ -709,6 +709,7 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
           description: data.description !== undefined ? data.description : store.description,
           open_time: data.open_time !== undefined ? data.open_time : store.open_time,
           close_time: data.close_time !== undefined ? data.close_time : store.close_time,
+          tag_ids: store.tags?.map(tag => tag.id) || [], // 기존 태그 유지
         },
         {
           headers: {
@@ -1222,19 +1223,29 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
                                   <Sparkles className="w-3 h-3" />
                                   NEW
                                 </span>
-                                {post.category === 'gold_trade' && (
-                                  <span className="px-2 py-1 text-xs font-medium bg-amber-100 text-amber-700 rounded">
-                                    금거래
+                                {post.type === 'buy_gold' && (
+                                  <span className="px-2 py-1 text-xs font-semibold bg-[#FEF3C7] text-[#8A6A00] rounded-md">
+                                    금 구매
                                   </span>
                                 )}
-                                {post.category === 'gold_news' && (
-                                  <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-700 rounded">
-                                    금소식
+                                {post.type === 'sell_gold' && (
+                                  <span className="px-2 py-1 text-xs font-semibold bg-[#FEF3C7] text-[#8A6A00] rounded-md">
+                                    금 판매
                                   </span>
                                 )}
-                                {post.category === 'qna' && (
-                                  <span className="px-2 py-1 text-xs font-medium bg-green-100 text-green-700 rounded">
-                                    QnA
+                                {post.type === 'product_news' && (
+                                  <span className="px-2 py-1 text-xs font-semibold bg-[#FEF3C7] text-[#8A6A00] rounded-md">
+                                    상품소식
+                                  </span>
+                                )}
+                                {post.type === 'store_news' && (
+                                  <span className="px-2 py-1 text-xs font-semibold bg-[#FEF3C7] text-[#8A6A00] rounded-md">
+                                    매장소식
+                                  </span>
+                                )}
+                                {post.type === 'question' && (
+                                  <span className="px-2 py-1 text-xs font-semibold bg-[#FEF3C7] text-[#8A6A00] rounded-md">
+                                    질문
                                   </span>
                                 )}
                               </div>
@@ -1379,18 +1390,18 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
                                     </span>
                                   )}
                                   {post.type === 'product_news' && (
-                                    <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-700 rounded">
-                                      상품
+                                    <span className="px-2 py-1 text-xs font-semibold bg-[#FEF3C7] text-[#8A6A00] rounded-md">
+                                      상품소식
                                     </span>
                                   )}
                                   {post.type === 'store_news' && (
-                                    <span className="px-2 py-1 text-xs font-medium bg-purple-100 text-purple-700 rounded">
-                                      매장
+                                    <span className="px-2 py-1 text-xs font-semibold bg-[#FEF3C7] text-[#8A6A00] rounded-md">
+                                      매장소식
                                     </span>
                                   )}
                                   {post.type === 'buy_gold' && (
-                                    <span className="px-2 py-1 text-xs font-medium bg-amber-100 text-amber-700 rounded">
-                                      금 매입
+                                    <span className="px-2 py-1 text-xs font-semibold bg-[#FEF3C7] text-[#8A6A00] rounded-md">
+                                      금 구매
                                     </span>
                                   )}
                                 </div>
@@ -1466,18 +1477,18 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
                                     </span>
                                   )}
                                   {post.type === 'product_news' && (
-                                    <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-700 rounded">
-                                      상품
+                                    <span className="px-2 py-1 text-xs font-semibold bg-[#FEF3C7] text-[#8A6A00] rounded-md">
+                                      상품소식
                                     </span>
                                   )}
                                   {post.type === 'store_news' && (
-                                    <span className="px-2 py-1 text-xs font-medium bg-purple-100 text-purple-700 rounded">
-                                      매장
+                                    <span className="px-2 py-1 text-xs font-semibold bg-[#FEF3C7] text-[#8A6A00] rounded-md">
+                                      매장소식
                                     </span>
                                   )}
                                   {post.type === 'buy_gold' && (
-                                    <span className="px-2 py-1 text-xs font-medium bg-amber-100 text-amber-700 rounded">
-                                      금 매입
+                                    <span className="px-2 py-1 text-xs font-semibold bg-[#FEF3C7] text-[#8A6A00] rounded-md">
+                                      금 구매
                                     </span>
                                   )}
                                 </div>

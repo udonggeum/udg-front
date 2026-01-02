@@ -12,7 +12,7 @@ import { getChatRoomsAction } from "@/actions/chat";
 import { getMyStoreAction } from "@/actions/stores";
 import { useWebSocket } from "@/hooks/useWebSocket";
 import { toast } from "sonner";
-import { User, Settings, LogOut, ChevronDown, MapPin, Menu, X } from "lucide-react";
+import { User, Settings, LogOut, ChevronDown, MapPin, Menu, X, Store } from "lucide-react";
 import LocationSettingModal from "@/components/LocationSettingModal";
 import { NotificationDropdown } from "@/components/notification-dropdown";
 import {
@@ -116,10 +116,11 @@ export function Header() {
     }
   }, [user?.role, tokens?.access_token]);
 
-  // WebSocket으로 실시간 메시지 수신
+  // WebSocket으로 실시간 메시지 수신 (인증된 사용자만)
+  const wsToken = isAuthenticated && tokens?.access_token ? tokens.access_token : "";
   useWebSocket({
     url: process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8080/api/v1/chats/ws',
-    token: tokens?.access_token || "",
+    token: wsToken,
     onMessage: handleWebSocketMessage,
   });
 
@@ -270,7 +271,11 @@ export function Header() {
                   onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                   className="flex items-center gap-2 text-caption font-semibold text-gray-700 hover:bg-gray-100"
                 >
-                  <User className="w-4 h-4" />
+                  {user?.role === "admin" ? (
+                    <Store className="w-4 h-4" />
+                  ) : (
+                    <User className="w-4 h-4" />
+                  )}
                   <span className="hidden sm:inline">{user?.nickname || user?.name || "사용자"}</span>
                   <ChevronDown className="w-4 h-4" />
                 </Button>

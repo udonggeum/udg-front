@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useRef, type FormEvent, type ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
-import { User as UserIcon, ArrowLeft, Save, Mail, Phone, MapPin, Camera, CheckCircle2 } from "lucide-react";
+import Link from "next/link";
+import { User as UserIcon, ArrowLeft, Save, Mail, Phone, MapPin, Camera, CheckCircle2, Store as StoreIcon } from "lucide-react";
 import AddressSearchInput from "@/components/AddressSearchInput";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { updateProfileAction, sendPhoneVerificationAction, verifyPhoneAction, getMeAction } from "@/actions/auth";
@@ -15,6 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
+import { getUserImageUrl } from "@/lib/utils";
 
 interface FormErrors {
   name?: string;
@@ -416,41 +418,77 @@ export default function ProfileEditPage() {
         <Card className="mb-6 border-0 shadow-sm">
           <CardContent className="p-6">
             <div className="flex flex-col items-center">
-              <div className="relative group mb-4">
-                <Avatar
-                  className="w-32 h-32 border-4 border-gray-100 cursor-pointer transition-opacity hover:opacity-80"
-                  onClick={handleProfileImageClick}
-                >
-                  {user?.profile_image ? (
-                    <AvatarImage src={user.profile_image} alt={user.name} />
-                  ) : null}
-                  <AvatarFallback className="bg-gradient-to-br from-[#C9A227] to-[#8A6A00] text-white text-4xl">
-                    {user?.name?.charAt(0) || "U"}
-                  </AvatarFallback>
-                </Avatar>
-                {/* 카메라 아이콘 오버레이 */}
-                <div
-                  className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
-                  onClick={handleProfileImageClick}
-                >
-                  {isUploadingImage ? (
-                    <div className="w-8 h-8 border-4 border-white border-t-transparent rounded-full animate-spin" />
-                  ) : (
-                    <Camera className="w-10 h-10 text-white" />
-                  )}
-                </div>
-                {/* Hidden file input */}
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleProfileImageChange}
-                  disabled={isUploadingImage}
-                />
-              </div>
-              <p className="text-sm text-gray-600">프로필 이미지를 클릭하여 변경</p>
-              <p className="text-xs text-gray-500 mt-1">JPG, PNG (최대 5MB)</p>
+              {user?.role === "admin" ? (
+                // 매장 관리자: 프로필 이미지 수정 불가, 매장 이미지 사용 안내
+                <>
+                  <div className="relative mb-4">
+                    <Avatar className="w-32 h-32 border-4 border-gray-100">
+                      {user?.store?.image_url ? (
+                        <AvatarImage src={user.store.image_url} alt={user.store.name} />
+                      ) : null}
+                      <AvatarFallback className="bg-gradient-to-br from-[#C9A227] to-[#8A6A00] text-white text-4xl">
+                        {user?.store?.name?.charAt(0) || user?.name?.charAt(0) || "U"}
+                      </AvatarFallback>
+                    </Avatar>
+                  </div>
+                  <div className="text-center max-w-md">
+                    <div className="flex items-center justify-center gap-2 text-sm text-gray-700 mb-2">
+                      <StoreIcon className="w-4 h-4 text-[#8A6A00]" />
+                      <span className="font-medium">매장 이미지가 프로필 이미지로 사용됩니다</span>
+                    </div>
+                    <p className="text-xs text-gray-500 mb-3">
+                      매장 관리자는 별도 프로필 이미지를 설정할 수 없습니다
+                    </p>
+                    {user?.store?.id && (
+                      <Link href={`/stores/${user.store.id}/edit`}>
+                        <Button variant="outline" size="sm" className="gap-2">
+                          <StoreIcon className="w-4 h-4" />
+                          매장 정보에서 이미지 수정하기
+                        </Button>
+                      </Link>
+                    )}
+                  </div>
+                </>
+              ) : (
+                // 일반 사용자: 프로필 이미지 수정 가능
+                <>
+                  <div className="relative group mb-4">
+                    <Avatar
+                      className="w-32 h-32 border-4 border-gray-100 cursor-pointer transition-opacity hover:opacity-80"
+                      onClick={handleProfileImageClick}
+                    >
+                      {user?.profile_image ? (
+                        <AvatarImage src={user.profile_image} alt={user.name} />
+                      ) : null}
+                      <AvatarFallback className="bg-gradient-to-br from-[#C9A227] to-[#8A6A00] text-white text-4xl">
+                        {user?.name?.charAt(0) || "U"}
+                      </AvatarFallback>
+                    </Avatar>
+                    {/* 카메라 아이콘 오버레이 */}
+                    <div
+                      className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                      onClick={handleProfileImageClick}
+                    >
+                      {isUploadingImage ? (
+                        <div className="w-8 h-8 border-4 border-white border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        <Camera className="w-10 h-10 text-white" />
+                      )}
+                    </div>
+                    {/* Hidden file input */}
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleProfileImageChange}
+                      disabled={isUploadingImage}
+                    />
+                  </div>
+                  <p className="text-sm text-gray-600">프로필 이미지를 클릭하여 변경</p>
+                  <p className="text-xs text-gray-500 mt-1">JPG, PNG (최대 5MB)</p>
+                </>
+              )}
             </div>
           </CardContent>
         </Card>

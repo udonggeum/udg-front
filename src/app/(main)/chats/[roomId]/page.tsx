@@ -26,6 +26,7 @@ import { Send, ArrowLeft, User, AlertCircle, RotateCw, X, Search, Paperclip, Ima
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useWebSocket } from "@/hooks/useWebSocket";
+import { getUserDisplayName } from "@/lib/utils";
 
 export default function ChatRoomPage() {
   const router = useRouter();
@@ -75,10 +76,11 @@ export default function ChatRoomPage() {
     }
   }, [isNearBottom, scrollToBottom]);
 
-  // WebSocket connection
+  // WebSocket connection (인증된 사용자만)
+  const wsToken = isAuthenticated && tokens?.access_token ? tokens.access_token : "";
   const { isConnected, sendMessage } = useWebSocket({
     url: process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8080/api/v1/chats/ws',
-    token: tokens?.access_token || "",
+    token: wsToken,
     onMessage: (data) => {
       if (data.type === "new_message" && data.message) {
         if (data.message.chat_room_id === roomId) {
@@ -695,15 +697,6 @@ export default function ChatRoomPage() {
     return room.user1_id === user.id ? room.user2 : room.user1;
   };
 
-  // 사용자 표시명 가져오기 (admin이고 매장명이 있으면 매장명, 아니면 닉네임)
-  const getDisplayName = (chatUser: ChatRoom["user1"] | null) => {
-    if (!chatUser) return "알 수 없음";
-    if (chatUser.role === "admin" && chatUser.store?.name) {
-      return chatUser.store.name;
-    }
-    return chatUser.nickname || chatUser.name;
-  };
-
   // 채팅 타입 레이블 가져오기
   const getChatTypeLabel = (type: ChatRoom["type"]) => {
     switch (type) {
@@ -757,7 +750,7 @@ export default function ChatRoomPage() {
               </div>
               <div className="flex-1 min-w-0">
                 <h2 className="font-semibold text-gray-900 truncate">
-                  {getDisplayName(otherUser)}
+                  {getUserDisplayName(otherUser || {})}
                 </h2>
                 <p className="text-xs text-gray-600">
                   {room && getChatTypeLabel(room.type)}

@@ -10,6 +10,7 @@ import { MessageCircle, User, Store, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import { ko } from "date-fns/locale";
+import { getUserDisplayName } from "@/lib/utils";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -63,15 +64,6 @@ export default function ChatsPage() {
   const getOtherUser = (room: ChatRoomWithUnread) => {
     if (!user) return null;
     return room.user1_id === user.id ? room.user2 : room.user1;
-  };
-
-  // 사용자 표시명 가져오기 (admin이고 매장명이 있으면 매장명, 아니면 닉네임)
-  const getDisplayName = (chatUser: ChatRoomWithUnread["user1"] | null) => {
-    if (!chatUser) return "알 수 없음";
-    if (chatUser.role === "admin" && chatUser.store?.name) {
-      return chatUser.store.name;
-    }
-    return chatUser.nickname || chatUser.name;
   };
 
   // 대화 타입 레이블 가져오기
@@ -176,16 +168,17 @@ export default function ChatsPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-          <MessageCircle className="w-6 h-6" />
-          메시지
-        </h1>
-        <p className="text-sm text-gray-600 mt-1">
-          {rooms.length}개의 대화
-        </p>
-      </div>
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-4xl mx-auto px-4 py-8">
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+            <MessageCircle className="w-6 h-6" />
+            메시지
+          </h1>
+          <p className="text-sm text-gray-600 mt-1">
+            {rooms.length}개의 대화
+          </p>
+        </div>
 
       {/* 필터 탭 - 평면 구조 */}
       <div className="mb-6 bg-white rounded-xl border border-gray-200 p-1 inline-flex gap-1 flex-wrap">
@@ -300,7 +293,7 @@ export default function ChatsPage() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between mb-1">
                         <h3 className="font-semibold text-gray-900 truncate">
-                          {getDisplayName(otherUser)}
+                          {getUserDisplayName(otherUser || {})}
                         </h3>
                         {room.last_message_at && (
                           <span className="text-xs text-gray-600 flex-shrink-0 ml-2">
@@ -403,6 +396,7 @@ export default function ChatsPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      </div>
     </div>
   );
 }

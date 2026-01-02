@@ -150,8 +150,15 @@ export interface PostListQuery {
   search?: string;
   page?: number;
   page_size?: number;
+
+  // 지역 필터 (다중 선택 지원)
+  regions?: string[];   // 시/도 목록
+  districts?: string[]; // 시/군/구 목록
+
+  // 하위 호환성을 위한 단일 지역 필터 (deprecated)
   region?: string;
   district?: string;
+
   sort_by?: 'created_at' | 'view_count' | 'like_count' | 'comment_count';
   sort_order?: 'asc' | 'desc';
 }

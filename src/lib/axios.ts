@@ -1,4 +1,5 @@
 import axios, { AxiosError, InternalAxiosRequestConfig, AxiosResponse } from "axios";
+import { translateErrorMessage } from "./error-messages";
 
 /**
  * Shared axios instance for all API calls
@@ -76,6 +77,12 @@ apiClient.interceptors.response.use(
 
     // Handle 401 Unauthorized errors
     if (error.response?.status === 401 && !originalRequest._retry) {
+      // 로그인/회원가입 엔드포인트는 401 자동 처리 제외 (로그인 실패와 토큰 만료를 구분)
+      if (originalRequest.url?.includes('/auth/login') ||
+          originalRequest.url?.includes('/auth/register')) {
+        return Promise.reject(error);
+      }
+
       // refresh 엔드포인트 자체에서 401이 나면 즉시 로그아웃
       if (originalRequest.url?.includes('/auth/refresh')) {
         if (typeof window !== "undefined") {
@@ -193,18 +200,40 @@ export function handleApiError<T = unknown>(error: unknown, defaultMessage: stri
   if (axios.isAxiosError(error)) {
     const axiosError = error as AxiosError<{ error?: string; message?: string }> & { isUnauthorized?: boolean };
 
-    // 401 Unauthorized - 가장 우선적으로 체크
-    if (axiosError.response?.status === 401 || axiosError.isUnauthorized) {
+    // 401 Unauthorized 처리
+    if (axiosError.response?.status === 401) {
+      // 백엔드에서 온 에러 메시지가 있으면 우선 사용 (로그인 실패 등)
+      const backendError = axiosError.response?.data?.error || axiosError.response?.data?.message;
+
+      // isUnauthorized 플래그가 있거나 백엔드 메시지가 없을 때만 "로그인 만료" 메시지 사용
+      if (axiosError.isUnauthorized || !backendError) {
+        return {
+          success: false,
+          error: "로그인이 만료되었습니다. 다시 로그인해주세요.",
+          isUnauthorized: true,
+        };
+      }
+
+      // 백엔드 에러 메시지를 한국어로 번역
       return {
         success: false,
-        error: "로그인이 만료되었습니다. 다시 로그인해주세요.",
+        error: translateErrorMessage(backendError),
         isUnauthorized: true,
+      };
+    }
+
+    // 다른 HTTP 에러도 번역
+    const backendError = axiosError.response?.data?.error || axiosError.response?.data?.message;
+    if (backendError) {
+      return {
+        success: false,
+        error: translateErrorMessage(backendError),
       };
     }
 
     return {
       success: false,
-      error: axiosError.response?.data?.error || axiosError.response?.data?.message || defaultMessage,
+      error: defaultMessage,
     };
   }
 

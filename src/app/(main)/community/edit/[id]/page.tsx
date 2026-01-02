@@ -229,6 +229,8 @@ export default function CommunityEditPage() {
     const requestData: any = {
       title,
       content,
+      category: selectedCategory,
+      type: selectedType,
     };
 
     // 금거래 관련 정보 추가
@@ -262,10 +264,13 @@ export default function CommunityEditPage() {
 
     const result = await updatePostAction(postId, requestData, tokens.access_token);
 
+    console.log("Update post result:", result);
+
     if (result.success && result.data) {
       toast.success("게시글이 수정되었습니다.");
       router.push(`/community/posts/${postId}`);
     } else {
+      console.error("Update post failed:", result);
       toast.error(result.error || "게시글 수정에 실패했습니다.");
       setIsSubmitting(false);
     }
@@ -360,23 +365,6 @@ export default function CommunityEditPage() {
                   <h3 className="text-lg font-semibold mb-4">
                     금 거래 정보 <span className="text-red-500">*</span>
                   </h3>
-
-                  {/* 이미지 업로드 */}
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      이미지 <span className="text-red-500">*</span>
-                    </label>
-                    <ImageUploader
-                      imageUrls={imageUrls}
-                      onImagesChange={setImageUrls}
-                      maxImages={5}
-                      accessToken={tokens.access_token}
-                      folder="community"
-                    />
-                    {errors.images && (
-                      <p className="mt-2 text-sm text-red-500">{errors.images}</p>
-                    )}
-                  </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {/* 금 종류 */}
@@ -580,6 +568,23 @@ export default function CommunityEditPage() {
                 />
                 {errors.content && (
                   <p className="mt-2 text-sm text-red-500">{errors.content}</p>
+                )}
+              </div>
+
+              {/* 이미지 업로드 - 모든 카테고리에서 사용 가능 */}
+              <div className="border-t pt-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  이미지 {selectedCategory === "gold_trade" && selectedType === "sell_gold" && <span className="text-red-500">*</span>}
+                </label>
+                <ImageUploader
+                  imageUrls={imageUrls}
+                  onImagesChange={setImageUrls}
+                  maxImages={5}
+                  accessToken={tokens.access_token}
+                  folder="community"
+                />
+                {errors.images && (
+                  <p className="mt-2 text-sm text-red-500">{errors.images}</p>
                 )}
               </div>
 

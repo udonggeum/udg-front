@@ -43,6 +43,7 @@ import { NOTIFICATION_RANGE_LABELS } from "@/types/notification";
 import { KOREA_REGIONS } from "@/lib/regions";
 import { toast } from "sonner";
 import { X } from "lucide-react";
+import { getUserImageUrl } from "@/lib/utils";
 
 export default function MyPage() {
   const router = useRouter();
@@ -367,7 +368,7 @@ export default function MyPage() {
   }
 
   return (
-    <main className="flex-grow py-8 bg-gray-50">
+    <main className="flex-grow py-8 bg-white">
       <Container className="max-w-5xl">
         {/* 프로필 헤더 + 활동 통계 */}
         <Card className="mb-6 border-0 shadow-sm">
@@ -375,37 +376,52 @@ export default function MyPage() {
             <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
               {/* 프로필 이미지 */}
               <div className="relative group">
-                <Avatar
-                  className="w-24 h-24 border-4 border-gray-100 cursor-pointer transition-opacity hover:opacity-80"
-                  onClick={handleProfileImageClick}
-                >
-                  {user?.profile_image ? (
-                    <AvatarImage src={user.profile_image} alt={user.name} />
-                  ) : null}
-                  <AvatarFallback className="bg-gradient-to-br from-[#C9A227] to-[#8A6A00] text-white text-2xl">
-                    {user?.name?.charAt(0) || "U"}
-                  </AvatarFallback>
-                </Avatar>
-                {/* 카메라 아이콘 오버레이 */}
-                <div
-                  className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
-                  onClick={handleProfileImageClick}
-                >
-                  {isUploadingImage ? (
-                    <div className="w-6 h-6 border-3 border-white border-t-transparent rounded-full animate-spin" />
-                  ) : (
-                    <Camera className="w-8 h-8 text-white" />
-                  )}
-                </div>
-                {/* Hidden file input */}
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleProfileImageChange}
-                  disabled={isUploadingImage}
-                />
+                {isAdmin ? (
+                  // 매장 관리자: 매장 이미지 표시, 수정 불가
+                  <Avatar className="w-24 h-24 border-4 border-gray-100">
+                    {user?.store?.image_url ? (
+                      <AvatarImage src={user.store.image_url} alt={user.store.name} />
+                    ) : null}
+                    <AvatarFallback className="bg-gradient-to-br from-[#C9A227] to-[#8A6A00] text-white text-2xl">
+                      {user?.store?.name?.charAt(0) || user?.name?.charAt(0) || "U"}
+                    </AvatarFallback>
+                  </Avatar>
+                ) : (
+                  // 일반 사용자: 프로필 이미지 표시, 수정 가능
+                  <>
+                    <Avatar
+                      className="w-24 h-24 border-4 border-gray-100 cursor-pointer transition-opacity hover:opacity-80"
+                      onClick={handleProfileImageClick}
+                    >
+                      {user?.profile_image ? (
+                        <AvatarImage src={user.profile_image} alt={user.name} />
+                      ) : null}
+                      <AvatarFallback className="bg-gradient-to-br from-[#C9A227] to-[#8A6A00] text-white text-2xl">
+                        {user?.name?.charAt(0) || "U"}
+                      </AvatarFallback>
+                    </Avatar>
+                    {/* 카메라 아이콘 오버레이 */}
+                    <div
+                      className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                      onClick={handleProfileImageClick}
+                    >
+                      {isUploadingImage ? (
+                        <div className="w-6 h-6 border-3 border-white border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        <Camera className="w-8 h-8 text-white" />
+                      )}
+                    </div>
+                    {/* Hidden file input */}
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleProfileImageChange}
+                      disabled={isUploadingImage}
+                    />
+                  </>
+                )}
               </div>
 
               {/* 프로필 정보 + 활동 통계 */}

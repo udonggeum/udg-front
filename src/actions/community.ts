@@ -107,7 +107,7 @@ export async function updatePostAction(
   accessToken: string
 ): Promise<ApiResponse<CommunityPost>> {
   try {
-    const response = await apiClient.put<{ post: CommunityPost; message: string }>(
+    const response = await apiClient.put<CommunityPost | { post: CommunityPost; message: string }>(
       `/community/posts/${postId}`,
       data,
       {
@@ -117,9 +117,14 @@ export async function updatePostAction(
       }
     );
 
+    console.log("Update post response:", response.data);
+
+    // 응답 구조 확인: { post: ... } 형태인지, 직접 post 객체인지
+    const postData = 'post' in response.data ? response.data.post : response.data;
+
     return {
       success: true,
-      data: response.data.post,
+      data: postData,
     };
   } catch (error) {
     return handleApiError(error, "게시글 수정에 실패했습니다.");

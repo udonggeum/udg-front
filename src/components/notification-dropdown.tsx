@@ -128,7 +128,11 @@ export function NotificationDropdown() {
         };
 
         ws.onerror = (error) => {
-          console.error("[알림 WebSocket] 오류:", error);
+          // WebSocket 연결 실패는 예상된 상황 (서버 미실행 등)
+          // 재연결 로직이 있으므로 조용히 처리
+          if (process.env.NODE_ENV === 'development') {
+            console.warn("[알림 WebSocket] 연결 실패 (서버 미실행 가능성)");
+          }
         };
 
         ws.onclose = (event) => {

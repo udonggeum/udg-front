@@ -93,7 +93,8 @@ export function useWebSocket({
   });
 
   useEffect(() => {
-    if (!token) return;
+    // 토큰이 없거나 빈 문자열이면 연결하지 않음
+    if (!token || token.trim() === "") return;
 
     const connect = async (accessToken: string) => {
       try {
