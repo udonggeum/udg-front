@@ -91,10 +91,7 @@ export default function ProfileEditPage() {
   // 성공 시 마이페이지로 이동
   useEffect(() => {
     if (isSuccess) {
-      const timer = setTimeout(() => {
-        router.push("/mypage");
-      }, 1500);
-      return () => clearTimeout(timer);
+      router.push("/mypage");
     }
   }, [isSuccess, router]);
 

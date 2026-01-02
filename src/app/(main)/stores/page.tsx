@@ -486,9 +486,14 @@ function StoresPageContent() {
     if (window.innerWidth < 768) {
       router.push(`/stores/${store.id}`);
     } else {
-      // PC에서는 우측 패널 열기
+      // PC에서는 우측 패널 열기 + 지도 중심 이동
       setSelectedStore(store);
       setIsDetailPanelOpen(true);
+
+      // 선택된 매장 위치로 지도 중심 이동
+      if (store.lat && store.lng) {
+        setMapCenter({ lat: store.lat, lng: store.lng });
+      }
     }
   };
 

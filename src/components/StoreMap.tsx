@@ -56,13 +56,16 @@ export default function StoreMap({
   );
   const [level, setLevel] = useState(5); // 지도 줌 레벨 (1~14)
   const [bounds, setBounds] = useState<kakao.maps.LatLngBounds | null>(null);
+  const [prevSelectedStoreId, setPrevSelectedStoreId] = useState<number | null | undefined>(null);
 
-  // prop center가 변경되면 지도 중심 업데이트
+  // prop center가 변경되면 지도 중심 업데이트 (선택된 매장이 변경될 때만)
+  // 사용자가 지도를 움직인 후에는 강제로 중심을 변경하지 않음
   useEffect(() => {
-    if (propCenter) {
+    if (propCenter && selectedStoreId !== prevSelectedStoreId) {
       setCenter(propCenter);
+      setPrevSelectedStoreId(selectedStoreId);
     }
-  }, [propCenter]);
+  }, [propCenter, selectedStoreId, prevSelectedStoreId]);
 
   // 매장 데이터가 로드되면 전체 매장 bounds fit (초기 포커싱)
   useEffect(() => {
@@ -78,16 +81,16 @@ export default function StoreMap({
     }
   }, [map, stores, propCenter]);
 
-  // 선택된 매장이 변경되면 해당 위치로 지도 중심 이동
+  // 선택된 매장이 변경되면 해당 위치로 지도 중심 이동 (한 번만)
   useEffect(() => {
-    if (selectedStoreId && map) {
+    if (selectedStoreId && map && selectedStoreId !== prevSelectedStoreId) {
       const selectedStore = stores.find((store) => store.id === selectedStoreId);
       if (selectedStore) {
         const moveLatLon = new kakao.maps.LatLng(selectedStore.lat, selectedStore.lng);
         map.panTo(moveLatLon); // 부드럽게 이동
       }
     }
-  }, [selectedStoreId, stores, map]);
+  }, [selectedStoreId, stores, map, prevSelectedStoreId]);
 
   const handleMarkerClick = (store: StoreLocation) => {
     if (onStoreClick) {
