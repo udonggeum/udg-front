@@ -2,6 +2,12 @@
  * User type
  * 사용자 정보
  */
+export interface UserStore {
+  id: number;
+  name: string;
+  image_url?: string;
+}
+
 export interface User {
   id: number;
   email: string;
@@ -13,6 +19,10 @@ export interface User {
   longitude?: number; // 경도 (주소 기반)
   profile_image?: string;
   role: 'user' | 'admin';
+
+  // 매장 정보 (admin인 경우)
+  store_id?: number;
+  store?: UserStore;
 
   // 인증 관련 필드
   email_verified?: boolean;
