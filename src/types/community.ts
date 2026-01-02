@@ -21,6 +21,8 @@ export interface PostAuthor {
   name: string;
   nickname: string;
   role: 'user' | 'admin';
+  profile_image?: string;
+  store?: PostStore;
 }
 
 export interface PostStore {
@@ -29,6 +31,8 @@ export interface PostStore {
   region?: string;
   district?: string;
   address?: string;
+  phone_number?: string;
+  image_url?: string;
 }
 
 export interface CommunityPost {
