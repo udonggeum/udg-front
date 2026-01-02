@@ -24,11 +24,17 @@ export function useWebSocket({
   const reconnectAttemptsRef = useRef(0);
   const maxReconnectAttempts = 5;
   const isRefreshingRef = useRef(false);
+  const tokenRef = useRef(token); // 토큰을 ref로 관리하여 클로저 문제 해결
 
   // onMessage 최신 상태 유지
   useEffect(() => {
     onMessageRef.current = onMessage;
   }, [onMessage]);
+
+  // 토큰이 변경되면 ref 업데이트
+  useEffect(() => {
+    tokenRef.current = token;
+  }, [token]);
 
   // 토큰 갱신 함수 (ref로 저장하여 dependency 문제 방지)
   const refreshTokenRef = useRef(async (): Promise<string | null> => {
@@ -66,6 +72,7 @@ export function useWebSocket({
         };
 
         updateTokens(newTokens);
+        tokenRef.current = newTokens.access_token; // ref도 업데이트
         console.log("[WebSocket] 토큰 갱신 성공");
         return newTokens.access_token;
       } else {
@@ -143,7 +150,8 @@ export function useWebSocket({
             console.log(`[WebSocket] ${delay}ms 후 재연결 시도 (${reconnectAttemptsRef.current}/${maxReconnectAttempts})`);
 
             reconnectTimeoutRef.current = setTimeout(() => {
-              connect(accessToken);
+              // 최신 토큰을 ref에서 가져와서 사용 (클로저 문제 해결)
+              connect(tokenRef.current);
             }, delay) as NodeJS.Timeout;
           } else if (reconnectAttemptsRef.current >= maxReconnectAttempts) {
             console.error("[WebSocket] 최대 재연결 시도 횟수 초과");
