@@ -42,6 +42,7 @@ export interface CommunityPost {
 
   // 기본 정보
   title: string;
+  slug: string; // URL용 고유 식별자 (SEO)
   content: string;
   category: PostCategory;
   type: PostType;

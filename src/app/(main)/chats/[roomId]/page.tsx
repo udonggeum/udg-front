@@ -26,7 +26,7 @@ import { Send, ArrowLeft, User, AlertCircle, RotateCw, X, Search, Paperclip, Ima
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useWebSocket } from "@/hooks/useWebSocket";
-import { getUserDisplayName } from "@/lib/utils";
+import { getUserDisplayName, getUserImageUrl } from "@/lib/utils";
 
 export default function ChatRoomPage() {
   const router = useRouter();
@@ -745,8 +745,20 @@ export default function ChatRoomPage() {
 
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#C9A227] to-[#8A6A00] flex items-center justify-center flex-shrink-0">
-                <User className="w-5 h-5 text-white" />
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden ${
+                getUserImageUrl(otherUser || {})
+                  ? "bg-white border border-gray-200"
+                  : "bg-gradient-to-br from-[#C9A227] to-[#8A6A00]"
+              }`}>
+                {getUserImageUrl(otherUser || {}) ? (
+                  <img
+                    src={getUserImageUrl(otherUser || {})}
+                    alt={getUserDisplayName(otherUser || {})}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <User className="w-5 h-5 text-white" />
+                )}
               </div>
               <div className="flex-1 min-w-0">
                 <h2 className="font-semibold text-gray-900 truncate">

@@ -484,7 +484,7 @@ function StoresPageContent() {
   const handleStoreClick = (store: StoreWithExtras) => {
     // 모바일에서는 상세 페이지로 바로 이동
     if (window.innerWidth < 768) {
-      router.push(`/stores/${store.id}`);
+      router.push(`/stores/${store.id}/${store.slug}`);
     } else {
       // PC에서는 우측 패널 열기 + 지도 중심 이동
       setSelectedStore(store);
@@ -853,7 +853,7 @@ function StoresPageContent() {
                     <div>
                       <button
                         type="button"
-                        onClick={() => router.push(`/stores/${selectedStore.id}`)}
+                        onClick={() => router.push(`/stores/${selectedStore.id}/${selectedStore.slug}`)}
                         className="hover:underline"
                       >
                         <h3 className="text-[20px] font-bold text-gray-900">
@@ -946,7 +946,7 @@ function StoresPageContent() {
                 {/* 매장 상세보기 버튼 */}
                 <Button
                   type="button"
-                  onClick={() => router.push(`/stores/${selectedStore.id}`)}
+                  onClick={() => router.push(`/stores/${selectedStore.id}/${selectedStore.slug}`)}
                   variant="brand-primary"
                   size="lg"
                   className="w-full"

@@ -33,6 +33,7 @@ export interface StoreDetail {
   id: number;
   user_id?: number;
   name: string;
+  slug: string; // URL용 고유 식별자 (SEO)
   region?: string;
   district?: string;
   address?: string;

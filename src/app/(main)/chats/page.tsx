@@ -10,7 +10,7 @@ import { MessageCircle, User, Store, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import { ko } from "date-fns/locale";
-import { getUserDisplayName } from "@/lib/utils";
+import { getUserDisplayName, getUserImageUrl } from "@/lib/utils";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -281,8 +281,18 @@ export default function ChatsPage() {
                 >
                   <div className="flex items-start gap-3">
                     {/* Avatar */}
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#C9A227] to-[#8A6A00] flex items-center justify-center flex-shrink-0">
-                      {room.type === "STORE" ? (
+                    <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden ${
+                      getUserImageUrl(otherUser || {})
+                        ? "bg-white border border-gray-200"
+                        : "bg-gradient-to-br from-[#C9A227] to-[#8A6A00]"
+                    }`}>
+                      {getUserImageUrl(otherUser || {}) ? (
+                        <img
+                          src={getUserImageUrl(otherUser || {})}
+                          alt={getUserDisplayName(otherUser || {})}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : room.type === "STORE" ? (
                         <Store className="w-6 h-6 text-white" />
                       ) : (
                         <User className="w-6 h-6 text-white" />

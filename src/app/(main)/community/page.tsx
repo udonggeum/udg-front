@@ -722,7 +722,7 @@ function CommunityPageContent() {
                 {data.data.map((post) => (
                   <Link
                     key={post.id}
-                    href={`/community/posts/${post.id}`}
+                    href={`/community/posts/${post.id}/${post.slug}`}
                     className="group bg-white rounded-2xl overflow-hidden border border-gray-100 hover:border-gray-200 hover:shadow-lg transition-all duration-300 flex flex-col h-full"
                   >
                     {/* Thumbnail */}
@@ -771,7 +771,11 @@ function CommunityPageContent() {
                       {/* Profile + Stats */}
                       <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-2">
-                          <div className="w-6 h-6 rounded-full flex items-center justify-center overflow-hidden bg-gradient-to-br from-[#C9A227] to-[#8A6A00]">
+                          <div className={`w-6 h-6 rounded-full flex items-center justify-center overflow-hidden ${
+                            getUserImageUrl(post.user)
+                              ? "bg-white border border-gray-200"
+                              : "bg-gradient-to-br from-[#C9A227] to-[#8A6A00]"
+                          }`}>
                             {getUserImageUrl(post.user) ? (
                               <img
                                 src={getUserImageUrl(post.user)}
@@ -831,14 +835,18 @@ function CommunityPageContent() {
                 {data.data.map((post) => (
                   <Link
                     key={post.id}
-                    href={`/community/posts/${post.id}`}
+                    href={`/community/posts/${post.id}/${post.slug}`}
                     className="block bg-white rounded-xl border border-gray-100 hover:border-gray-200 hover:shadow-lg transition-all duration-200 p-5"
                   >
                     <div className="flex gap-5">
                       {/* Left: Store Profile + Thumbnails */}
                       <div className="flex flex-col gap-3 flex-shrink-0">
                         {/* Store/User Profile */}
-                        <div className="w-36 h-36 rounded-2xl flex items-center justify-center overflow-hidden bg-gradient-to-br from-[#C9A227] to-[#8A6A00]">
+                        <div className={`w-36 h-36 rounded-2xl flex items-center justify-center overflow-hidden ${
+                          getUserImageUrl(post.user)
+                            ? "bg-white border-2 border-gray-200"
+                            : "bg-gradient-to-br from-[#C9A227] to-[#8A6A00]"
+                        }`}>
                           {getUserImageUrl(post.user) ? (
                             <img
                               src={getUserImageUrl(post.user)}

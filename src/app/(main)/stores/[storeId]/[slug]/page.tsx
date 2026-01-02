@@ -1822,6 +1822,7 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
 export default function StoreDetailPage() {
   const params = useParams();
   const storeId = params.storeId ? Number(params.storeId) : null;
+  // slug는 SEO용이므로 params.slug를 받지만 실제 조회는 storeId로 수행
 
   // storeId가 변경되면 컴포넌트를 완전히 재마운트
   return <StoreDetailContent key={storeId} storeId={storeId} />;

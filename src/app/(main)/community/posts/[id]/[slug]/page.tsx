@@ -36,6 +36,7 @@ import { Button } from "@/components/ui/button";
 
 export default function CommunityDetailPage() {
   const params = useParams();
+  // slug는 SEO용이므로 params.slug를 받지만 실제 조회는 id로 수행
   const router = useRouter();
   const { user, tokens } = useAuthStore();
 
@@ -406,7 +407,11 @@ export default function CommunityDetailPage() {
         <div className="mb-6 pb-6 border-b border-gray-200">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-full flex items-center justify-center overflow-hidden bg-gradient-to-br from-[#C9A227] to-[#8A6A00]">
+              <div className={`w-12 h-12 rounded-full flex items-center justify-center overflow-hidden ${
+                getUserImageUrl(postData.user)
+                  ? "bg-white border border-gray-200"
+                  : "bg-gradient-to-br from-[#C9A227] to-[#8A6A00]"
+              }`}>
                 {getUserImageUrl(postData.user) ? (
                   <img
                     src={getUserImageUrl(postData.user)}
@@ -697,7 +702,11 @@ export default function CommunityDetailPage() {
                     <div key={comment.id} className="py-5 first:pt-0">
                       <div className="flex gap-3">
                         {/* Profile Image */}
-                        <div className="w-10 h-10 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0 bg-gradient-to-br from-[#C9A227] to-[#8A6A00]">
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0 ${
+                          getUserImageUrl(comment.user)
+                            ? "bg-white border border-gray-200"
+                            : "bg-gradient-to-br from-[#C9A227] to-[#8A6A00]"
+                        }`}>
                           {getUserImageUrl(comment.user) ? (
                             <img
                               src={getUserImageUrl(comment.user)}
