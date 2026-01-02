@@ -363,7 +363,16 @@ export default function ProfileEditPage() {
     setIsPending(true);
 
     try {
-      const result = await updateProfileAction(formData, tokens.access_token);
+      // admin 사용자는 닉네임 수정 불가 (매장명과 동일해야 함)
+      const updateData = user?.role === "admin"
+        ? {
+            name: formData.name,
+            phone: formData.phone,
+            address: formData.address,
+          }
+        : formData;
+
+      const result = await updateProfileAction(updateData, tokens.access_token);
 
       if (result.success && result.data) {
         setIsSuccess(true);
@@ -504,10 +513,12 @@ export default function ProfileEditPage() {
                       onChange={handleChange}
                       className="h-12"
                       placeholder="닉네임을 입력하세요"
-                      disabled={isPending}
+                      disabled={isPending || user?.role === "admin"}
                     />
                     <p className="text-xs text-gray-500 mt-1">
-                      입력하지 않으면 자동으로 생성됩니다
+                      {user?.role === "admin"
+                        ? "매장 주인은 닉네임을 수정할 수 없습니다 (매장명과 동일)"
+                        : "입력하지 않으면 자동으로 생성됩니다"}
                     </p>
                   </div>
 

@@ -31,8 +31,10 @@ export function NotificationDropdown() {
   const [isLoading, setIsLoading] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const fetchNotifications = useCallback(async (showLoading = false) => {
-    if (!tokens?.access_token) return;
+  // fetchNotifications를 ref로 저장하여 dependency 문제 방지
+  const fetchNotificationsRef = useRef(async (showLoading = false) => {
+    const currentTokens = useAuthStore.getState().tokens;
+    if (!currentTokens?.access_token) return;
 
     if (showLoading) {
       setIsLoading(true);
@@ -41,7 +43,7 @@ export function NotificationDropdown() {
     try {
       const result = await getNotificationsAction(
         { page: 1, page_size: 5 },
-        tokens.access_token
+        currentTokens.access_token
       );
 
       if (result.success && result.data) {
@@ -55,7 +57,12 @@ export function NotificationDropdown() {
         setIsLoading(false);
       }
     }
-  }, [tokens?.access_token, setRecentNotifications, setUnreadCount]);
+  });
+
+  // 컴포넌트에서 사용할 fetchNotifications 래퍼
+  const fetchNotifications = useCallback((showLoading = false) => {
+    return fetchNotificationsRef.current(showLoading);
+  }, []);
 
   // 드롭다운 열 때 알림 조회
   useEffect(() => {
@@ -71,7 +78,7 @@ export function NotificationDropdown() {
     console.log("[알림 WebSocket] 토큰 변경 감지, 연결 초기화");
 
     // 초기 로드
-    fetchNotifications(false);
+    fetchNotificationsRef.current(false);
 
     // WebSocket 연결
     const wsProtocol = window.location.protocol === "https:" ? "wss:" : "ws:";
@@ -107,10 +114,8 @@ export function NotificationDropdown() {
             if (data.type === "new_notification") {
               // 새 알림 수신
               setUnreadCount(data.unread_count);
-              // 알림 목록 새로고침 (드롭다운이 열려있을 때만)
-              if (isOpen) {
-                fetchNotifications(false);
-              }
+              // 알림 목록 새로고침 (항상 실행 - 드롭다운 열릴 때 최신 데이터 표시)
+              fetchNotificationsRef.current(false);
               // 알림 토스트 표시
               toast.info(data.notification?.title || "새 알림이 도착했습니다");
             } else if (data.type === "unread_count") {
@@ -168,7 +173,7 @@ export function NotificationDropdown() {
         clearTimeout(reconnectTimeout);
       }
     };
-  }, [tokens?.access_token, fetchNotifications, setUnreadCount, isOpen]);
+  }, [tokens?.access_token, setUnreadCount]);
 
   // 외부 클릭 감지
   useEffect(() => {

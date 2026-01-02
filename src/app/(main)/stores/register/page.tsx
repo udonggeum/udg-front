@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { registerStoreAction } from "@/actions/stores";
-import { getMeAction } from "@/actions/auth";
+import { getMeAction, updateProfileAction } from "@/actions/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -161,7 +161,24 @@ export default function StoreRegisterPage() {
       if (result.success && result.data) {
         toast.success(result.data.message || "매장이 성공적으로 등록되었습니다!");
 
-        // 유저 정보 새로고침 (admin 권한 반영)
+        // 닉네임을 매장명으로 업데이트
+        if (formData.name && user) {
+          const updateResult = await updateProfileAction(
+            {
+              name: user.name,
+              nickname: formData.name, // 매장명을 닉네임으로 설정
+              phone: user.phone,
+              address: user.address,
+            },
+            tokens.access_token
+          );
+
+          if (!updateResult.success) {
+            console.error("닉네임 업데이트 실패:", updateResult.error);
+          }
+        }
+
+        // 유저 정보 새로고침 (admin 권한 및 닉네임 반영)
         const userResult = await getMeAction(tokens.access_token);
         if (userResult.success && userResult.data?.user) {
           updateUser(userResult.data.user);

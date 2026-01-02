@@ -30,8 +30,8 @@ export function useWebSocket({
     onMessageRef.current = onMessage;
   }, [onMessage]);
 
-  // 토큰 갱신 함수
-  const refreshToken = useCallback(async (): Promise<string | null> => {
+  // 토큰 갱신 함수 (ref로 저장하여 dependency 문제 방지)
+  const refreshTokenRef = useRef(async (): Promise<string | null> => {
     if (isRefreshingRef.current) {
       console.log("[WebSocket] 이미 토큰 갱신 중...");
       return null;
@@ -83,7 +83,7 @@ export function useWebSocket({
     } finally {
       isRefreshingRef.current = false;
     }
-  }, []);
+  });
 
   useEffect(() => {
     if (!token) return;
@@ -127,7 +127,7 @@ export function useWebSocket({
             console.warn("[WebSocket] 인증 실패 감지, 토큰 갱신 시도");
 
             // 토큰 갱신 시도
-            const newToken = await refreshToken();
+            const newToken = await refreshTokenRef.current();
             if (newToken) {
               console.log("[WebSocket] 새 토큰으로 재연결 시도");
               // 새 토큰으로 즉시 재연결
@@ -166,7 +166,7 @@ export function useWebSocket({
         wsRef.current.close(1000, "Component unmount");
       }
     };
-  }, [url, token, autoReconnect, refreshToken]);
+  }, [url, token, autoReconnect]);
 
   const sendMessage = (message: any) => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {

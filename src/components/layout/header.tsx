@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useLocationStore } from "@/stores/useLocationStore";
@@ -41,8 +41,9 @@ export function Header() {
     }
   }, [user?.address, currentLocation, initializeFromUserAddress]);
 
-  // 안읽은 메시지 개수 가져오기
-  const fetchUnreadCount = useCallback(async () => {
+  // 안읽은 메시지 개수 가져오기 (ref로 저장하여 dependency 문제 방지)
+  const fetchUnreadCountRef = useRef(async () => {
+    const { isAuthenticated, tokens } = useAuthStore.getState();
     if (!isAuthenticated || !tokens?.access_token) {
       setUnreadChatCount(0);
       return;
@@ -63,7 +64,12 @@ export function Header() {
     } catch (error) {
       console.error("Failed to fetch unread chat count:", error);
     }
-  }, [isAuthenticated, tokens, handleApiError]);
+  });
+
+  // 컴포넌트에서 사용할 fetchUnreadCount 래퍼
+  const fetchUnreadCount = useCallback(() => {
+    return fetchUnreadCountRef.current();
+  }, []);
 
   // WebSocket 메시지 핸들러 (안정화된 콜백)
   const handleWebSocketMessage = useCallback((data: any) => {
