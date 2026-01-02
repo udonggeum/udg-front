@@ -293,7 +293,7 @@ function CommunityPageContent() {
               onClick={() => handleMainCategoryChange("market")}
               className={`px-8 py-3 text-[16px] font-bold rounded-xl transition-all duration-200 ${
                 mainCategory === "market"
-                  ? "bg-yellow-400 text-gray-900 shadow-md"
+                  ? "bg-[#C9A227] text-white shadow-md"
                   : "text-gray-600 hover:text-gray-900"
               }`}
             >
@@ -303,7 +303,7 @@ function CommunityPageContent() {
               onClick={() => handleMainCategoryChange("community")}
               className={`px-8 py-3 text-[16px] font-bold rounded-xl transition-all duration-200 ${
                 mainCategory === "community"
-                  ? "bg-yellow-400 text-gray-900 shadow-md"
+                  ? "bg-[#C9A227] text-white shadow-md"
                   : "text-gray-600 hover:text-gray-900"
               }`}
             >
@@ -312,14 +312,14 @@ function CommunityPageContent() {
           </div>
 
           {/* 지역 선택 영역 */}
-          <div className="mb-5 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-2xl p-4 border border-yellow-200">
+          <div className="mb-5 bg-gradient-to-r from-[#FEF9E7] to-[#FDF8E8] rounded-2xl p-4 border border-[#C9A227]/30">
             <div className="flex items-center justify-between">
               <button
                 onClick={() => setIsLocationModalOpen(true)}
                 className="flex items-center gap-2 text-left flex-1"
               >
                 <svg
-                  className="w-5 h-5 text-yellow-600"
+                  className="w-5 h-5 text-[#C9A227]"
                   fill="currentColor"
                   viewBox="0 0 24 24"
                 >
@@ -377,7 +377,7 @@ function CommunityPageContent() {
                     setIsLocationModalOpen(false);
                   }}
                   className={`w-full text-left px-4 py-3 rounded-lg mb-2 transition-colors ${
-                    !selectedRegion ? "bg-yellow-50 text-gray-900 font-semibold" : "hover:bg-gray-50 text-gray-700"
+                    !selectedRegion ? "bg-[#FEF9E7] text-gray-900 font-semibold" : "hover:bg-gray-50 text-gray-700"
                   }`}
                 >
                   전체 지역
@@ -392,7 +392,7 @@ function CommunityPageContent() {
                         setSelectedDistrict("");
                       }}
                       className={`w-full text-left px-4 py-3 rounded-lg transition-colors ${
-                        selectedRegion === region.region ? "bg-yellow-50 text-gray-900 font-semibold" : "hover:bg-gray-50 text-gray-700"
+                        selectedRegion === region.region ? "bg-[#FEF9E7] text-gray-900 font-semibold" : "hover:bg-gray-50 text-gray-700"
                       }`}
                     >
                       {region.region}
@@ -444,7 +444,7 @@ function CommunityPageContent() {
                     onClick={() => setSelectedType(undefined)}
                     className={`px-4 py-2.5 text-caption font-semibold rounded-lg transition-all duration-200 ${
                       !selectedType
-                        ? "bg-gray-900 text-white shadow-sm"
+                        ? "bg-[#C9A227] text-white shadow-md"
                         : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
                     }`}
                   >
@@ -454,7 +454,7 @@ function CommunityPageContent() {
                     onClick={() => setSelectedType("buy_gold")}
                     className={`px-4 py-2.5 text-caption font-semibold rounded-lg transition-all duration-200 ${
                       selectedType === "buy_gold"
-                        ? "bg-gray-900 text-white shadow-sm"
+                        ? "bg-[#C9A227] text-white shadow-md"
                         : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
                     }`}
                   >
@@ -464,7 +464,7 @@ function CommunityPageContent() {
                     onClick={() => setSelectedType("sell_gold")}
                     className={`px-4 py-2.5 text-caption font-semibold rounded-lg transition-all duration-200 ${
                       selectedType === "sell_gold"
-                        ? "bg-gray-900 text-white shadow-sm"
+                        ? "bg-[#C9A227] text-white shadow-md"
                         : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
                     }`}
                   >
@@ -480,7 +480,7 @@ function CommunityPageContent() {
                     }}
                     className={`px-4 py-2.5 text-caption font-semibold rounded-lg transition-all duration-200 ${
                       selectedCategory === "gold_news" && !selectedType
-                        ? "bg-gray-900 text-white shadow-sm"
+                        ? "bg-[#C9A227] text-white shadow-md"
                         : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
                     }`}
                   >
@@ -493,7 +493,7 @@ function CommunityPageContent() {
                     }}
                     className={`px-4 py-2.5 text-caption font-semibold rounded-lg transition-all duration-200 ${
                       selectedType === "product_news"
-                        ? "bg-gray-900 text-white shadow-sm"
+                        ? "bg-[#C9A227] text-white shadow-md"
                         : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
                     }`}
                   >
@@ -506,7 +506,7 @@ function CommunityPageContent() {
                     }}
                     className={`px-4 py-2.5 text-caption font-semibold rounded-lg transition-all duration-200 ${
                       selectedType === "store_news"
-                        ? "bg-gray-900 text-white shadow-sm"
+                        ? "bg-[#C9A227] text-white shadow-md"
                         : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
                     }`}
                   >
@@ -519,7 +519,7 @@ function CommunityPageContent() {
                     }}
                     className={`px-4 py-2.5 text-caption font-semibold rounded-lg transition-all duration-200 ${
                       selectedCategory === "qna"
-                        ? "bg-gray-900 text-white shadow-sm"
+                        ? "bg-[#C9A227] text-white shadow-md"
                         : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
                     }`}
                   >
@@ -652,7 +652,7 @@ function CommunityPageContent() {
                           {post.type === "sell_gold" && post.reservation_status && (
                             <div className="absolute top-2 right-2">
                               {post.reservation_status === 'reserved' ? (
-                                <span className="inline-flex items-center px-2.5 py-1 bg-yellow-500 text-white text-xs font-bold rounded-full shadow-md">
+                                <span className="inline-flex items-center px-2.5 py-1 bg-[#FEF9E7]0 text-white text-xs font-bold rounded-full shadow-md">
                                   🔒 예약중
                                 </span>
                               ) : post.reservation_status === 'completed' ? (
@@ -664,7 +664,7 @@ function CommunityPageContent() {
                           )}
                         </div>
                       ) : (
-                        <div className="relative w-full aspect-[16/9] bg-gradient-to-br from-yellow-400 to-yellow-500 flex items-center justify-center">
+                        <div className="relative w-full aspect-[16/9] bg-gradient-to-br from-[#C9A227] to-[#8A6A00] flex items-center justify-center">
                           <svg
                             className="w-16 h-16 text-white/50"
                             fill="currentColor"
@@ -676,7 +676,7 @@ function CommunityPageContent() {
                           {post.type === "sell_gold" && post.reservation_status && (
                             <div className="absolute top-2 right-2">
                               {post.reservation_status === 'reserved' ? (
-                                <span className="inline-flex items-center px-2.5 py-1 bg-yellow-500 text-white text-xs font-bold rounded-full shadow-md">
+                                <span className="inline-flex items-center px-2.5 py-1 bg-[#FEF9E7]0 text-white text-xs font-bold rounded-full shadow-md">
                                   🔒 예약중
                                 </span>
                               ) : post.reservation_status === 'completed' ? (
@@ -704,7 +704,7 @@ function CommunityPageContent() {
                         {/* Meta Info */}
                         <div className="flex items-center justify-between pt-4 border-t border-gray-100">
                           <div className="flex items-center gap-2">
-                            <div className="w-8 h-8 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-full flex items-center justify-center">
+                            <div className="w-8 h-8 bg-gradient-to-br from-[#C9A227] to-[#8A6A00] rounded-full flex items-center justify-center">
                               <span className="text-xs font-bold text-white">
                                 {(() => {
                                   const authorName =
@@ -789,7 +789,7 @@ function CommunityPageContent() {
                       {/* Meta Info */}
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          <div className="w-7 h-7 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-full flex items-center justify-center">
+                          <div className="w-7 h-7 bg-gradient-to-br from-[#C9A227] to-[#8A6A00] rounded-full flex items-center justify-center">
                             <span className="text-xs font-bold text-white">
                               {(() => {
                                 const authorName =

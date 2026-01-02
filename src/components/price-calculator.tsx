@@ -112,7 +112,7 @@ export default function PriceCalculator({ prices }: PriceCalculatorProps) {
       {/* 헤더 */}
       <div className="p-6 border-b border-gray-100">
         <div className="flex items-center gap-2 mb-1">
-          <Calculator className="w-5 h-5 text-yellow-600" />
+          <Calculator className="w-5 h-5 text-[#C9A227]" />
           <h2 className="text-[18px] font-bold text-gray-900">시세 계산기</h2>
         </div>
         <p className="text-small text-gray-500">
@@ -131,7 +131,7 @@ export default function PriceCalculator({ prices }: PriceCalculatorProps) {
               <select
                 value={selectedType}
                 onChange={(e) => setSelectedType(e.target.value as GoldType)}
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl text-caption focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent transition-all"
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl text-caption focus:outline-none focus:ring-2 focus:ring-[#C9A227] focus:border-transparent transition-all"
               >
                 {prices.map((price) => (
                   <option key={price.type} value={price.type}>
@@ -152,12 +152,12 @@ export default function PriceCalculator({ prices }: PriceCalculatorProps) {
                   placeholder="0"
                   min="0"
                   step="0.01"
-                  className="flex-1 px-4 py-3 border border-gray-200 rounded-xl text-caption focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent transition-all tabular-nums"
+                  className="flex-1 px-4 py-3 border border-gray-200 rounded-xl text-caption focus:outline-none focus:ring-2 focus:ring-[#C9A227] focus:border-transparent transition-all tabular-nums"
                 />
                 <select
                   value={unit}
                   onChange={(e) => setUnit(e.target.value as WeightUnit)}
-                  className="px-4 py-3 border border-gray-200 rounded-xl text-caption focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent transition-all"
+                  className="px-4 py-3 border border-gray-200 rounded-xl text-caption focus:outline-none focus:ring-2 focus:ring-[#C9A227] focus:border-transparent transition-all"
                 >
                   <option value="g">g</option>
                   <option value="돈">돈</option>
@@ -187,7 +187,7 @@ export default function PriceCalculator({ prices }: PriceCalculatorProps) {
                   id="purityConversion"
                   checked={purityConversionEnabled}
                   onChange={(e) => setPurityConversionEnabled(e.target.checked)}
-                  className="w-4 h-4 text-yellow-600 bg-gray-100 border-gray-300 rounded focus:ring-yellow-500"
+                  className="w-4 h-4 text-[#C9A227] bg-gray-100 border-gray-300 rounded focus:ring-[#C9A227]"
                 />
                 <label
                   htmlFor="purityConversion"
@@ -205,7 +205,7 @@ export default function PriceCalculator({ prices }: PriceCalculatorProps) {
                   <select
                     value={targetPurity}
                     onChange={(e) => setTargetPurity(e.target.value as GoldType)}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl text-caption focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent transition-all"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl text-caption focus:outline-none focus:ring-2 focus:ring-[#C9A227] focus:border-transparent transition-all"
                   >
                     {prices
                       .filter((p) => p.type !== selectedType)
@@ -239,14 +239,14 @@ export default function PriceCalculator({ prices }: PriceCalculatorProps) {
           {/* 결과 영역 */}
           <div className="space-y-4">
             {/* 매입 예상가 (살 때) */}
-            <div className="p-4 bg-gradient-to-br from-green-50 to-green-100 rounded-xl border border-green-200">
-              <p className="text-small font-medium text-green-700 mb-1">살 때 예상가 (매입가)</p>
-              <p className="text-[28px] font-bold text-green-600 tabular-nums">
+            <div className="p-4 bg-gradient-to-br from-[#FEF9E7] to-[#FDF8E8] rounded-xl border border-[#C9A227]/30">
+              <p className="text-small font-medium text-[#8A6A00] mb-1">살 때 예상가 (매입가)</p>
+              <p className="text-[28px] font-bold text-[#8A6A00] tabular-nums">
                 {buyEstimate.toLocaleString()}
                 <span className="text-[16px] ml-1">원</span>
               </p>
               {selectedPrice && weightInGrams > 0 && (
-                <p className="text-[11px] text-green-600 mt-1">
+                <p className="text-[11px] text-[#8A6A00]/80 mt-1">
                   {purityConversionEnabled
                     ? `${prices
                         .find((p) => p.type === targetPurity)
@@ -261,14 +261,14 @@ export default function PriceCalculator({ prices }: PriceCalculatorProps) {
             </div>
 
             {/* 매도 예상가 (팔 때) */}
-            <div className="p-4 bg-gradient-to-br from-red-50 to-red-100 rounded-xl border border-red-200">
-              <p className="text-small font-medium text-red-700 mb-1">팔 때 예상가 (매도가)</p>
-              <p className="text-[28px] font-bold text-red-600 tabular-nums">
+            <div className="p-4 bg-gradient-to-br from-[#C9A227] to-[#B8941F] rounded-xl border border-[#8A6A00]">
+              <p className="text-small font-medium text-white/90 mb-1">팔 때 예상가 (매도가)</p>
+              <p className="text-[28px] font-bold text-white tabular-nums">
                 {sellEstimate.toLocaleString()}
                 <span className="text-[16px] ml-1">원</span>
               </p>
               {selectedPrice && weightInGrams > 0 && (
-                <p className="text-[11px] text-red-600 mt-1">
+                <p className="text-[11px] text-white/80 mt-1">
                   {purityConversionEnabled
                     ? `${prices
                         .find((p) => p.type === targetPurity)

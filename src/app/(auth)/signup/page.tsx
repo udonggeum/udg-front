@@ -522,7 +522,7 @@ export default function SignupPage() {
       <header className="w-full bg-white border-b border-gray-100 sticky top-0 z-50">
         <div className="max-w-[520px] mx-auto px-page h-[60px] flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8 bg-gradient-to-br from-[#C9A227] to-[#8A6A00] rounded-lg flex items-center justify-center">
               <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
               </svg>
@@ -541,10 +541,10 @@ export default function SignupPage() {
           {/* 스텝 인디케이터 */}
           <div className="flex items-center justify-center gap-4 mb-10">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-gray-900 text-white rounded-full flex items-center justify-center text-small font-semibold">
+              <div className="w-8 h-8 bg-[#C9A227] text-white rounded-full flex items-center justify-center text-small font-semibold">
                 1
               </div>
-              <span className="text-small font-medium text-gray-900 hidden sm:block">정보입력</span>
+              <span className="text-small font-medium text-[#C9A227] hidden sm:block">정보입력</span>
             </div>
             <div className="w-8 h-0.5 bg-gray-200"></div>
             <div className="flex items-center gap-2">
@@ -633,7 +633,7 @@ export default function SignupPage() {
                     onChange={handleChange}
                     onBlur={() => handleBlur("email")}
                     disabled={isPending || isEmailVerified}
-                    className={`px-4 py-6 bg-gray-100 border-transparent focus:border-gray-900 focus:bg-white rounded-xl text-body placeholder-gray-400 smooth-transition ${
+                    className={`px-4 py-6 bg-gray-100 border-transparent focus:border-[#C9A227] focus:bg-white rounded-xl text-body placeholder-gray-400 smooth-transition ${
                       touched.email && formErrors.email ? "border-red-500 focus:border-red-500" : ""
                     } ${isEmailVerified ? "bg-green-50 border-green-200" : ""}`}
                   />
@@ -671,14 +671,14 @@ export default function SignupPage() {
                       onChange={(e) => setEmailVerificationCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
                       disabled={isVerifyingEmail}
                       maxLength={6}
-                      className="px-4 py-6 bg-gray-100 border-transparent focus:border-gray-900 focus:bg-white rounded-xl text-body text-gray-900 placeholder-gray-400 smooth-transition"
+                      className="px-4 py-6 bg-gray-100 border-transparent focus:border-[#C9A227] focus:bg-white rounded-xl text-body text-gray-900 placeholder-gray-400 smooth-transition"
                     />
                   </div>
                   <Button
                     type="button"
                     disabled={isVerifyingEmail || emailVerificationCode.length !== 6}
                     onClick={handleVerifyEmail}
-                    className="px-5 py-6 bg-gray-900 hover:bg-gray-800 disabled:bg-gray-400 disabled:cursor-not-allowed text-white text-caption font-semibold rounded-xl whitespace-nowrap"
+                    className="px-5 py-6 bg-[#C9A227] hover:bg-[#8A6A00] disabled:bg-gray-400 disabled:cursor-not-allowed text-white text-caption font-semibold rounded-xl whitespace-nowrap"
                   >
                     {isVerifyingEmail ? "확인 중..." : "인증확인"}
                   </Button>
@@ -714,7 +714,7 @@ export default function SignupPage() {
                   onChange={handleChange}
                   onBlur={() => handleBlur("password")}
                   disabled={isPending}
-                  className={`w-full px-4 py-6 bg-gray-100 border-transparent focus:border-gray-900 focus:bg-white rounded-xl text-body placeholder-gray-400 smooth-transition pr-12 ${
+                  className={`w-full px-4 py-6 bg-gray-100 border-transparent focus:border-[#C9A227] focus:bg-white rounded-xl text-body placeholder-gray-400 smooth-transition pr-12 ${
                     touched.password && formErrors.password ? "border-red-500 focus:border-red-500" : ""
                   }`}
                 />
@@ -740,7 +740,7 @@ export default function SignupPage() {
                             ? passwordStrength <= 2
                               ? "bg-red-400"
                               : passwordStrength === 3
-                              ? "bg-yellow-400"
+                              ? "bg-[#C9A227]"
                               : "bg-green-400"
                             : "bg-gray-200"
                         }`}
@@ -756,7 +756,7 @@ export default function SignupPage() {
                           : passwordStrength <= 2
                           ? "text-red-500"
                           : passwordStrength === 3
-                          ? "text-yellow-600"
+                          ? "text-[#C9A227]"
                           : "text-green-600"
                       }
                     >
@@ -781,7 +781,7 @@ export default function SignupPage() {
                   onChange={handleChange}
                   onBlur={() => handleBlur("passwordConfirm")}
                   disabled={isPending}
-                  className={`w-full px-4 py-6 bg-gray-100 border-transparent focus:border-gray-900 focus:bg-white rounded-xl text-body placeholder-gray-400 smooth-transition pr-12 ${
+                  className={`w-full px-4 py-6 bg-gray-100 border-transparent focus:border-[#C9A227] focus:bg-white rounded-xl text-body placeholder-gray-400 smooth-transition pr-12 ${
                     touched.passwordConfirm && formErrors.passwordConfirm
                       ? "border-red-500 focus:border-red-500"
                       : ""
@@ -813,7 +813,7 @@ export default function SignupPage() {
                 onChange={handleChange}
                 onBlur={() => handleBlur("name")}
                 disabled={isPending}
-                className={`w-full px-4 py-6 bg-gray-100 border-transparent focus:border-gray-900 focus:bg-white rounded-xl text-body placeholder-gray-400 smooth-transition ${
+                className={`w-full px-4 py-6 bg-gray-100 border-transparent focus:border-[#C9A227] focus:bg-white rounded-xl text-body placeholder-gray-400 smooth-transition ${
                   touched.name && formErrors.name ? "border-red-500 focus:border-red-500" : ""
                 }`}
               />
@@ -834,7 +834,7 @@ export default function SignupPage() {
                 value={formData.nickname}
                 onChange={handleChange}
                 disabled={isPending}
-                className="w-full px-4 py-6 bg-gray-100 border-transparent focus:border-gray-900 focus:bg-white rounded-xl text-body placeholder-gray-400 smooth-transition"
+                className="w-full px-4 py-6 bg-gray-100 border-transparent focus:border-[#C9A227] focus:bg-white rounded-xl text-body placeholder-gray-400 smooth-transition"
               />
               <p className="mt-2 text-[12px] text-gray-500">
                 입력하지 않으면 자동으로 생성됩니다
@@ -854,7 +854,7 @@ export default function SignupPage() {
                 onChange={handleChange}
                 onBlur={() => handleBlur("phone")}
                 disabled={isPending}
-                className={`w-full px-4 py-6 bg-gray-100 border-transparent focus:border-gray-900 focus:bg-white rounded-xl text-body placeholder-gray-400 smooth-transition ${
+                className={`w-full px-4 py-6 bg-gray-100 border-transparent focus:border-[#C9A227] focus:bg-white rounded-xl text-body placeholder-gray-400 smooth-transition ${
                   touched.phone && formErrors.phone ? "border-red-500 focus:border-red-500" : ""
                 }`}
               />
@@ -881,7 +881,7 @@ export default function SignupPage() {
                   checked={allAgreed}
                   onCheckedChange={handleAllAgreed}
                   disabled={isPending}
-                  className="w-6 h-6 rounded-full border-2 border-gray-900 data-[state=checked]:bg-gray-900"
+                  className="w-6 h-6 rounded-full border-2 border-[#C9A227] data-[state=checked]:bg-[#C9A227]"
                 />
                 <Label htmlFor="all" className="text-body font-semibold text-gray-900 cursor-pointer">
                   전체 동의

@@ -84,7 +84,7 @@ export default function CommunityEditPage() {
   if (!user || !tokens?.access_token) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="bg-yellow-50 border border-yellow-200 text-yellow-700 px-6 py-4 rounded-xl max-w-md">
+        <div className="bg-[#FEF9E7] border border-[#C9A227]/30 text-[#8A6A00] px-6 py-4 rounded-xl max-w-md">
           <span>로그인이 필요합니다.</span>
         </div>
       </div>
@@ -297,7 +297,7 @@ export default function CommunityEditPage() {
                             !isAvailable
                               ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
                               : selectedCategory === category
-                              ? "bg-gray-900 text-white border-gray-900"
+                              ? "bg-[#C9A227] text-white border-[#C9A227]"
                               : "bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100"
                           }`}
                           onClick={() => isAvailable && handleCategoryChange(category)}

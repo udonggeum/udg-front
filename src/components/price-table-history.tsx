@@ -157,14 +157,14 @@ export default function PriceTableHistory({ type, period }: PriceTableHistoryPro
                 <tr
                   key={row.date}
                   className={`border-b border-gray-50 hover:bg-gray-50 transition-colors duration-200 ${
-                    isToday ? "bg-yellow-50" : ""
+                    isToday ? "bg-[#FEF9E7]" : ""
                   }`}
                 >
                   <td className="py-4 px-6">
                     <div className="flex items-center gap-2">
                       <span className="font-medium text-gray-900">{formatDate(row.date)}</span>
                       {isToday && (
-                        <span className="px-2 py-0.5 bg-yellow-500 text-white text-[10px] font-bold rounded">
+                        <span className="px-2 py-0.5 bg-[#C9A227] text-white text-[10px] font-bold rounded">
                           오늘
                         </span>
                       )}

@@ -225,7 +225,7 @@ export default function CommunityDetailPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="inline-block w-8 h-8 border-4 border-gray-200 border-t-gray-900 rounded-full animate-spin"></div>
+        <div className="inline-block w-8 h-8 border-4 border-gray-200 border-t-[#C9A227] rounded-full animate-spin"></div>
       </div>
     );
   }
@@ -315,7 +315,7 @@ export default function CommunityDetailPage() {
                 {postData.type === 'sell_gold' && postData.reservation_status && (
                   <div className="mb-3">
                     {postData.reservation_status === 'reserved' ? (
-                      <span className="inline-flex items-center px-3 py-1 bg-yellow-100 text-yellow-800 text-sm font-semibold rounded-full">
+                      <span className="inline-flex items-center px-3 py-1 bg-[#FEF9E7] text-[#8A6A00] text-sm font-semibold rounded-full">
                         🔒 예약중 - {postData.reserved_by_user?.name || '구매자'}님과 거래 예정
                       </span>
                     ) : postData.reservation_status === 'completed' ? (
@@ -411,9 +411,9 @@ export default function CommunityDetailPage() {
         {postData.category === "gold_trade" ? (
           /* 금거래 - 채팅 문의 섹션 */
           <div className="mt-8">
-            <div className="bg-gradient-to-br from-yellow-50 to-amber-50 rounded-2xl p-8 border-2 border-yellow-200">
+            <div className="bg-gradient-to-br from-[#FEF9E7] to-[#FDF8E8] rounded-2xl p-8 border-2 border-[#C9A227]/30">
               <div className="flex flex-col items-center text-center">
-                <div className="w-16 h-16 bg-yellow-400 rounded-full flex items-center justify-center mb-4">
+                <div className="w-16 h-16 bg-[#C9A227] rounded-full flex items-center justify-center mb-4">
                   <MessageCircle className="w-8 h-8 text-white" />
                 </div>
                 <h3 className="text-xl font-bold text-gray-900 mb-2">
@@ -430,7 +430,7 @@ export default function CommunityDetailPage() {
                     (postData.type === 'buy_gold' && user.role === 'user') ? (
                       <button
                         onClick={handleContactSeller}
-                        className="px-8 py-4 bg-yellow-400 hover:bg-yellow-500 text-gray-900 text-base font-bold rounded-xl transition-all duration-200 transform hover:-translate-y-0.5 hover:shadow-lg flex items-center gap-2"
+                        className="px-8 py-4 bg-[#C9A227] hover:bg-[#8A6A00] text-white text-base font-bold rounded-xl shadow-md hover:shadow-lg transition-all active:scale-[0.98] flex items-center gap-2"
                       >
                         <MessageCircle className="w-5 h-5" />
                         {postData.type === 'sell_gold' ? '판매자에게 문의하기' : '매장에 문의하기'}
@@ -450,7 +450,7 @@ export default function CommunityDetailPage() {
                 ) : (
                   <Link
                     href="/login"
-                    className="px-8 py-4 bg-yellow-400 hover:bg-yellow-500 text-gray-900 text-base font-bold rounded-xl transition-all duration-200 transform hover:-translate-y-0.5 hover:shadow-lg flex items-center gap-2"
+                    className="px-8 py-4 bg-[#C9A227] hover:bg-[#8A6A00] text-white text-base font-bold rounded-xl shadow-md hover:shadow-lg transition-all active:scale-[0.98] flex items-center gap-2"
                   >
                     로그인하고 문의하기
                   </Link>
@@ -485,7 +485,7 @@ export default function CommunityDetailPage() {
                   </div>
                 )}
                 <textarea
-                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 mb-2"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C9A227] mb-2"
                   placeholder={
                     postData.category === "qna"
                       ? "답변을 작성하세요"
@@ -498,7 +498,7 @@ export default function CommunityDetailPage() {
                 <div className="flex justify-end">
                   <button
                     type="submit"
-                    className="px-6 py-2.5 bg-gray-900 text-white text-sm font-semibold rounded-lg hover:bg-gray-800 transition-all disabled:opacity-50"
+                    className="px-6 py-2.5 bg-[#C9A227] text-white text-sm font-semibold rounded-xl hover:bg-[#8A6A00] shadow-sm transition-all active:scale-[0.98] disabled:opacity-50"
                     disabled={!commentContent.trim()}
                   >
                     {postData.category === "qna" ? "답변 작성" : "댓글 작성"}

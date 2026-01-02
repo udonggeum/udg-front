@@ -662,7 +662,7 @@ export default function MyStoreEditPage() {
                       variant={selectedTagIds.includes(tag.id) ? "default" : "outline"}
                       className={`cursor-pointer transition-all ${
                         selectedTagIds.includes(tag.id)
-                          ? "bg-gray-900 text-white hover:bg-gray-800"
+                          ? "bg-[#C9A227] text-white hover:bg-[#8A6A00]"
                           : "hover:bg-gray-100"
                       }`}
                       onClick={() => handleTagToggle(tag.id)}

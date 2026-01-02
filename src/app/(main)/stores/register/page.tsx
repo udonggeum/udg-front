@@ -202,7 +202,7 @@ export default function StoreRegisterPage() {
     return (
       <div className="max-w-2xl mx-auto px-4 py-16">
         <Card className="p-12 text-center">
-          <AlertCircle className="w-16 h-16 text-yellow-500 mx-auto mb-4" />
+          <AlertCircle className="w-16 h-16 text-[#C9A227] mx-auto mb-4" />
           <h2 className="text-xl font-bold text-gray-900 mb-2">
             로그인이 필요합니다
           </h2>
@@ -248,7 +248,7 @@ export default function StoreRegisterPage() {
       {/* 헤더 */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2 flex items-center gap-3">
-          <Store className="w-8 h-8 text-yellow-600" />
+          <Store className="w-8 h-8 text-[#C9A227]" />
           매장 등록
         </h1>
         <p className="text-gray-600">
@@ -335,7 +335,7 @@ export default function StoreRegisterPage() {
         {/* 2. 매장 기본 정보 */}
         <Card className="p-6">
           <div className="flex items-center gap-2 mb-6">
-            <Store className="w-5 h-5 text-yellow-600" />
+            <Store className="w-5 h-5 text-[#C9A227]" />
             <h2 className="text-xl font-bold text-gray-900">
               2. 매장 기본 정보 (필수)
             </h2>
@@ -485,8 +485,9 @@ export default function StoreRegisterPage() {
 
           <Button
             type="submit"
+            variant="brand-primary"
             disabled={isSubmitting}
-            className="px-8 bg-yellow-500 hover:bg-yellow-600 text-white"
+            className="px-8"
           >
             {isSubmitting ? (
               <>
@@ -508,25 +509,25 @@ export default function StoreRegisterPage() {
         <h3 className="font-semibold text-gray-900 mb-3">📌 안내사항</h3>
         <ul className="space-y-2 text-sm text-gray-700">
           <li className="flex items-start gap-2">
-            <span className="text-yellow-600 mt-0.5">•</span>
+            <span className="text-[#C9A227] mt-0.5">•</span>
             <span>
               사업자 정보는 국세청 사업자등록번호 진위 확인 API를 통해 자동으로 검증됩니다.
             </span>
           </li>
           <li className="flex items-start gap-2">
-            <span className="text-yellow-600 mt-0.5">•</span>
+            <span className="text-[#C9A227] mt-0.5">•</span>
             <span>
               사업자 인증이 완료되면 자동으로 매장 관리자 권한이 부여됩니다.
             </span>
           </li>
           <li className="flex items-start gap-2">
-            <span className="text-yellow-600 mt-0.5">•</span>
+            <span className="text-[#C9A227] mt-0.5">•</span>
             <span>
               매장 등록 후 마이페이지에서 추가 정보를 수정할 수 있습니다.
             </span>
           </li>
           <li className="flex items-start gap-2">
-            <span className="text-yellow-600 mt-0.5">•</span>
+            <span className="text-[#C9A227] mt-0.5">•</span>
             <span>
               주소 검색 시 자동으로 위도/경도가 설정되어 거리순 정렬에 활용됩니다.
             </span>

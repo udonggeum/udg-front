@@ -85,7 +85,7 @@ export default function TagEditModal({
           {/* Header */}
           <div className="relative px-6 py-5 border-b border-gray-100">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-2xl flex items-center justify-center shadow-lg shadow-yellow-500/30">
+              <div className="w-10 h-10 bg-gradient-to-br from-[#C9A227] to-[#C9A227] rounded-2xl flex items-center justify-center shadow-lg shadow-[#C9A227]/30">
                 <Sparkles className="w-5 h-5 text-white" />
               </div>
               <div>
@@ -128,7 +128,7 @@ export default function TagEditModal({
                         className={`ml-2 px-2 py-0.5 rounded-full text-xs font-bold ${
                           activeCategory === category
                             ? "bg-white/20 text-white"
-                            : "bg-yellow-400 text-gray-900"
+                            : "bg-[#C9A227] text-gray-900"
                         }`}
                       >
                         {selectedCount}
@@ -153,7 +153,7 @@ export default function TagEditModal({
                       onClick={() => toggleTag(tag.id)}
                       className={`relative px-4 py-3.5 rounded-2xl text-sm font-medium transition-all group ${
                         isSelected
-                          ? "bg-gradient-to-br from-yellow-400 to-yellow-500 text-gray-900 shadow-lg shadow-yellow-500/30 scale-[1.02]"
+                          ? "bg-gradient-to-br from-[#C9A227] to-[#C9A227] text-gray-900 shadow-lg shadow-[#C9A227]/30 scale-[1.02]"
                           : "bg-gray-50 text-gray-700 hover:bg-gray-100 border border-gray-200 hover:border-gray-300"
                       }`}
                     >
@@ -168,7 +168,7 @@ export default function TagEditModal({
                         </div>
                         {isSelected && (
                           <div className="w-5 h-5 bg-gray-900 rounded-full flex items-center justify-center flex-shrink-0">
-                            <Check className="w-3 h-3 text-yellow-400" />
+                            <Check className="w-3 h-3 text-[#C9A227]" />
                           </div>
                         )}
                       </div>
@@ -202,7 +202,7 @@ export default function TagEditModal({
               <button
                 onClick={handleSave}
                 disabled={isSaving}
-                className="flex-1 px-5 py-3.5 bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-gray-900 font-semibold rounded-xl shadow-lg shadow-yellow-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 px-5 py-3.5 bg-gradient-to-r from-[#C9A227] to-[#C9A227] hover:from-[#8A6A00] hover:to-[#8A6A00] text-gray-900 font-semibold rounded-xl shadow-lg shadow-[#C9A227]/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isSaving ? "저장 중..." : "저장하기"}
               </button>

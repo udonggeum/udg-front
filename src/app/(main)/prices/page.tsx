@@ -8,6 +8,7 @@ import GoldPriceChart from "@/components/gold-price-chart";
 import PriceTableHistory from "@/components/price-table-history";
 import PriceCalculator from "@/components/price-calculator";
 import { Container } from "@/components/layout-primitives";
+import { Button } from "@/components/ui/button";
 import type { GoldPrice, GoldType, HistoryPeriod } from "@/types/goldPrices";
 
 interface GoldPriceWithCalculations extends GoldPrice {
@@ -69,7 +70,7 @@ export default function PricesPage() {
       if (type === "Silver") {
         return { bg: "bg-slate-100", text: "text-slate-600" };
       }
-      return { bg: "bg-yellow-100", text: "text-yellow-700" };
+      return { bg: "bg-[#FEF9E7]", text: "text-[#8A6A00]" };
     };
 
     // 정렬 순서 정의: 24K > 18K > 14K > Platinum > Silver
@@ -147,14 +148,14 @@ export default function PricesPage() {
                 onClick={() => setSelectedType(price.type)}
                 className={`relative bg-white p-5 rounded-xl cursor-pointer transition-shadow duration-200 ${
                   isSelected
-                    ? "ring-2 ring-yellow-400 shadow-lg"
+                    ? "ring-2 ring-[#C9A227] shadow-lg"
                     : "shadow-sm md:hover:shadow-md"
                 }`}
               >
                 {/* 선택 표시 */}
                 {isSelected && (
                   <div className="absolute top-3 right-3">
-                    <div className="w-5 h-5 bg-yellow-400 rounded-full flex items-center justify-center">
+                    <div className="w-5 h-5 bg-[#C9A227] rounded-full flex items-center justify-center">
                       <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
                         <path
                           fillRule="evenodd"
@@ -327,7 +328,7 @@ export default function PricesPage() {
                     onClick={() => setSelectedPeriod(period)}
                     className={`px-3 py-1.5 text-small font-medium rounded-lg transition-all duration-200 ${
                       selectedPeriod === period
-                        ? "bg-gray-900 text-white shadow-sm"
+                        ? "bg-[#C9A227] text-white shadow-md"
                         : "text-gray-600 hover:bg-gray-100"
                     }`}
                   >
@@ -410,9 +411,9 @@ export default function PricesPage() {
 
       {/* 근처 매입 가능한 금은방 섹션 */}
       <div className="mb-8">
-        <div className="bg-gradient-to-br from-yellow-50 to-orange-50 rounded-2xl p-6 border border-yellow-200">
+        <div className="bg-gradient-to-br from-[#FEF9E7] to-orange-50 rounded-2xl p-6 border border-[#C9A227]/30">
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-12 h-12 bg-yellow-500 rounded-xl flex items-center justify-center">
+            <div className="w-12 h-12 bg-[#C9A227] rounded-xl flex items-center justify-center">
               <MapPin className="w-6 h-6 text-white" />
             </div>
             <div>
@@ -423,12 +424,14 @@ export default function PricesPage() {
           <p className="text-caption text-gray-600 mb-4">
             보유하신 금을 판매하고 싶으신가요? 가까운 매장에서 최적의 가격으로 매입해드립니다.
           </p>
-          <button
+          <Button
             onClick={() => router.push("/stores?buying=true")}
-            className="w-full px-6 py-3 bg-yellow-500 hover:bg-yellow-600 text-white font-semibold rounded-xl transition-all duration-200 transform hover:-translate-y-0.5 hover:shadow-lg"
+            variant="brand-primary"
+            size="lg"
+            className="w-full"
           >
             근처 매입 매장 보기
-          </button>
+          </Button>
         </div>
       </div>
 

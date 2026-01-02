@@ -681,7 +681,7 @@ export default function ChatRoomPage() {
     const parts = text.split(new RegExp(`(${keyword})`, "gi"));
     return parts.map((part, index) =>
       part.toLowerCase() === keyword.toLowerCase() ? (
-        <mark key={index} className="bg-yellow-200 text-gray-900">
+        <mark key={index} className="bg-[#FEF9E7] text-gray-900">
           {part}
         </mark>
       ) : (
@@ -752,7 +752,7 @@ export default function ChatRoomPage() {
 
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-yellow-400 to-yellow-500 flex items-center justify-center flex-shrink-0">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#C9A227] to-[#8A6A00] flex items-center justify-center flex-shrink-0">
                 <User className="w-5 h-5 text-white" />
               </div>
               <div className="flex-1 min-w-0">
@@ -801,7 +801,7 @@ export default function ChatRoomPage() {
                       /* 판매중 */
                       <button
                         onClick={handleReserve}
-                        className="flex-1 px-3 py-1.5 bg-yellow-400 hover:bg-yellow-500 text-gray-900 text-xs font-bold rounded transition-colors"
+                        className="flex-1 px-3 py-1.5 bg-[#C9A227] hover:bg-[#8A6A00] text-gray-900 text-xs font-bold rounded transition-colors"
                       >
                         예약하기
                       </button>
@@ -826,7 +826,7 @@ export default function ChatRoomPage() {
                     {/* 상태 표시 */}
                     {room.product.reservation_status === 'reserved' && (
                       <div className="w-full mt-1 text-center">
-                        <span className="text-[10px] text-yellow-700">
+                        <span className="text-[10px] text-[#8A6A00]">
                           🔒 {room.product.reserved_by_user?.nickname || room.product.reserved_by_user?.name || '구매자'}님과 거래 예약됨
                         </span>
                       </div>
@@ -869,7 +869,7 @@ export default function ChatRoomPage() {
               value={searchKeyword}
               onChange={(e) => setSearchKeyword(e.target.value)}
               placeholder="메시지 검색..."
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-yellow-400 text-sm"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-[#C9A227] text-sm"
             />
             {searchKeyword && (
               <div className="mt-2 text-xs text-gray-600">
@@ -906,7 +906,7 @@ export default function ChatRoomPage() {
                       className="p-1.5 hover:bg-gray-100 rounded-full transition-colors"
                       title="재전송"
                     >
-                      <RotateCw className="w-4 h-4 text-yellow-600" />
+                      <RotateCw className="w-4 h-4 text-[#C9A227]" />
                     </button>
                     <button
                       onClick={() => message.tempId && handleDeleteFailedMessage(message.tempId)}
@@ -923,7 +923,7 @@ export default function ChatRoomPage() {
                     isMine
                       ? isFailed
                         ? "bg-red-100 text-gray-900"
-                        : "bg-yellow-400 text-gray-900"
+                        : "bg-[#C9A227] text-gray-900"
                       : "bg-gray-100 text-gray-900"
                   } ${isPending ? "opacity-60" : ""}`}
                 >
@@ -1136,15 +1136,16 @@ export default function ChatRoomPage() {
             value={newMessage}
             onChange={handleInputChange}
             placeholder={selectedFile ? "메시지 추가 (선택사항)..." : "메시지를 입력하세요..."}
-            className="flex-1 px-4 py-3 border border-gray-300 rounded-full focus:outline-none focus:border-yellow-400"
+            className="flex-1 px-4 py-3 border border-gray-300 rounded-full focus:outline-none focus:border-[#C9A227]"
             disabled={isSending || isUploading}
           />
 
           <Button
             type="submit"
+            variant="brand-primary"
             size="icon"
             disabled={(!newMessage.trim() && !selectedFile) || isSending || isUploading}
-            className="w-12 h-12 rounded-full bg-yellow-400 hover:bg-yellow-500 disabled:opacity-50 flex-shrink-0"
+            className="w-12 h-12 rounded-full flex-shrink-0"
           >
             {isUploading ? (
               <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />

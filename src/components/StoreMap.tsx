@@ -155,8 +155,8 @@ export default function StoreMap({
                     ${isSelected ? "w-12 h-12 shadow-xl" : "w-10 h-10"}
                     ${isOpen
                       ? isSelected
-                        ? "bg-gradient-to-br from-yellow-400 to-yellow-600 scale-110"
-                        : "bg-gradient-to-br from-yellow-400 to-yellow-500 hover:scale-110"
+                        ? "bg-gradient-to-br from-[#C9A227] to-[#8A6A00] scale-110"
+                        : "bg-gradient-to-br from-[#C9A227] to-[#C9A227] hover:scale-110"
                       : "bg-gray-400"
                     }
                   `}
@@ -171,7 +171,7 @@ export default function StoreMap({
                 <div
                   className={`
                     absolute left-1/2 -translate-x-1/2
-                    ${isOpen ? "border-t-yellow-600" : "border-t-gray-400"}
+                    ${isOpen ? "border-t-[#8A6A00]" : "border-t-gray-400"}
                   `}
                   style={{
                     width: 0,
@@ -185,7 +185,7 @@ export default function StoreMap({
 
                 {/* 선택 시 펄스 효과 */}
                 {isSelected && (
-                  <div className="absolute inset-0 rounded-full bg-yellow-400 opacity-30 animate-ping" />
+                  <div className="absolute inset-0 rounded-full bg-[#C9A227] opacity-30 animate-ping" />
                 )}
               </div>
             </CustomOverlayMap>
@@ -228,7 +228,7 @@ export default function StoreMap({
                             className={`
                               px-2 py-0.5 text-[11px] font-medium rounded-full
                               ${idx === 0
-                                ? "bg-yellow-100 text-yellow-700"
+                                ? "bg-[#FEF9E7] text-[#8A6A00]"
                                 : "bg-gray-100 text-gray-600"
                               }
                             `}

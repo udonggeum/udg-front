@@ -12,28 +12,25 @@ const buttonVariants = cva(
         default: "bg-primary text-primary-foreground hover:bg-primary/90",
         destructive:
           "bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60",
-        outline:
-          "border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50",
-        secondary:
-          "bg-secondary text-secondary-foreground hover:bg-secondary/80",
-        ghost:
-          "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
-        link: "text-primary underline-offset-4 hover:underline",
 
-        // 프로젝트 전용 브랜드 variant
-        "brand-primary": "bg-brand-primary text-white hover:bg-brand-primary-hover rounded-[--radius-button]",
-        "brand-yellow": "bg-brand-yellow text-gray-900 hover:bg-brand-yellow-hover rounded-[--radius-button] shadow-sm",
-        "brand-gold": "bg-brand-gold text-white hover:bg-brand-gold-hover rounded-[--radius-button]",
-        "kakao": "bg-kakao-yellow text-gray-900 hover:bg-kakao-yellow-hover rounded-[--radius-button]",
-        "naver": "bg-[#03C75A] text-white hover:bg-[#02B350] rounded-[--radius-button]",
+        // 우동금 런칭 디자인 시스템
+        "brand-primary": "bg-[#C9A227] text-white hover:bg-[#8A6A00] rounded-xl font-semibold shadow-sm active:scale-[0.98] transition-transform",
+        secondary: "bg-gray-100 text-gray-900 hover:bg-gray-200 rounded-xl font-semibold active:scale-[0.98] transition-transform",
+        ghost: "bg-transparent border-2 border-gray-300 text-gray-700 hover:border-gray-900 hover:text-gray-900 rounded-xl font-semibold active:scale-[0.98] transition-transform",
+        link: "text-[#C9A227] hover:text-[#8A6A00] underline-offset-4 hover:underline font-medium",
+        outline: "border-2 border-gray-200 bg-white hover:bg-gray-50 hover:border-gray-900 text-gray-900 rounded-xl font-semibold active:scale-[0.98] transition-transform",
+
+        // 소셜 로그인 브랜드 컬러 (유지)
+        "kakao": "bg-kakao-yellow text-gray-900 hover:bg-kakao-yellow-hover rounded-xl font-semibold",
+        "naver": "bg-[#03C75A] text-white hover:bg-[#02B350] rounded-xl font-semibold",
       },
       size: {
-        default: "h-9 px-4 py-2 has-[>svg]:px-3",
-        sm: "h-8 rounded-md gap-1.5 px-3 has-[>svg]:px-2.5",
-        lg: "h-10 rounded-md px-6 has-[>svg]:px-4",
-        icon: "size-9",
-        "icon-sm": "size-8",
-        "icon-lg": "size-10",
+        default: "h-10 px-4 py-2 has-[>svg]:px-3",
+        sm: "h-9 px-3 py-2 has-[>svg]:px-2.5",
+        lg: "h-12 px-6 py-3 has-[>svg]:px-4",
+        icon: "size-10",
+        "icon-sm": "size-9",
+        "icon-lg": "size-12",
       },
     },
     defaultVariants: {

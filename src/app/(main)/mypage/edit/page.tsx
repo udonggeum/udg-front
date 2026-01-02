@@ -424,7 +424,7 @@ export default function ProfileEditPage() {
                   {user?.profile_image ? (
                     <AvatarImage src={user.profile_image} alt={user.name} />
                   ) : null}
-                  <AvatarFallback className="bg-gradient-to-br from-yellow-400 to-yellow-600 text-white text-4xl">
+                  <AvatarFallback className="bg-gradient-to-br from-[#C9A227] to-[#8A6A00] text-white text-4xl">
                     {user?.name?.charAt(0) || "U"}
                   </AvatarFallback>
                 </Avatar>
@@ -577,10 +577,10 @@ export default function ProfileEditPage() {
                         />
                         <Button
                           type="button"
-                          variant="default"
+                          variant="secondary"
                           disabled={isVerifyingPhone || phoneVerificationCode.length !== 6}
                           onClick={handleVerifyPhone}
-                          className="px-4 h-12 whitespace-nowrap bg-gray-900 hover:bg-gray-800 text-white"
+                          className="px-4 h-12 whitespace-nowrap"
                         >
                           {isVerifyingPhone ? "확인 중..." : "인증확인"}
                         </Button>
@@ -652,7 +652,8 @@ export default function ProfileEditPage() {
                 </Button>
                 <Button
                   type="submit"
-                  className="gap-2 bg-gray-900 hover:bg-gray-800 text-white"
+                  variant="brand-primary"
+                  className="gap-2"
                   disabled={isPending}
                 >
                   {isPending ? (

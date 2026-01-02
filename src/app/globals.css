@@ -100,15 +100,20 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
-  --gold: #D7B56D;
 
-  /* 프로젝트 전용 브랜드 색상 */
-  --brand-primary: oklch(0.205 0 0); /* gray-900 equivalent */
-  --brand-primary-hover: oklch(0.269 0 0); /* gray-800 equivalent */
-  --brand-yellow: oklch(0.828 0.189 84.429); /* yellow-400 equivalent */
-  --brand-yellow-hover: oklch(0.769 0.188 70.08); /* yellow-500 equivalent */
-  --brand-gold: #D7B56D;
-  --brand-gold-hover: #C9A95F;
+  /* 프로젝트 전용 브랜드 색상 (우동금 런칭 디자인) */
+  --brand-primary: #C9A227; /* Primary 골드 */
+  --brand-primary-hover: #8A6A00; /* Primary Dark (호버/강조) */
+  --brand-primary-dark: #8A6A00; /* Primary Dark (별칭) */
+  --brand-text-sub: #2F2F2F; /* 서브 텍스트 */
+  --brand-background: #F7F6F3; /* 배경색 */
+
+  /* 기존 gold 색상도 새 브랜드 컬러로 통일 */
+  --gold: #C9A227;
+  --brand-gold: #C9A227;
+  --brand-gold-hover: #8A6A00;
+
+  /* 카카오 브랜드 컬러 유지 */
   --kakao-yellow: #FEE500;
   --kakao-yellow-hover: #FDD835;
 
@@ -250,6 +255,35 @@
   }
   .p-card {
     padding: var(--spacing-card);
+  }
+
+  /* 통일된 카드 스타일 (우동금 런칭 디자인) */
+  .card-primary {
+    background-color: white;
+    border-radius: var(--radius-card);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    border: 1px solid #F3F4F6;
+  }
+
+  .card-primary:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  }
+
+  /* 브랜드 컬러 유틸리티 */
+  .bg-brand-primary {
+    background-color: var(--brand-primary);
+  }
+
+  .text-brand-primary {
+    color: var(--brand-primary);
+  }
+
+  .border-brand-primary {
+    border-color: var(--brand-primary);
+  }
+
+  .hover\:bg-brand-primary-hover:hover {
+    background-color: var(--brand-primary-hover);
   }
 }
 

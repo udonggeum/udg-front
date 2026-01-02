@@ -73,7 +73,7 @@ function KakaoCallbackContent() {
       <div className="text-center">
         <div className="relative w-16 h-16 mx-auto mb-6">
           {/* 카카오 로고 색상의 스피너 */}
-          <div className="absolute inset-0 rounded-full border-4 border-yellow-100"></div>
+          <div className="absolute inset-0 rounded-full border-4 border-[#FEF9E7]"></div>
           <div className="absolute inset-0 rounded-full border-4 border-[#FEE500] border-t-transparent animate-spin"></div>
         </div>
         <h2 className="text-xl font-semibold text-gray-900 mb-2">카카오 로그인 중</h2>
@@ -89,7 +89,7 @@ export default function KakaoCallbackPage() {
       fallback={
         <div className="min-h-screen flex items-center justify-center bg-gray-50">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-500 mx-auto mb-4"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#C9A227] mx-auto mb-4"></div>
             <p className="text-gray-600">로딩 중...</p>
           </div>
         </div>

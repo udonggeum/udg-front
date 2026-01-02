@@ -212,7 +212,7 @@ export default function ForgotPasswordPage() {
             {/* 제출 버튼 */}
             <Button
               type="submit"
-              variant="brand-gold"
+              variant="brand-primary"
               className="w-full h-12 font-semibold"
               disabled={isPending}
             >

@@ -139,14 +139,12 @@ export default function Home() {
         price: `${Math.floor(price.buy_price).toLocaleString()}원`,
         change: Math.floor(price.change_amount || 0),
         changePercent: price.change_percent || 0,
-        bgColor: price.type.includes("K") ? "bg-yellow-100" : "bg-gray-100",
-        textColor: price.type.includes("K") ? "text-yellow-700" : "text-gray-700",
       }))
     : [
-        { karat: "24K", name: "순금", price: "452,000원", change: -1000, changePercent: -0.22, bgColor: "bg-yellow-100", textColor: "text-yellow-700" },
-        { karat: "18K", name: "18K금", price: "339,000원", change: 500, changePercent: 0.15, bgColor: "bg-yellow-100", textColor: "text-yellow-700" },
-        { karat: "14K", name: "14K금", price: "264,000원", change: 0, changePercent: 0, bgColor: "bg-yellow-100", textColor: "text-yellow-700" },
-        { karat: "Pt", name: "백금", price: "158,000원", change: 2000, changePercent: 1.28, bgColor: "bg-gray-100", textColor: "text-gray-700" },
+        { karat: "24K", name: "순금", price: "452,000원", change: -1000, changePercent: -0.22 },
+        { karat: "18K", name: "18K금", price: "339,000원", change: 500, changePercent: 0.15 },
+        { karat: "14K", name: "14K금", price: "264,000원", change: 0, changePercent: 0 },
+        { karat: "Pt", name: "백금", price: "158,000원", change: 2000, changePercent: 1.28 },
       ];
 
   return (
@@ -182,7 +180,7 @@ export default function Home() {
             <h1 className="text-[28px] sm:text-[40px] md:text-[52px] font-bold leading-[1.2] tracking-[-0.02em] text-gray-900 mb-5">
               투명한 금 거래,
               <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-500 to-yellow-600">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#C9A227] to-[#8A6A00]">
                 쉽고 빠르게
               </span>
             </h1>
@@ -236,8 +234,8 @@ export default function Home() {
               href="/prices"
               className="group flex flex-col items-center gap-3 smooth-transition"
             >
-              <div className="w-16 h-16 bg-yellow-50 border-2 border-yellow-200 rounded-2xl flex items-center justify-center md:group-hover:scale-110 transition-transform duration-200">
-                <DollarSign className="w-8 h-8 text-yellow-600" />
+              <div className="w-16 h-16 bg-[#FEF9E7] border-2 border-[#C9A227]/30 rounded-2xl flex items-center justify-center md:group-hover:scale-110 transition-transform duration-200">
+                <DollarSign className="w-8 h-8 text-[#C9A227]" />
               </div>
               <span className="text-caption font-medium text-gray-700 text-center group-hover:text-gray-900">금시세</span>
             </Link>
@@ -247,8 +245,8 @@ export default function Home() {
               href="/stores"
               className="group flex flex-col items-center gap-3 smooth-transition"
             >
-              <div className="w-16 h-16 bg-blue-50 border-2 border-blue-200 rounded-2xl flex items-center justify-center md:group-hover:scale-110 transition-transform duration-200">
-                <MapPin className="w-8 h-8 text-blue-600" />
+              <div className="w-16 h-16 bg-[#FEF9E7] border-2 border-[#C9A227]/30 rounded-2xl flex items-center justify-center md:group-hover:scale-110 transition-transform duration-200">
+                <MapPin className="w-8 h-8 text-[#C9A227]" />
               </div>
               <span className="text-caption font-medium text-gray-700 text-center group-hover:text-gray-900">매장찾기</span>
             </Link>
@@ -258,8 +256,8 @@ export default function Home() {
               href="/community"
               className="group flex flex-col items-center gap-3 smooth-transition"
             >
-              <div className="w-16 h-16 bg-purple-50 border-2 border-purple-200 rounded-2xl flex items-center justify-center md:group-hover:scale-110 transition-transform duration-200">
-                <Mountain className="w-8 h-8 text-purple-600" />
+              <div className="w-16 h-16 bg-[#FEF9E7] border-2 border-[#C9A227]/30 rounded-2xl flex items-center justify-center md:group-hover:scale-110 transition-transform duration-200">
+                <Mountain className="w-8 h-8 text-[#C9A227]" />
               </div>
               <span className="text-caption font-medium text-gray-700 text-center group-hover:text-gray-900">금광산</span>
             </Link>
@@ -270,8 +268,8 @@ export default function Home() {
                 href="/chats"
                 className="group flex flex-col items-center gap-3 smooth-transition"
               >
-                <div className="w-16 h-16 bg-emerald-50 border-2 border-emerald-200 rounded-2xl flex items-center justify-center md:group-hover:scale-110 transition-transform duration-200">
-                  <MessageCircle className="w-8 h-8 text-emerald-600" />
+                <div className="w-16 h-16 bg-[#FEF9E7] border-2 border-[#C9A227]/30 rounded-2xl flex items-center justify-center md:group-hover:scale-110 transition-transform duration-200">
+                  <MessageCircle className="w-8 h-8 text-[#C9A227]" />
                 </div>
                 <span className="text-caption font-medium text-gray-700 text-center group-hover:text-gray-900">메시지</span>
               </Link>
@@ -283,8 +281,8 @@ export default function Home() {
                 href="/community?liked=true"
                 className="group flex flex-col items-center gap-3 smooth-transition"
               >
-                <div className="w-16 h-16 bg-rose-50 border-2 border-rose-200 rounded-2xl flex items-center justify-center md:group-hover:scale-110 transition-transform duration-200">
-                  <BookHeart className="w-8 h-8 text-rose-600" />
+                <div className="w-16 h-16 bg-[#FEF9E7] border-2 border-[#C9A227]/30 rounded-2xl flex items-center justify-center md:group-hover:scale-110 transition-transform duration-200">
+                  <BookHeart className="w-8 h-8 text-[#C9A227]" />
                 </div>
                 <span className="text-caption font-medium text-gray-700 text-center group-hover:text-gray-900">관심글</span>
               </Link>
@@ -297,8 +295,8 @@ export default function Home() {
                 href="/login"
                 className="group flex flex-col items-center gap-3 smooth-transition"
               >
-                <div className="w-16 h-16 bg-gray-50 border-2 border-gray-200 rounded-2xl flex items-center justify-center md:group-hover:scale-110 transition-transform duration-200">
-                  <LogIn className="w-8 h-8 text-gray-600" />
+                <div className="w-16 h-16 bg-[#FEF9E7] border-2 border-[#C9A227]/30 rounded-2xl flex items-center justify-center md:group-hover:scale-110 transition-transform duration-200">
+                  <LogIn className="w-8 h-8 text-[#C9A227]" />
                 </div>
                 <span className="text-caption font-medium text-gray-700 text-center group-hover:text-gray-900">로그인</span>
               </Link>
@@ -308,8 +306,8 @@ export default function Home() {
                 href="/mystore"
                 className="group flex flex-col items-center gap-3 smooth-transition"
               >
-                <div className="w-16 h-16 bg-green-50 border-2 border-green-200 rounded-2xl flex items-center justify-center md:group-hover:scale-110 transition-transform duration-200">
-                  <Store className="w-8 h-8 text-green-600" />
+                <div className="w-16 h-16 bg-[#FEF9E7] border-2 border-[#C9A227]/30 rounded-2xl flex items-center justify-center md:group-hover:scale-110 transition-transform duration-200">
+                  <Store className="w-8 h-8 text-[#C9A227]" />
                 </div>
                 <span className="text-caption font-medium text-gray-700 text-center group-hover:text-gray-900">내매장</span>
               </Link>
@@ -319,8 +317,8 @@ export default function Home() {
                 href="/mypage"
                 className="group flex flex-col items-center gap-3 smooth-transition"
               >
-                <div className="w-16 h-16 bg-pink-50 border-2 border-pink-200 rounded-2xl flex items-center justify-center md:group-hover:scale-110 transition-transform duration-200">
-                  <Heart className="w-8 h-8 text-pink-600" />
+                <div className="w-16 h-16 bg-[#FEF9E7] border-2 border-[#C9A227]/30 rounded-2xl flex items-center justify-center md:group-hover:scale-110 transition-transform duration-200">
+                  <Heart className="w-8 h-8 text-[#C9A227]" />
                 </div>
                 <span className="text-caption font-medium text-gray-700 text-center group-hover:text-gray-900">관심매장</span>
               </Link>
@@ -355,8 +353,8 @@ export default function Home() {
               {goldPriceDisplay.map((item) => (
               <Card key={item.karat} className="bg-white p-5 rounded-2xl card-shadow smooth-transition hover-lift cursor-pointer border-0">
                 <div className="flex items-center gap-2 mb-3">
-                  <div className={`w-8 h-8 ${item.bgColor} rounded-lg flex items-center justify-center`}>
-                    <span className={`text-[12px] font-bold ${item.textColor}`}>{item.karat}</span>
+                  <div className="w-8 h-8 bg-[#FEF9E7] border border-[#C9A227]/30 rounded-lg flex items-center justify-center">
+                    <span className="text-[12px] font-bold text-[#C9A227]">{item.karat}</span>
                   </div>
                   <span className="text-body font-semibold text-gray-900">{item.name}</span>
                 </div>
@@ -433,8 +431,8 @@ export default function Home() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {nearbyStores.map((store) => (
                 <Link key={store.id} href={`/stores/${store.id}`} className="bg-white p-5 rounded-2xl card-shadow smooth-transition hover-lift flex gap-4">
-                  <div className="w-20 h-20 bg-yellow-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                    <Store className="w-10 h-10 text-yellow-600" />
+                  <div className="w-20 h-20 bg-[#FEF9E7] border border-[#C9A227]/20 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <Store className="w-10 h-10 text-[#C9A227]" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
@@ -461,8 +459,8 @@ export default function Home() {
           ) : !user?.address ? (
             // 주소가 등록되지 않은 경우
             <div className="bg-white rounded-2xl p-12 text-center">
-              <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <MapPin className="w-8 h-8 text-yellow-600" />
+              <div className="w-16 h-16 bg-[#FEF9E7] border border-[#C9A227]/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <MapPin className="w-8 h-8 text-[#C9A227]" />
               </div>
               <h3 className="text-[18px] font-semibold text-gray-900 mb-2">
                 주소를 등록해주세요
@@ -479,8 +477,8 @@ export default function Home() {
           ) : (
             // 주소는 있지만 주변 매장이 없는 경우
             <div className="bg-white rounded-2xl p-12 text-center">
-              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Store className="w-8 h-8 text-gray-400" />
+              <div className="w-16 h-16 bg-[#FEF9E7] border border-[#C9A227]/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Store className="w-8 h-8 text-[#C9A227]" />
               </div>
               <h3 className="text-[18px] font-semibold text-gray-900 mb-2">
                 주변 매장이 없습니다
@@ -507,7 +505,7 @@ export default function Home() {
               <p className="text-body text-gray-400">무료로 매장을 등록하고 더 많은 고객을 만나보세요</p>
             </div>
             <Link href="/stores/register">
-              <Button variant="outline" size="lg" className="px-8 py-4 flex-shrink-0 bg-white hover:bg-gray-100 text-gray-900">
+              <Button variant="brand-primary" size="lg" className="px-8 py-4 flex-shrink-0">
                 매장 등록하기
               </Button>
             </Link>

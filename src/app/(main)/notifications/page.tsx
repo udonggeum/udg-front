@@ -196,7 +196,7 @@ export default function NotificationsPage() {
               }}
               className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
                 filteredType === "all"
-                  ? "bg-gray-900 text-white"
+                  ? "bg-[#C9A227] text-white"
                   : "bg-gray-100 text-gray-700 hover:bg-gray-200"
               }`}
             >
@@ -209,7 +209,7 @@ export default function NotificationsPage() {
               }}
               className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
                 filteredType === "new_sell_post"
-                  ? "bg-gray-900 text-white"
+                  ? "bg-[#C9A227] text-white"
                   : "bg-gray-100 text-gray-700 hover:bg-gray-200"
               }`}
             >
@@ -222,7 +222,7 @@ export default function NotificationsPage() {
               }}
               className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
                 filteredType === "post_comment"
-                  ? "bg-gray-900 text-white"
+                  ? "bg-[#C9A227] text-white"
                   : "bg-gray-100 text-gray-700 hover:bg-gray-200"
               }`}
             >
@@ -235,7 +235,7 @@ export default function NotificationsPage() {
               }}
               className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
                 filteredType === "store_liked"
-                  ? "bg-gray-900 text-white"
+                  ? "bg-[#C9A227] text-white"
                   : "bg-gray-100 text-gray-700 hover:bg-gray-200"
               }`}
             >

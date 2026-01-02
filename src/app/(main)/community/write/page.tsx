@@ -48,7 +48,7 @@ export default function CommunityWritePage() {
   if (!user || !tokens?.access_token) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="bg-yellow-50 border border-yellow-200 text-yellow-700 px-6 py-4 rounded-xl max-w-md">
+        <div className="bg-[#FEF9E7] border border-[#C9A227]/30 text-[#8A6A00] px-6 py-4 rounded-xl max-w-md">
           <span>로그인이 필요합니다.</span>
         </div>
       </div>
@@ -303,7 +303,7 @@ export default function CommunityWritePage() {
                             !isAvailable
                               ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
                               : selectedCategory === category
-                              ? "bg-gray-900 text-white border-gray-900"
+                              ? "bg-[#C9A227] text-white border-[#C9A227] shadow-sm"
                               : "bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100"
                           }`}
                           onClick={() => isAvailable && handleCategoryChange(category)}
@@ -329,7 +329,7 @@ export default function CommunityWritePage() {
                 <select
                   className={`w-full p-3 rounded-lg border ${
                     errors.type ? "border-red-500" : "border-gray-200"
-                  } focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent`}
+                  } focus:outline-none focus:ring-2 focus:ring-[#C9A227] focus:border-transparent`}
                   value={selectedType}
                   onChange={(e) => setSelectedType(e.target.value as PostType)}
                 >
@@ -350,7 +350,7 @@ export default function CommunityWritePage() {
                   type="text"
                   className={`w-full p-3 rounded-lg border ${
                     errors.title ? "border-red-500" : "border-gray-200"
-                  } focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent`}
+                  } focus:outline-none focus:ring-2 focus:ring-[#C9A227] focus:border-transparent`}
                   placeholder="제목을 입력하세요"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
@@ -374,7 +374,7 @@ export default function CommunityWritePage() {
                         금 종류 <span className="text-red-500">*</span>
                       </label>
                       <select
-                        className={`w-full p-3 rounded-lg border ${errors.goldType ? "border-red-500" : "border-gray-200"} focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent disabled:bg-gray-100`}
+                        className={`w-full p-3 rounded-lg border ${errors.goldType ? "border-red-500" : "border-gray-200"} focus:outline-none focus:ring-2 focus:ring-[#C9A227] focus:border-transparent disabled:bg-gray-100`}
                         value={goldType}
                         onChange={(e) => setGoldType(e.target.value)}
                         disabled={goldTypeUnknown}
@@ -389,7 +389,7 @@ export default function CommunityWritePage() {
                       <label className="flex items-center mt-2 cursor-pointer">
                         <input
                           type="checkbox"
-                          className="w-4 h-4 rounded border-gray-300 text-gray-900 focus:ring-gray-900"
+                          className="w-4 h-4 rounded border-gray-300 text-[#C9A227] focus:ring-[#C9A227]"
                           checked={goldTypeUnknown}
                           onChange={(e) => {
                             setGoldTypeUnknown(e.target.checked);
@@ -411,7 +411,7 @@ export default function CommunityWritePage() {
                       <input
                         type="number"
                         step="0.01"
-                        className={`w-full p-3 rounded-lg border ${errors.weight ? "border-red-500" : "border-gray-200"} focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent disabled:bg-gray-100`}
+                        className={`w-full p-3 rounded-lg border ${errors.weight ? "border-red-500" : "border-gray-200"} focus:outline-none focus:ring-2 focus:ring-[#C9A227] focus:border-transparent disabled:bg-gray-100`}
                         placeholder="예: 18.75"
                         value={weight}
                         onChange={(e) => setWeight(e.target.value)}
@@ -420,7 +420,7 @@ export default function CommunityWritePage() {
                       <label className="flex items-center mt-2 cursor-pointer">
                         <input
                           type="checkbox"
-                          className="w-4 h-4 rounded border-gray-300 text-gray-900 focus:ring-gray-900"
+                          className="w-4 h-4 rounded border-gray-300 text-[#C9A227] focus:ring-[#C9A227]"
                           checked={weightUnknown}
                           onChange={(e) => {
                             setWeightUnknown(e.target.checked);
@@ -441,7 +441,7 @@ export default function CommunityWritePage() {
                       </label>
                       <input
                         type="number"
-                        className={`w-full p-3 rounded-lg border ${errors.price ? "border-red-500" : "border-gray-200"} focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent disabled:bg-gray-100`}
+                        className={`w-full p-3 rounded-lg border ${errors.price ? "border-red-500" : "border-gray-200"} focus:outline-none focus:ring-2 focus:ring-[#C9A227] focus:border-transparent disabled:bg-gray-100`}
                         placeholder="예: 3500000"
                         value={price}
                         onChange={(e) => setPrice(e.target.value)}
@@ -450,7 +450,7 @@ export default function CommunityWritePage() {
                       <label className="flex items-center mt-2 cursor-pointer">
                         <input
                           type="checkbox"
-                          className="w-4 h-4 rounded border-gray-300 text-gray-900 focus:ring-gray-900"
+                          className="w-4 h-4 rounded border-gray-300 text-[#C9A227] focus:ring-[#C9A227]"
                           checked={priceNegotiable}
                           onChange={(e) => {
                             setPriceNegotiable(e.target.checked);
@@ -479,7 +479,7 @@ export default function CommunityWritePage() {
                           disabled={user.role === "admin" && ADMIN_ONLY_TYPES.includes(selectedType)}
                           className={`w-full p-3 rounded-lg border ${
                             errors.location ? "border-red-500" : "border-gray-200"
-                          } focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed`}
+                          } focus:outline-none focus:ring-2 focus:ring-[#C9A227] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed`}
                         >
                           <option value="">시/도 선택</option>
                           {KOREA_REGIONS.map(({ region: regionName }) => (
@@ -495,7 +495,7 @@ export default function CommunityWritePage() {
                           disabled={!region || (user.role === "admin" && ADMIN_ONLY_TYPES.includes(selectedType))}
                           className={`w-full p-3 rounded-lg border ${
                             errors.location ? "border-red-500" : "border-gray-200"
-                          } focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed`}
+                          } focus:outline-none focus:ring-2 focus:ring-[#C9A227] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed`}
                         >
                           <option value="">구/군 선택</option>
                           {region &&
@@ -598,7 +598,7 @@ export default function CommunityWritePage() {
                 <textarea
                   className={`w-full p-3 rounded-lg border ${
                     errors.content ? "border-red-500" : "border-gray-200"
-                  } focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent resize-none`}
+                  } focus:outline-none focus:ring-2 focus:ring-[#C9A227] focus:border-transparent resize-none`}
                   rows={10}
                   placeholder="내용을 입력하세요 (최소 10자)"
                   value={content}
@@ -636,7 +636,7 @@ export default function CommunityWritePage() {
                 </Link>
                 <button
                   type="submit"
-                  className="px-6 py-3 bg-gray-900 hover:bg-gray-800 text-white text-sm font-semibold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-6 py-3 bg-[#C9A227] hover:bg-[#8A6A00] text-white text-sm font-semibold rounded-xl shadow-sm transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
                   disabled={isSubmitting}
                 >
                   {isSubmitting ? (

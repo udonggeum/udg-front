@@ -382,7 +382,7 @@ export default function MyPage() {
                   {user?.profile_image ? (
                     <AvatarImage src={user.profile_image} alt={user.name} />
                   ) : null}
-                  <AvatarFallback className="bg-gradient-to-br from-yellow-400 to-yellow-600 text-white text-2xl">
+                  <AvatarFallback className="bg-gradient-to-br from-[#C9A227] to-[#8A6A00] text-white text-2xl">
                     {user?.name?.charAt(0) || "U"}
                   </AvatarFallback>
                 </Avatar>
@@ -456,7 +456,7 @@ export default function MyPage() {
                   </Button>
                 )}
                 <Button
-                  variant="outline"
+                  variant="brand-primary"
                   onClick={() => router.push("/mypage/edit")}
                   className="gap-2"
                 >
@@ -769,7 +769,7 @@ export default function MyPage() {
                     ) : (
                       <div className="space-y-6">
                         {/* 매장 요약 카드 */}
-                        <div className="p-6 bg-gradient-to-br from-yellow-50 to-orange-50 rounded-xl border border-yellow-200">
+                        <div className="p-6 bg-gradient-to-br from-[#FEF9E7] to-orange-50 rounded-xl border border-[#C9A227]/30">
                           <div className="flex items-start justify-between mb-4">
                             <div className="flex items-center gap-3">
                               <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center overflow-hidden border border-gray-200">
@@ -898,7 +898,7 @@ export default function MyPage() {
                           마음에 드는 매장을 찾아 좋아요를 눌러보세요
                         </p>
                         <Link href="/stores">
-                          <Button variant="brand-primary">
+                          <Button variant="outline">
                             매장 둘러보기
                           </Button>
                         </Link>
@@ -1003,7 +1003,7 @@ export default function MyPage() {
                       커뮤니티에서 첫 글을 작성해보세요
                     </p>
                     <Link href="/community">
-                      <Button variant="brand-primary">
+                      <Button variant="outline">
                         커뮤니티 가기
                       </Button>
                     </Link>

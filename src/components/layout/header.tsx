@@ -158,7 +158,7 @@ export function Header() {
       <div className="max-w-[1200px] mx-auto px-page h-[60px] flex justify-between items-center">
         {/* 로고 */}
         <Link href="/" className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-lg flex items-center justify-center">
+          <div className="w-8 h-8 bg-gradient-to-br from-[#C9A227] to-[#C9A227] rounded-lg flex items-center justify-center">
             <svg
               className="w-5 h-5 text-white"
               fill="currentColor"
@@ -245,7 +245,7 @@ export function Header() {
                       variant="ghost"
                       size="icon"
                       onClick={() => setIsLocationModalOpen(true)}
-                      className="text-gray-500 hover:text-blue-600 hover:bg-gray-100"
+                      className="text-gray-500 hover:text-[#C9A227] hover:bg-gray-50 border-0"
                     >
                       <MapPin className="w-4 h-4" />
                     </Button>
@@ -257,7 +257,11 @@ export function Header() {
               </TooltipProvider>
 
               {/* 알림 아이콘 (Admin 전용) */}
-              {user?.role === "admin" && <NotificationDropdown />}
+              {user?.role === "admin" && (
+                <div>
+                  <NotificationDropdown />
+                </div>
+              )}
 
               {/* 사용자 드롭다운 메뉴 */}
               <div className="relative">
@@ -267,7 +271,7 @@ export function Header() {
                   className="flex items-center gap-2 text-caption font-semibold text-gray-700 hover:bg-gray-100"
                 >
                   <User className="w-4 h-4" />
-                  <span className="hidden sm:inline">{user?.name || "사용자"}</span>
+                  <span className="hidden sm:inline">{user?.nickname || user?.name || "사용자"}</span>
                   <ChevronDown className="w-4 h-4" />
                 </Button>
 
@@ -285,7 +289,7 @@ export function Header() {
                     <div className="px-4 py-2 border-b border-gray-100">
                       <p className="text-xs text-gray-500 truncate">{user?.email}</p>
                       {user?.role === "admin" && (
-                        <p className="text-xs text-yellow-600 font-semibold mt-0.5">관리자</p>
+                        <p className="text-xs text-[#C9A227] font-semibold mt-0.5">관리자</p>
                       )}
                     </div>
 

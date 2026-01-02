@@ -193,7 +193,7 @@ export default function ChatsPage() {
           onClick={() => setSelectedFilter("all")}
           className={`px-4 py-2.5 text-sm font-semibold rounded-lg transition-all duration-200 ${
             selectedFilter === "all"
-              ? "bg-gray-900 text-white shadow-sm"
+              ? "bg-[#C9A227] text-white shadow-md"
               : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
           }`}
         >
@@ -208,7 +208,7 @@ export default function ChatsPage() {
           onClick={() => setSelectedFilter("STORE")}
           className={`px-4 py-2.5 text-sm font-semibold rounded-lg transition-all duration-200 flex items-center gap-2 ${
             selectedFilter === "STORE"
-              ? "bg-gray-900 text-white shadow-sm"
+              ? "bg-[#C9A227] text-white shadow-md"
               : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
           }`}
         >
@@ -224,7 +224,7 @@ export default function ChatsPage() {
           onClick={() => setSelectedFilter("received")}
           className={`px-4 py-2.5 text-sm font-semibold rounded-lg transition-all duration-200 flex items-center gap-2 ${
             selectedFilter === "received"
-              ? "bg-gray-900 text-white shadow-sm"
+              ? "bg-[#C9A227] text-white shadow-md"
               : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
           }`}
         >
@@ -240,7 +240,7 @@ export default function ChatsPage() {
           onClick={() => setSelectedFilter("sent")}
           className={`px-4 py-2.5 text-sm font-semibold rounded-lg transition-all duration-200 flex items-center gap-2 ${
             selectedFilter === "sent"
-              ? "bg-gray-900 text-white shadow-sm"
+              ? "bg-[#C9A227] text-white shadow-md"
               : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
           }`}
         >
@@ -280,7 +280,7 @@ export default function ChatsPage() {
             return (
               <div
                 key={room.id}
-                className="relative w-full bg-white rounded-lg border border-gray-200 md:hover:border-yellow-400 md:hover:shadow-md transition-shadow duration-200"
+                className="relative w-full bg-white rounded-lg border border-gray-200 md:hover:border-[#C9A227] md:hover:shadow-md transition-shadow duration-200"
               >
                 <button
                   onClick={() => router.push(`/chats/${room.id}`)}
@@ -288,7 +288,7 @@ export default function ChatsPage() {
                 >
                   <div className="flex items-start gap-3">
                     {/* Avatar */}
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-yellow-400 to-yellow-500 flex items-center justify-center flex-shrink-0">
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#C9A227] to-[#8A6A00] flex items-center justify-center flex-shrink-0">
                       {room.type === "STORE" ? (
                         <Store className="w-6 h-6 text-white" />
                       ) : (
@@ -314,7 +314,7 @@ export default function ChatsPage() {
                           {room.last_message_content || "메시지 없음"}
                         </p>
                         {unreadCount > 0 && (
-                          <span className="ml-2 bg-yellow-400 text-white text-xs font-bold rounded-full px-2 py-0.5 flex-shrink-0">
+                          <span className="ml-2 bg-[#C9A227] text-white text-xs font-bold rounded-full px-2 py-0.5 flex-shrink-0">
                             {unreadCount}
                           </span>
                         )}

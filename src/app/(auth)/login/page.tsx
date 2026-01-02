@@ -206,7 +206,7 @@ function LoginForm() {
   return (
     <div className="min-h-screen flex">
       {/* 좌측 - 브랜딩 영역 (데스크탑만) */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-yellow-400 via-yellow-500 to-yellow-600 relative overflow-hidden">
+      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-[#C9A227] via-[#B8941F] to-[#8A6A00] relative overflow-hidden">
         {/* 배경 패턴 */}
         <div className="absolute inset-0 opacity-30">
           <div className="absolute inset-0" style={{
@@ -224,7 +224,7 @@ function LoginForm() {
           {/* 로고 */}
           <Link href="/" className="flex items-center gap-3">
             <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center">
-              <svg className="w-6 h-6 text-yellow-500" fill="currentColor" viewBox="0 0 24 24">
+              <svg className="w-6 h-6 text-[#C9A227]" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
               </svg>
             </div>
@@ -285,7 +285,7 @@ function LoginForm() {
         <header className="lg:hidden w-full bg-white border-b border-gray-100">
           <div className="px-page h-[60px] flex items-center justify-between">
             <Link href="/" className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-lg flex items-center justify-center">
+              <div className="w-8 h-8 bg-gradient-to-br from-[#C9A227] to-[#8A6A00] rounded-lg flex items-center justify-center">
                 <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
                 </svg>
@@ -358,7 +358,7 @@ function LoginForm() {
                   onChange={handleChange}
                   onBlur={handleBlur}
                   required
-                  className={`w-full px-4 py-6 bg-gray-100 border-transparent focus:border-gray-900 focus:bg-white rounded-xl text-body placeholder-gray-400 smooth-transition ${
+                  className={`w-full px-4 py-6 bg-gray-100 border-transparent focus:border-[#C9A227] focus:bg-white rounded-xl text-body placeholder-gray-400 smooth-transition ${
                     touched.email && formErrors.email
                       ? "border-red-400 focus:border-red-400"
                       : ""
@@ -380,7 +380,7 @@ function LoginForm() {
                   onBlur={handleBlur}
                   error={touched.password ? formErrors.password : undefined}
                   required
-                  className="w-full px-4 py-6 bg-gray-100 border-transparent focus:border-gray-900 focus:bg-white rounded-xl text-body placeholder-gray-400 smooth-transition"
+                  className="w-full px-4 py-6 bg-gray-100 border-transparent focus:border-[#C9A227] focus:bg-white rounded-xl text-body placeholder-gray-400 smooth-transition"
                 />
               </div>
 

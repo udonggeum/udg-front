@@ -237,7 +237,7 @@ function StoresPageContent() {
         if (result.success && result.data) {
           // 백엔드 데이터에 UI용 추가 정보 추가
           const iconColors = [
-            { bg: "bg-yellow-100", color: "text-yellow-600" },
+            { bg: "bg-[#FEF9E7]", color: "text-[#C9A227]" },
             { bg: "bg-blue-100", color: "text-blue-600" },
             { bg: "bg-purple-100", color: "text-purple-600" },
             { bg: "bg-orange-100", color: "text-orange-600" },
@@ -571,7 +571,7 @@ function StoresPageContent() {
                 onClick={() => setIsMobileMapOpen(false)}
                 className={`flex-1 py-2.5 text-sm font-semibold rounded-lg transition-colors ${
                   !isMobileMapOpen
-                    ? "bg-gray-900 text-white"
+                    ? "bg-[#C9A227] text-white"
                     : "bg-gray-100 text-gray-600"
                 }`}
               >
@@ -581,7 +581,7 @@ function StoresPageContent() {
                 onClick={() => setIsMobileMapOpen(true)}
                 className={`flex-1 py-2.5 text-sm font-semibold rounded-lg transition-colors ${
                   isMobileMapOpen
-                    ? "bg-gray-900 text-white"
+                    ? "bg-[#C9A227] text-white"
                     : "bg-gray-100 text-gray-600"
                 }`}
               >
@@ -641,7 +641,7 @@ function StoresPageContent() {
                   onClick={() => setSelectedFilter(tag.id)}
                   className={`px-4 py-2.5 min-h-[44px] text-small font-medium rounded-full border whitespace-nowrap transition-all duration-200 ${
                     selectedFilter === tag.id
-                      ? "bg-gray-900 text-white border-gray-900 active:bg-gray-800"
+                      ? "bg-[#C9A227] text-white border-[#C9A227] active:bg-[#8A6A00]"
                       : "bg-white text-gray-600 border-gray-200 hover:border-gray-400 active:bg-gray-50"
                   }`}
                 >
@@ -734,7 +734,11 @@ function StoresPageContent() {
                         <h3 className="text-[16px] font-semibold text-gray-900 truncate flex-1">
                           {store.name}
                         </h3>
-                        <span className="px-1.5 py-0.5 bg-green-100 text-green-700 text-[11px] font-medium rounded flex-shrink-0">
+                        <span className={`px-1.5 py-0.5 text-[11px] font-medium rounded flex-shrink-0 ${
+                          store.isOpen
+                            ? "bg-[#FEF9E7] text-[#8A6A00]"
+                            : "bg-gray-100 text-gray-600"
+                        }`}>
                           {store.isOpen ? "영업중" : "준비중"}
                         </span>
                         <button
@@ -866,7 +870,7 @@ function StoresPageContent() {
                   </div>
                   {/* 영업 상태 */}
                   <div className="flex items-center gap-2 text-caption">
-                    <span className={selectedStore.isOpen ? "text-green-600 font-medium" : "text-gray-500"}>
+                    <span className={selectedStore.isOpen ? "text-[#8A6A00] font-medium" : "text-gray-500"}>
                       {selectedStore.isOpen ? "영업중" : "준비중"}
                     </span>
                     {selectedStore.close_time && (
@@ -888,7 +892,7 @@ function StoresPageContent() {
                           key={tag.id}
                           className={`px-3 py-1.5 text-small font-medium rounded-full ${
                             idx === 0
-                              ? "bg-gray-900 text-white"
+                              ? "bg-[#C9A227] text-white"
                               : "bg-gray-100 text-gray-700"
                           }`}
                         >

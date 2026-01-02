@@ -238,7 +238,7 @@ export function NotificationDropdown() {
       {/* 알림 아이콘 */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="relative p-2.5 text-gray-500 hover:text-blue-600 hover:bg-gray-100 rounded-lg transition-colors"
+        className="relative p-2.5 text-gray-500 hover:text-[#C9A227] hover:bg-gray-50 rounded-lg transition-colors"
       >
         <Bell className="w-4 h-4" />
         {unreadCount > 0 && (
