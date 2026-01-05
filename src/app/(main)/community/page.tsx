@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense, useRef, useCallback, useMemo } from "react";
+import { useState, useEffect, Suspense, useRef, useCallback, useMemo, memo } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { getPostsAction } from "@/actions/community";
@@ -17,8 +17,8 @@ import { getUserDisplayName, getUserImageUrl } from "@/lib/utils";
 
 type MainCategory = "market" | "community";
 
-// 스켈레톤 로딩 컴포넌트
-function SkeletonCard({ viewMode }: { viewMode: "grid" | "list" }) {
+// 스켈레톤 로딩 컴포넌트 - React.memo로 최적화
+const SkeletonCard = memo(function SkeletonCard({ viewMode }: { viewMode: "grid" | "list" }) {
   if (viewMode === "grid") {
     return (
       <div className="bg-white rounded-2xl overflow-hidden border border-gray-100 animate-pulse">
@@ -51,7 +51,7 @@ function SkeletonCard({ viewMode }: { viewMode: "grid" | "list" }) {
       </div>
     </div>
   );
-}
+});
 
 function CommunityPageContent() {
   const searchParams = useSearchParams();

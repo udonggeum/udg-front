@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback, Suspense } from "react";
+import { useState, useEffect, useMemo, useCallback, Suspense, memo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   Search,
@@ -25,8 +25,9 @@ import { Virtuoso } from "react-virtuoso";
 
 /**
  * 매장 이미지 컴포넌트 - 로딩 실패 시 폴백 UI 표시
+ * React.memo로 최적화: props가 변경되지 않으면 재렌더링 방지
  */
-function StoreImage({
+const StoreImage = memo(function StoreImage({
   imageUrl,
   storeName,
   iconBg,
@@ -82,7 +83,7 @@ function StoreImage({
       />
     </div>
   );
-}
+});
 
 const PAGE_SIZE = 50;
 
