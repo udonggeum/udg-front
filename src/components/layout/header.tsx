@@ -33,6 +33,7 @@ export function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [unreadChatCount, setUnreadChatCount] = useState(0);
   const [myStoreId, setMyStoreId] = useState<number | null>(null);
+  const [myStoreSlug, setMyStoreSlug] = useState<string | null>(null);
 
   // user.address로 초기화 (currentLocation이 없을 때만)
   useEffect(() => {
@@ -95,11 +96,12 @@ export function Header() {
     }
   }, [fetchUnreadCount, isAuthenticated]);
 
-  // admin 사용자의 매장 ID 가져오기
+  // admin 사용자의 매장 ID와 slug 가져오기
   useEffect(() => {
     const fetchMyStoreId = async () => {
       if (user?.role !== "admin" || !tokens?.access_token) {
         setMyStoreId(null);
+        setMyStoreSlug(null);
         return;
       }
 
@@ -107,6 +109,7 @@ export function Header() {
         const result = await getMyStoreAction(tokens.access_token);
         if (result.success && result.data?.store) {
           setMyStoreId(result.data.store.id);
+          setMyStoreSlug(result.data.store.slug);
         } else {
           console.error("Failed to fetch my store ID:", result.error);
         }
@@ -313,9 +316,9 @@ export function Header() {
                     </Link>
 
                     {/* Admin 전용: 내 매장 */}
-                    {user?.role === "admin" && myStoreId && (
+                    {user?.role === "admin" && myStoreId && myStoreSlug && (
                       <Link
-                        href={`/stores/${myStoreId}`}
+                        href={`/stores/${myStoreId}/${myStoreSlug}`}
                         onClick={() => setIsDropdownOpen(false)}
                         className="flex items-center gap-2 px-4 py-2.5 text-caption text-gray-700 hover:bg-gray-50 smooth-transition"
                       >

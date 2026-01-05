@@ -436,8 +436,8 @@ export default function ProfileEditPage() {
                     <p className="text-xs text-gray-500 mb-3">
                       매장 관리자는 별도 프로필 이미지를 설정할 수 없습니다
                     </p>
-                    {user?.store?.id && (
-                      <Link href={`/stores/${user.store.id}/edit`}>
+                    {user?.store?.id && user?.store?.slug && (
+                      <Link href={`/stores/${user.store.id}/${user.store.slug}`}>
                         <Button variant="outline" size="sm" className="gap-2">
                           <StoreIcon className="w-4 h-4" />
                           매장 정보에서 이미지 수정하기

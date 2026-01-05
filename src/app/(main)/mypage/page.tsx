@@ -877,7 +877,7 @@ export default function MyPage() {
                               매장 정보 수정
                             </Button>
                           </Link>
-                          <Link href={`/stores/${myStore.id}`} className="flex-1">
+                          <Link href={`/stores/${myStore.id}/${myStore.slug}`} className="flex-1">
                             <Button variant="outline" className="w-full">
                               <Eye className="w-4 h-4 mr-2" />
                               매장 페이지 보기
@@ -913,7 +913,7 @@ export default function MyPage() {
                     ) : (
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {likedStores.map((store) => (
-                          <Link key={store.id} href={`/stores/${store.id}`}>
+                          <Link key={store.id} href={`/stores/${store.id}/${store.slug}`}>
                             <div className="p-4 border rounded-lg hover:shadow-md transition-shadow cursor-pointer">
                               <div className="flex items-start gap-3">
                                 <Store className="w-10 h-10 text-gray-400 flex-shrink-0" />

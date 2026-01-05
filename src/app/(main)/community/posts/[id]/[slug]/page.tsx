@@ -659,7 +659,7 @@ export default function CommunityDetailPage() {
 
               {/* 매장으로 가기 - 웹에서만 표시 */}
               <Link
-                href={`/stores/${postData.store.id}`}
+                href={`/stores/${postData.store.id}/${postData.store.slug}`}
                 className="hidden sm:flex flex-1 items-center justify-center gap-2 px-4 py-3 bg-white border border-[#C9A227]/30 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition-colors"
               >
                 <Store className="w-4 h-4" />
