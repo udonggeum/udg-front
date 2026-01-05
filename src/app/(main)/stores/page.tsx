@@ -21,6 +21,7 @@ import { useAuthStore } from "@/stores/useAuthStore";
 import { toast } from "sonner";
 import { useAuthenticatedAction } from "@/hooks/useAuthenticatedAction";
 import { Button } from "@/components/ui/button";
+import { Virtuoso } from "react-virtuoso";
 
 /**
  * 매장 이미지 컴포넌트 - 로딩 실패 시 폴백 UI 표시
@@ -715,16 +716,17 @@ function StoresPageContent() {
                 </p>
               </div>
             ) : (
-              filteredStores.map((store) => (
-                <div
-                  key={store.id}
-                  onClick={() => handleStoreClick(store)}
-                  className={`p-5 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors duration-200 border-l-4 ${
-                    selectedStore?.id === store.id
-                      ? "bg-gray-50 border-l-gray-900"
-                      : "border-l-transparent"
-                  }`}
-                >
+              <Virtuoso
+                data={filteredStores}
+                itemContent={(index, store) => (
+                  <div
+                    onClick={() => handleStoreClick(store)}
+                    className={`p-5 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors duration-200 border-l-4 ${
+                      selectedStore?.id === store.id
+                        ? "bg-gray-50 border-l-gray-900"
+                        : "border-l-transparent"
+                    }`}
+                  >
                   <div className="flex gap-4">
                     <div className="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0">
                       <StoreImage
@@ -783,8 +785,9 @@ function StoresPageContent() {
                       )}
                     </div>
                   </div>
-                </div>
-              ))
+                  </div>
+                )}
+              />
             )}
           </div>
         </div>

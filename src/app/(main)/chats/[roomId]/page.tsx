@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useApiErrorHandler } from "@/hooks/useApiCall";
@@ -27,6 +27,8 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useWebSocket } from "@/hooks/useWebSocket";
 import { getUserDisplayName, getUserImageUrl } from "@/lib/utils";
+import { Virtuoso, VirtuosoHandle } from "react-virtuoso";
+import Image from "next/image";
 
 export default function ChatRoomPage() {
   const router = useRouter();
@@ -42,39 +44,42 @@ export default function ChatRoomPage() {
   const [isSending, setIsSending] = useState(false);
   const [isOtherUserTyping, setIsOtherUserTyping] = useState(false);
   const [searchKeyword, setSearchKeyword] = useState("");
+  const [debouncedSearchKeyword, setDebouncedSearchKeyword] = useState("");
   const [showSearch, setShowSearch] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [filePreviewUrl, setFilePreviewUrl] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [editingMessageId, setEditingMessageId] = useState<number | null>(null);
   const [editingContent, setEditingContent] = useState("");
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const virtuosoRef = useRef<VirtuosoHandle>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const searchDebounceRef = useRef<NodeJS.Timeout | null>(null);
 
-  // 사용자가 맨 아래에 있는지 확인 (100px 이내면 맨 아래로 간주)
-  const isNearBottom = useCallback(() => {
-    const container = messagesContainerRef.current;
-    if (!container) return true; // 컨테이너가 없으면 스크롤 허용
-
-    const threshold = 100; // 맨 아래로부터 100px 이내
-    const distanceFromBottom =
-      container.scrollHeight - container.scrollTop - container.clientHeight;
-
-    return distanceFromBottom <= threshold;
-  }, []);
-
+  // Virtuoso를 맨 아래로 스크롤
   const scrollToBottom = useCallback(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    virtuosoRef.current?.scrollToIndex({
+      index: "LAST",
+      behavior: "smooth",
+    });
   }, []);
 
-  // 조건부 스크롤: 맨 아래에 있을 때만 스크롤
-  const scrollToBottomIfNeeded = useCallback(() => {
-    if (isNearBottom()) {
-      scrollToBottom();
+  // 검색어 디바운싱 (300ms)
+  useEffect(() => {
+    if (searchDebounceRef.current) {
+      clearTimeout(searchDebounceRef.current);
     }
-  }, [isNearBottom, scrollToBottom]);
+
+    searchDebounceRef.current = setTimeout(() => {
+      setDebouncedSearchKeyword(searchKeyword);
+    }, 300);
+
+    return () => {
+      if (searchDebounceRef.current) {
+        clearTimeout(searchDebounceRef.current);
+      }
+    };
+  }, [searchKeyword]);
 
   // WebSocket connection (인증된 사용자만)
   const wsToken = isAuthenticated && tokens?.access_token ? tokens.access_token : "";
@@ -95,7 +100,8 @@ export default function ChatRoomPage() {
               (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
             );
           });
-          scrollToBottomIfNeeded();
+          // 새 메시지가 도착하면 자동 스크롤 (다른 사용자의 메시지도 포함)
+          setTimeout(() => scrollToBottom(), 100);
 
           // Mark as read if not my message
           if (data.message.sender_id !== user?.id && tokens?.access_token) {
@@ -168,9 +174,12 @@ export default function ChatRoomPage() {
     joinChatRoomAction(roomId, tokens.access_token);
   }, [roomId, tokens?.access_token]);
 
+  // 메시지가 로드되거나 업데이트될 때 맨 아래로 스크롤 (초기 로드 시에만)
   useEffect(() => {
-    scrollToBottom();
-  }, [messages, scrollToBottom]);
+    if (messages.length > 0 && !debouncedSearchKeyword) {
+      setTimeout(() => scrollToBottom(), 100);
+    }
+  }, [messages.length]); // messages 대신 messages.length로 변경하여 불필요한 재렌더링 방지
 
   const fetchRoomData = async () => {
     if (!tokens?.access_token) return;
@@ -669,12 +678,13 @@ export default function ChatRoomPage() {
     }
   };
 
-  // 검색 필터링된 메시지
-  const filteredMessages = searchKeyword.trim()
-    ? messages.filter((msg) =>
-        msg.content.toLowerCase().includes(searchKeyword.toLowerCase())
-      )
-    : messages;
+  // 검색 필터링된 메시지 (디바운싱된 검색어 사용)
+  const filteredMessages = useMemo(() => {
+    if (!debouncedSearchKeyword.trim()) return messages;
+    return messages.filter((msg) =>
+      msg.content.toLowerCase().includes(debouncedSearchKeyword.toLowerCase())
+    );
+  }, [messages, debouncedSearchKeyword]);
 
   // 검색어 하이라이트
   const highlightText = (text: string, keyword: string) => {
@@ -745,16 +755,18 @@ export default function ChatRoomPage() {
 
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-3">
-              <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden ${
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden relative ${
                 getUserImageUrl(otherUser || {})
                   ? "bg-white border border-gray-200"
                   : "bg-gradient-to-br from-[#C9A227] to-[#8A6A00]"
               }`}>
                 {getUserImageUrl(otherUser || {}) ? (
-                  <img
-                    src={getUserImageUrl(otherUser || {})}
+                  <Image
+                    src={getUserImageUrl(otherUser || {}) || "/default-avatar.png"}
                     alt={getUserDisplayName(otherUser || {})}
-                    className="w-full h-full object-cover"
+                    fill
+                    sizes="40px"
+                    className="object-cover"
                   />
                 ) : (
                   <User className="w-5 h-5 text-white" />
@@ -885,23 +897,28 @@ export default function ChatRoomPage() {
         )}
       </div>
 
-      {/* Messages */}
-      <div ref={messagesContainerRef} className="flex-1 overflow-y-auto py-4 space-y-3">
-        {filteredMessages.length === 0 ? (
+      {/* Messages - Virtualized */}
+      {filteredMessages.length === 0 ? (
+        <div className="flex-1 flex items-center justify-center">
           <div className="text-center py-16 text-gray-600">
             <p>{searchKeyword ? "검색 결과가 없습니다." : "메시지를 입력해 대화를 시작하세요."}</p>
           </div>
-        ) : (
-          <>
-            {filteredMessages.map((message) => {
+        </div>
+      ) : (
+        <Virtuoso
+          ref={virtuosoRef}
+          data={filteredMessages}
+          className="flex-1"
+          followOutput="smooth"
+          initialTopMostItemIndex={filteredMessages.length > 0 ? filteredMessages.length - 1 : undefined}
+          itemContent={(index, message) => {
             const isMine = message.sender_id === user?.id;
             const isFailed = message.status === "failed";
             const isPending = message.status === "pending";
 
             return (
               <div
-                key={message.tempId || message.id}
-                className={`flex ${isMine ? "justify-end" : "justify-start"} items-end gap-2`}
+                className={`flex ${isMine ? "justify-end" : "justify-start"} items-end gap-2 py-1.5`}
               >
                 {/* 실패 시 재전송/삭제 버튼 (왼쪽) */}
                 {isMine && isFailed && (
@@ -942,11 +959,11 @@ export default function ChatRoomPage() {
 
                   {/* 이미지 표시 */}
                   {message.message_type === "IMAGE" && message.file_url && (
-                    <div className="mb-2">
+                    <div className="mb-2 relative w-full" style={{ maxHeight: "256px" }}>
                       <img
                         src={message.file_url}
                         alt={message.file_name || "이미지"}
-                        className="max-w-full max-h-64 rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+                        className="rounded-lg cursor-pointer hover:opacity-90 transition-opacity max-w-full max-h-64 object-contain"
                         onClick={() => window.open(message.file_url, "_blank")}
                       />
                     </div>
@@ -1004,7 +1021,7 @@ export default function ChatRoomPage() {
                       {(message.message_type === "TEXT" || message.content) && (
                         <div>
                           <p className={`text-sm whitespace-pre-wrap break-words ${message.is_deleted ? "text-gray-400 italic" : ""}`}>
-                            {highlightText(message.content, searchKeyword)}
+                            {highlightText(message.content, debouncedSearchKeyword)}
                           </p>
                           {message.is_edited && !message.is_deleted && (
                             <span className="text-xs text-gray-600 ml-1">(수정됨)</span>
@@ -1061,22 +1078,22 @@ export default function ChatRoomPage() {
                 </div>
               </div>
             );
-          })}
-          {isOtherUserTyping && (
-            <div className="flex justify-start">
-              <div className="bg-gray-100 rounded-2xl px-4 py-3">
-                <div className="flex items-center gap-1">
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+          }}
+          components={{
+            Footer: () => isOtherUserTyping ? (
+              <div className="flex justify-start py-1.5">
+                <div className="bg-gray-100 rounded-2xl px-4 py-3">
+                  <div className="flex items-center gap-1">
+                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
-          </>
-        )}
-        <div ref={messagesEndRef} />
-      </div>
+            ) : null
+          }}
+        />
+      )}
 
       {/* Input */}
       <div className="pt-4 border-t border-gray-200 flex-shrink-0">
@@ -1085,11 +1102,13 @@ export default function ChatRoomPage() {
           <div className="mb-3 p-3 bg-gray-50 rounded-lg">
             <div className="flex items-start gap-3">
               {filePreviewUrl ? (
-                <img
-                  src={filePreviewUrl}
-                  alt="미리보기"
-                  className="w-20 h-20 object-cover rounded"
-                />
+                <div className="w-20 h-20 rounded overflow-hidden">
+                  <img
+                    src={filePreviewUrl}
+                    alt="미리보기"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
               ) : (
                 <div className="w-20 h-20 bg-gray-200 rounded flex items-center justify-center">
                   <FileText className="w-8 h-8 text-gray-400" />
