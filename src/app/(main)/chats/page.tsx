@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { getChatRoomsAction, leaveChatRoomAction } from "@/actions/chat";
@@ -141,19 +141,21 @@ export default function ChatsPage() {
     return false;
   });
 
-  // 각 타입별 개수 계산
-  const roomCounts = {
-    all: rooms.length,
-    STORE: rooms.filter((r) => r.type === "STORE").length,
-    received: rooms.filter((r) => {
-      const isGoldTrade = r.type === "SELL_GOLD" || r.type === "BUY_GOLD" || r.type === "SALE";
-      return isGoldTrade && r.product?.user_id === user?.id;
-    }).length,
-    sent: rooms.filter((r) => {
-      const isGoldTrade = r.type === "SELL_GOLD" || r.type === "BUY_GOLD" || r.type === "SALE";
-      return isGoldTrade && r.product?.user_id !== user?.id;
-    }).length,
-  };
+  // 각 타입별 개수 계산 (useMemo로 최적화)
+  const roomCounts = useMemo(() => {
+    return {
+      all: rooms.length,
+      STORE: rooms.filter((r) => r.type === "STORE").length,
+      received: rooms.filter((r) => {
+        const isGoldTrade = r.type === "SELL_GOLD" || r.type === "BUY_GOLD" || r.type === "SALE";
+        return isGoldTrade && r.product?.user_id === user?.id;
+      }).length,
+      sent: rooms.filter((r) => {
+        const isGoldTrade = r.type === "SELL_GOLD" || r.type === "BUY_GOLD" || r.type === "SALE";
+        return isGoldTrade && r.product?.user_id !== user?.id;
+      }).length,
+    };
+  }, [rooms, user?.id]); // ✅ useMemo로 메모이제이션
 
   if (isLoading) {
     return (

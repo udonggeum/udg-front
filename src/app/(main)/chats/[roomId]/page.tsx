@@ -158,7 +158,7 @@ export default function ChatRoomPage() {
     }
 
     fetchRoomData();
-  }, [isAuthenticated, tokens, roomId]);
+  }, [isAuthenticated, tokens?.access_token, roomId]); // ✅ tokens 대신 tokens?.access_token 사용
 
   // Join chat room for WebSocket (WebSocket disconnect는 useWebSocket hook에서 자동 처리)
   useEffect(() => {
