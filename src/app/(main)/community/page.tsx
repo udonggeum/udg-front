@@ -110,6 +110,11 @@ function CommunityPageContent() {
     }
   }, [searchParams]);
 
+  // selectedLocations를 문자열로 변환하여 메모이제이션 (깊은 비교 방지)
+  const selectedLocationsKey = useMemo(() => {
+    return JSON.stringify(selectedLocations);
+  }, [selectedLocations]);
+
   // 게시글 데이터 로드 (디바운싱 적용)
   useEffect(() => {
     // 검색어가 있을 때만 500ms 디바운싱 적용
@@ -149,7 +154,7 @@ function CommunityPageContent() {
     }, searchQuery.trim() ? 500 : 0); // 검색어가 있으면 500ms 대기, 없으면 즉시 실행
 
     return () => clearTimeout(debounceTimer);
-  }, [selectedCategory, selectedType, currentSort, selectedLocations, searchQuery]);
+  }, [selectedCategory, selectedType, currentSort, selectedLocationsKey, searchQuery]); // ✅ selectedLocations 대신 selectedLocationsKey 사용
 
   // 추가 데이터 로드 (무한스크롤)
   const loadMorePosts = useCallback(async () => {
@@ -187,7 +192,7 @@ function CommunityPageContent() {
     }
 
     setIsLoadingMore(false);
-  }, [isLoadingMore, hasMore, data, selectedCategory, selectedType, currentPage, currentSort, selectedLocations, searchQuery]);
+  }, [isLoadingMore, hasMore, data, selectedCategory, selectedType, currentPage, currentSort, selectedLocationsKey, searchQuery]); // ✅ selectedLocations 대신 selectedLocationsKey 사용
 
   // Intersection Observer 설정
   useEffect(() => {

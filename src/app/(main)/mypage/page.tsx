@@ -118,7 +118,7 @@ export default function MyPage() {
     if (isAuthenticated && user) {
       fetchMyPosts();
     }
-  }, [isAuthenticated, user, selectedCategory]);
+  }, [isAuthenticated, user?.id, selectedCategory]); // ✅ user 대신 user?.id 사용
 
   // admin 사용자의 매장 불러오기
   useEffect(() => {

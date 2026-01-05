@@ -164,7 +164,10 @@ export function useWebSocket({
       }
     };
 
-    connect(token);
+    // 초기 연결만 수행 (토큰이 없을 때만 연결)
+    if (!wsRef.current || wsRef.current.readyState === WebSocket.CLOSED) {
+      connect(token);
+    }
 
     return () => {
       if (reconnectTimeoutRef.current) {
@@ -175,7 +178,7 @@ export function useWebSocket({
         wsRef.current.close(1000, "Component unmount");
       }
     };
-  }, [url, token, autoReconnect]);
+  }, [url, autoReconnect]); // ✅ token을 의존성에서 제거하여 토큰 변경 시 재연결 방지
 
   const sendMessage = (message: any) => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {

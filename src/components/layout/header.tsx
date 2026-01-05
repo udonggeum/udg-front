@@ -71,7 +71,7 @@ export function Header() {
     return fetchUnreadCountRef.current();
   }, []);
 
-  // WebSocket 메시지 핸들러 (안정화된 콜백)
+  // WebSocket 메시지 핸들러 (실시간 채팅 알림)
   const handleWebSocketMessage = useCallback((data: any) => {
     // 새 메시지가 왔을 때 (내가 보낸 메시지가 아닌 경우)
     if (data.type === "new_message" && data.message) {
@@ -88,8 +88,12 @@ export function Header() {
 
   // 초기 로드
   useEffect(() => {
-    fetchUnreadCount();
-  }, [fetchUnreadCount]);
+    if (isAuthenticated) {
+      fetchUnreadCount();
+    } else {
+      setUnreadChatCount(0);
+    }
+  }, [fetchUnreadCount, isAuthenticated]);
 
   // admin 사용자의 매장 ID 가져오기
   useEffect(() => {
@@ -116,7 +120,7 @@ export function Header() {
     }
   }, [user?.role, tokens?.access_token]);
 
-  // WebSocket으로 실시간 메시지 수신 (인증된 사용자만)
+  // WebSocket으로 실시간 채팅 알림 수신 (인증된 사용자만, 토큰 변경 시 재연결 안함)
   const wsToken = isAuthenticated && tokens?.access_token ? tokens.access_token : "";
   useWebSocket({
     url: process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8080/api/v1/chats/ws',

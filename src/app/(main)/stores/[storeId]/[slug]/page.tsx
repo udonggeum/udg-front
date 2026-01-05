@@ -317,7 +317,7 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
     };
 
     loadPosts();
-  }, [store, activeTab]);
+  }, [store?.id, activeTab]); // ✅ store 대신 store?.id 사용
 
   // 갤러리 로드
   useEffect(() => {
@@ -343,7 +343,7 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
     };
 
     loadGallery();
-  }, [store, activeTab]);
+  }, [store?.id, activeTab]); // ✅ store 대신 store?.id 사용
 
   // 로딩 상태
   if (isLoadingStore) {

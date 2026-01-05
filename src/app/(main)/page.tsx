@@ -129,7 +129,7 @@ export default function Home() {
     };
 
     fetchNearbyStores();
-  }, [isAuthenticated, user]);
+  }, [isAuthenticated, user?.id, user?.address, user?.latitude, user?.longitude]); // ✅ user 전체 대신 필요한 필드만 의존성으로 사용
 
   // 금 시세 데이터 매핑
   const goldPriceDisplay = goldPrices.length > 0

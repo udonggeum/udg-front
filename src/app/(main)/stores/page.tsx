@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, Suspense } from "react";
+import { useState, useEffect, useMemo, useCallback, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   Search,
@@ -170,6 +170,23 @@ function StoresPageContent() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // 매장 클릭 핸들러 (useCallback으로 메모이제이션)
+  const handleStoreClick = useCallback((store: StoreWithExtras) => {
+    // 모바일에서는 상세 페이지로 바로 이동
+    if (window.innerWidth < 768) {
+      router.push(`/stores/${store.id}/${store.slug}`);
+    } else {
+      // PC에서는 우측 패널 열기 + 지도 중심 이동
+      setSelectedStore(store);
+      setIsDetailPanelOpen(true);
+
+      // 선택된 매장 위치로 지도 중심 이동
+      if (store.lat && store.lng) {
+        setMapCenter({ lat: store.lat, lng: store.lng });
+      }
+    }
+  }, [router]);
+
   // 초기 로드 시 사용자 위치 자동 획득 (비침입적)
   useEffect(() => {
     if (navigator.geolocation) {
@@ -327,7 +344,7 @@ function StoresPageContent() {
       );
       console.log("✅ Distance recalculation complete");
     }
-  }, [userLocation, stores.length]);
+  }, [userLocation]); // ✅ stores.length 제거하여 무한 루프 방지
 
   // URL 파라미터에서 검색어 처리 (메인 화면의 인기 검색어 클릭 시)
   useEffect(() => {
@@ -359,7 +376,7 @@ function StoresPageContent() {
         }
       }
     }
-  }, [searchParams, stores.length]);
+  }, [searchParams, stores.length, handleStoreClick]); // ✅ handleStoreClick 의존성 추가
 
   // 좋아요 토글 핸들러
   const handleStoreLike = async (storeId: number, e: React.MouseEvent) => {
@@ -480,22 +497,6 @@ function StoresPageContent() {
     { id: "diamond", label: "다이아몬드" },
     { id: "repair", label: "수리가능" },
   ];
-
-  const handleStoreClick = (store: StoreWithExtras) => {
-    // 모바일에서는 상세 페이지로 바로 이동
-    if (window.innerWidth < 768) {
-      router.push(`/stores/${store.id}/${store.slug}`);
-    } else {
-      // PC에서는 우측 패널 열기 + 지도 중심 이동
-      setSelectedStore(store);
-      setIsDetailPanelOpen(true);
-
-      // 선택된 매장 위치로 지도 중심 이동
-      if (store.lat && store.lng) {
-        setMapCenter({ lat: store.lat, lng: store.lng });
-      }
-    }
-  };
 
   const closeDetailPanel = () => {
     setIsDetailPanelOpen(false);
