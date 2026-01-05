@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+import { Virtuoso } from "react-virtuoso";
 import {
   User,
   Heart,
@@ -88,94 +89,100 @@ export default function MyPage() {
     }
   }, [isAuthenticated, router]);
 
-  // 작성한 글 불러오기
+  // 🚀 병렬 API 호출 최적화: 페이지 로드 시 모든 데이터를 동시에 가져옴
   useEffect(() => {
-    const fetchMyPosts = async () => {
-      if (!user?.id) return;
+    if (!isAuthenticated) return;
 
-      setIsLoadingPosts(true);
+    const fetchAllData = async () => {
+      const promises: Promise<any>[] = [];
+
+      // 1. 작성한 글 불러오기 (모든 사용자)
+      if (user?.id) {
+        setIsLoadingPosts(true);
+        promises.push(
+          getPostsAction({
+            user_id: user.id,
+            category: selectedCategory === "all" ? undefined : (selectedCategory as "gold_trade" | "gold_news" | "qna"),
+            page: 1,
+            page_size: 50,
+            sort_by: "created_at",
+            sort_order: "desc",
+          }).then(result => ({ type: "posts", result }))
+        );
+      }
+
+      // 2. 매장 정보 불러오기 (admin만)
+      if (isAdmin && tokens?.access_token) {
+        setIsLoadingMyStore(true);
+        promises.push(
+          getMyStoreAction(tokens.access_token).then(result => ({ type: "store", result }))
+        );
+      }
+
+      // 3. 알림 설정 불러오기 (admin만)
+      if (isAdmin && tokens?.access_token) {
+        setIsLoadingSettings(true);
+        promises.push(
+          getNotificationSettingsAction(tokens.access_token).then(result => ({ type: "settings", result }))
+        );
+      }
+
+      // 4. 좋아요한 매장 불러오기 (일반 사용자만)
+      if (!isAdmin && tokens?.access_token) {
+        setIsLoadingStores(true);
+        promises.push(
+          getUserLikedStoresAction(tokens.access_token).then(result => ({ type: "likedStores", result }))
+        );
+      }
+
+      // 병렬로 모든 API 호출
       try {
-        const result = await getPostsAction({
-          user_id: user.id,
-          category: selectedCategory === "all" ? undefined : (selectedCategory as "gold_trade" | "gold_news" | "qna"),
-          page: 1,
-          page_size: 50,
-          sort_by: "created_at",
-          sort_order: "desc",
+        const results = await Promise.all(promises);
+
+        results.forEach(({ type, result }) => {
+          if (type === "posts") {
+            if (result.success && result.data) {
+              setMyPosts(result.data.data);
+              setTotalPosts(result.data.total);
+            }
+            setIsLoadingPosts(false);
+          } else if (type === "store") {
+            if (result.success && result.data?.store) {
+              setMyStore(result.data.store);
+            } else {
+              console.error("Failed to fetch my store:", result.error);
+            }
+            setIsLoadingMyStore(false);
+          } else if (type === "settings") {
+            if (result.success && result.data?.settings) {
+              const settings = {
+                ...result.data.settings,
+                selected_regions: result.data.settings.selected_regions || [],
+              };
+              setNotificationSettings(settings);
+            } else {
+              console.error("Failed to fetch notification settings:", result.error);
+            }
+            setIsLoadingSettings(false);
+          } else if (type === "likedStores") {
+            if (result.success && result.data) {
+              setLikedStores(result.data.stores);
+              setTotalLikedStores(result.data.count || result.data.stores.length);
+            }
+            setIsLoadingStores(false);
+          }
         });
-
-        if (result.success && result.data) {
-          setMyPosts(result.data.data);
-          setTotalPosts(result.data.total);
-        }
       } catch (error) {
-        console.error("Failed to fetch posts:", error);
-      } finally {
+        console.error("Failed to fetch data:", error);
         setIsLoadingPosts(false);
-      }
-    };
-
-    if (isAuthenticated && user) {
-      fetchMyPosts();
-    }
-  }, [isAuthenticated, user?.id, selectedCategory]); // ✅ user 대신 user?.id 사용
-
-  // admin 사용자의 매장 불러오기
-  useEffect(() => {
-    const fetchMyStore = async () => {
-      if (!isAdmin || !tokens?.access_token) return;
-
-      setIsLoadingMyStore(true);
-      try {
-        const result = await getMyStoreAction(tokens.access_token);
-
-        if (result.success && result.data?.store) {
-          setMyStore(result.data.store);
-        } else {
-          console.error("Failed to fetch my store:", result.error);
-        }
-      } catch (error) {
-        console.error("Failed to fetch my store:", error);
-      } finally {
         setIsLoadingMyStore(false);
-      }
-    };
-
-    if (isAuthenticated && isAdmin && tokens?.access_token) {
-      fetchMyStore();
-    }
-  }, [isAuthenticated, isAdmin, tokens?.access_token]);
-
-  // 알림 설정 불러오기 (admin 전용)
-  useEffect(() => {
-    const fetchNotificationSettings = async () => {
-      if (!isAdmin || !tokens?.access_token) return;
-
-      setIsLoadingSettings(true);
-      try {
-        const result = await getNotificationSettingsAction(tokens.access_token);
-
-        if (result.success && result.data?.settings) {
-          // selected_regions가 없으면 빈 배열로 초기화
-          const settings = {
-            ...result.data.settings,
-            selected_regions: result.data.settings.selected_regions || [],
-          };
-          setNotificationSettings(settings);
-        } else {
-          console.error("Failed to fetch notification settings:", result.error);
-        }
-      } catch (error) {
-        console.error("Failed to fetch notification settings:", error);
-      } finally {
         setIsLoadingSettings(false);
+        setIsLoadingStores(false);
       }
     };
 
-    if (isAuthenticated && isAdmin && tokens?.access_token) {
-      fetchNotificationSettings();
-    }
-  }, [isAuthenticated, isAdmin, tokens?.access_token]);
+    fetchAllData();
+  }, [isAuthenticated, isAdmin, user?.id, tokens?.access_token, selectedCategory]);
 
   // 지역 추가
   const addRegion = () => {
@@ -241,31 +248,6 @@ export default function MyPage() {
       setIsSavingSettings(false);
     }
   };
-
-  // 좋아요한 매장 불러오기 (일반 사용자만)
-  useEffect(() => {
-    const fetchLikedStores = async () => {
-      if (!tokens?.access_token || isAdmin) return;
-
-      setIsLoadingStores(true);
-      try {
-        const result = await getUserLikedStoresAction(tokens.access_token);
-
-        if (result.success && result.data) {
-          setLikedStores(result.data.stores);
-          setTotalLikedStores(result.data.count || result.data.stores.length);
-        }
-      } catch (error) {
-        console.error("Failed to fetch liked stores:", error);
-      } finally {
-        setIsLoadingStores(false);
-      }
-    };
-
-    if (isAuthenticated && !isAdmin && tokens?.access_token) {
-      fetchLikedStores();
-    }
-  }, [isAuthenticated, isAdmin, tokens?.access_token]);
 
   const handleLogout = async () => {
     try {
@@ -1025,12 +1007,14 @@ export default function MyPage() {
                     </Link>
                   </div>
                 ) : (
-                  <div className="space-y-3">
-                    {myPosts.map((post) => (
+                  <Virtuoso
+                    data={myPosts}
+                    style={{ height: "600px" }}
+                    itemContent={(index, post) => (
                       <Link
                         key={post.id}
                         href={`/community/posts/${post.id}`}
-                        className="block p-4 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors"
+                        className="block p-4 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors mb-3"
                       >
                         <div className="flex items-start justify-between gap-4">
                           <div className="flex-1 min-w-0">
@@ -1068,8 +1052,8 @@ export default function MyPage() {
                           </div>
                         </div>
                       </Link>
-                    ))}
-                  </div>
+                    )}
+                  />
                 )}
               </CardContent>
             </Card>

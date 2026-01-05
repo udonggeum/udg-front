@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { getChatRoomsAction, leaveChatRoomAction } from "@/actions/chat";
 import { useApiErrorHandler } from "@/hooks/useApiCall";
@@ -283,16 +284,19 @@ export default function ChatsPage() {
                 >
                   <div className="flex items-start gap-3">
                     {/* Avatar */}
-                    <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden ${
+                    <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden relative ${
                       getUserImageUrl(otherUser || {})
                         ? "bg-white border border-gray-200"
                         : "bg-gradient-to-br from-[#C9A227] to-[#8A6A00]"
                     }`}>
                       {getUserImageUrl(otherUser || {}) ? (
-                        <img
-                          src={getUserImageUrl(otherUser || {})}
+                        <Image
+                          src={getUserImageUrl(otherUser || {}) || "/default-avatar.png"}
                           alt={getUserDisplayName(otherUser || {})}
-                          className="w-full h-full object-cover"
+                          fill
+                          sizes="48px"
+                          className="object-cover"
+                          loading="lazy"
                         />
                       ) : room.type === "STORE" ? (
                         <Store className="w-6 h-6 text-white" />

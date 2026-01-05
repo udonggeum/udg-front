@@ -2,6 +2,7 @@
 
 import { useState, useEffect, Suspense, useRef, useCallback, useMemo, memo } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { getPostsAction } from "@/actions/community";
 import { getStoreLocationsAction } from "@/actions/stores";
@@ -733,11 +734,16 @@ function CommunityPageContent() {
                     {/* Thumbnail */}
                     <div className="relative overflow-hidden bg-gray-50 flex-shrink-0">
                       {post.image_urls && post.image_urls.length > 0 ? (
-                        <img
-                          src={post.image_urls[0]}
-                          alt={post.title}
-                          className="w-full aspect-[4/3] object-cover group-hover:scale-105 transition-transform duration-300"
-                        />
+                        <div className="relative w-full aspect-[4/3]">
+                          <Image
+                            src={post.image_urls[0]}
+                            alt={post.title}
+                            fill
+                            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                            className="object-cover group-hover:scale-105 transition-transform duration-300"
+                            loading="lazy"
+                          />
+                        </div>
                       ) : (
                         <div className="w-full aspect-[4/3] bg-gradient-to-br from-[#C9A227] to-[#8A6A00] flex items-center justify-center">
                           <svg className="w-16 h-16 text-white/50" fill="currentColor" viewBox="0 0 24 24">
@@ -776,16 +782,19 @@ function CommunityPageContent() {
                       {/* Profile + Stats */}
                       <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-2">
-                          <div className={`w-6 h-6 rounded-full flex items-center justify-center overflow-hidden ${
+                          <div className={`w-6 h-6 rounded-full flex items-center justify-center overflow-hidden relative ${
                             getUserImageUrl(post.user)
                               ? "bg-white border border-gray-200"
                               : "bg-gradient-to-br from-[#C9A227] to-[#8A6A00]"
                           }`}>
                             {getUserImageUrl(post.user) ? (
-                              <img
-                                src={getUserImageUrl(post.user)}
+                              <Image
+                                src={getUserImageUrl(post.user) || "/default-avatar.png"}
                                 alt={getUserDisplayName(post.user)}
-                                className="w-full h-full object-cover"
+                                fill
+                                sizes="24px"
+                                className="object-cover"
+                                loading="lazy"
                               />
                             ) : (
                               <span className="text-[10px] font-bold text-white">
@@ -847,16 +856,19 @@ function CommunityPageContent() {
                       {/* Left: Store Profile + Thumbnails */}
                       <div className="flex flex-col gap-3 flex-shrink-0">
                         {/* Store/User Profile */}
-                        <div className={`w-36 h-36 rounded-2xl flex items-center justify-center overflow-hidden ${
+                        <div className={`w-36 h-36 rounded-2xl flex items-center justify-center overflow-hidden relative ${
                           getUserImageUrl(post.user)
                             ? "bg-white border-2 border-gray-200"
                             : "bg-gradient-to-br from-[#C9A227] to-[#8A6A00]"
                         }`}>
                           {getUserImageUrl(post.user) ? (
-                            <img
-                              src={getUserImageUrl(post.user)}
+                            <Image
+                              src={getUserImageUrl(post.user) || "/default-avatar.png"}
                               alt={getUserDisplayName(post.user)}
-                              className="w-full h-full object-cover"
+                              fill
+                              sizes="144px"
+                              className="object-cover"
+                              loading="lazy"
                             />
                           ) : (
                             <span className="text-4xl font-bold text-white">
@@ -869,11 +881,14 @@ function CommunityPageContent() {
                         {post.image_urls && post.image_urls.length > 0 && (
                           <div className="flex gap-1.5 w-36">
                             {post.image_urls.slice(0, 3).map((url, idx) => (
-                              <div key={idx} className="w-[42px] h-[42px] rounded-md overflow-hidden bg-gray-50">
-                                <img
+                              <div key={idx} className="relative w-[42px] h-[42px] rounded-md overflow-hidden bg-gray-50">
+                                <Image
                                   src={url}
                                   alt={`${post.title} ${idx + 1}`}
-                                  className="w-full h-full object-cover"
+                                  fill
+                                  sizes="42px"
+                                  className="object-cover"
+                                  loading="lazy"
                                 />
                               </div>
                             ))}
