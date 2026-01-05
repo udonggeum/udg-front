@@ -93,6 +93,8 @@ export default function MyPage() {
   useEffect(() => {
     if (!isAuthenticated) return;
 
+    let isMounted = true; // cleanup을 위한 플래그
+
     const fetchAllData = async () => {
       const promises: Promise<any>[] = [];
 
@@ -135,53 +137,60 @@ export default function MyPage() {
         );
       }
 
-      // 병렬로 모든 API 호출
-      try {
-        const results = await Promise.all(promises);
+      // 병렬로 모든 API 호출 (각 실패를 독립적으로 처리)
+      const results = await Promise.allSettled(promises);
 
-        results.forEach(({ type, result }) => {
-          if (type === "posts") {
-            if (result.success && result.data) {
-              setMyPosts(result.data.data);
-              setTotalPosts(result.data.total);
-            }
-            setIsLoadingPosts(false);
-          } else if (type === "store") {
-            if (result.success && result.data?.store) {
-              setMyStore(result.data.store);
-            } else {
-              console.error("Failed to fetch my store:", result.error);
-            }
-            setIsLoadingMyStore(false);
-          } else if (type === "settings") {
-            if (result.success && result.data?.settings) {
-              const settings = {
-                ...result.data.settings,
-                selected_regions: result.data.settings.selected_regions || [],
-              };
-              setNotificationSettings(settings);
-            } else {
-              console.error("Failed to fetch notification settings:", result.error);
-            }
-            setIsLoadingSettings(false);
-          } else if (type === "likedStores") {
-            if (result.success && result.data) {
-              setLikedStores(result.data.stores);
-              setTotalLikedStores(result.data.count || result.data.stores.length);
-            }
-            setIsLoadingStores(false);
+      // 컴포넌트가 unmount되었으면 state 업데이트하지 않음
+      if (!isMounted) return;
+
+      results.forEach((promiseResult, index) => {
+        if (promiseResult.status === "rejected") {
+          console.error("API call failed:", promiseResult.reason);
+          return;
+        }
+
+        const { type, result } = promiseResult.value;
+
+        if (type === "posts") {
+          if (result.success && result.data) {
+            setMyPosts(result.data.data);
+            setTotalPosts(result.data.total);
           }
-        });
-      } catch (error) {
-        console.error("Failed to fetch data:", error);
-        setIsLoadingPosts(false);
-        setIsLoadingMyStore(false);
-        setIsLoadingSettings(false);
-        setIsLoadingStores(false);
-      }
+          setIsLoadingPosts(false);
+        } else if (type === "store") {
+          if (result.success && result.data?.store) {
+            setMyStore(result.data.store);
+          } else {
+            console.error("Failed to fetch my store:", result.error);
+          }
+          setIsLoadingMyStore(false);
+        } else if (type === "settings") {
+          if (result.success && result.data?.settings) {
+            const settings = {
+              ...result.data.settings,
+              selected_regions: result.data.settings.selected_regions || [],
+            };
+            setNotificationSettings(settings);
+          } else {
+            console.error("Failed to fetch notification settings:", result.error);
+          }
+          setIsLoadingSettings(false);
+        } else if (type === "likedStores") {
+          if (result.success && result.data) {
+            setLikedStores(result.data.stores);
+            setTotalLikedStores(result.data.count || result.data.stores.length);
+          }
+          setIsLoadingStores(false);
+        }
+      });
     };
 
     fetchAllData();
+
+    // Cleanup: unmount시 isMounted 플래그 해제
+    return () => {
+      isMounted = false;
+    };
   }, [isAuthenticated, isAdmin, user?.id, tokens?.access_token, selectedCategory]);
 
   // 지역 추가

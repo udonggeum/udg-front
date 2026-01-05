@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, memo } from "react";
 import { X, Upload, Image as ImageIcon } from "lucide-react";
 import { generatePresignedURLAction, uploadFileToS3 } from "@/actions/upload";
 import { toast } from "sonner";
@@ -13,7 +13,7 @@ interface ImageUploaderProps {
   folder?: string;
 }
 
-export function ImageUploader({
+function ImageUploaderComponent({
   imageUrls,
   onImagesChange,
   maxImages = 5,
@@ -179,7 +179,7 @@ export function ImageUploader({
                 alt={`업로드 이미지 ${index + 1}`}
                 className="w-full h-full object-contain bg-white"
                 crossOrigin="anonymous"
-                loading="eager"
+                loading="lazy"
               />
               {/* 삭제 버튼 */}
               <button
@@ -205,3 +205,5 @@ export function ImageUploader({
     </div>
   );
 }
+
+export const ImageUploader = memo(ImageUploaderComponent);

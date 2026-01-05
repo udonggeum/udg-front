@@ -36,7 +36,7 @@ export async function getPostsAction(
       data: response.data,
     };
   } catch (error) {
-    return handleApiError(error, "게시글 목록 조회에 실패했습니다.");
+    return handleApiError(error, "게시글 목록 조회에 실패했습니다.", "GET /community/posts");
   }
 }
 
@@ -84,8 +84,6 @@ export async function createPostAction(
       }
     );
 
-    console.log("Create post response:", response.data);
-
     // 응답 구조 확인: { post: ... } 형태인지, 직접 post 객체인지
     const postData = 'post' in response.data ? response.data.post : response.data;
 
@@ -94,7 +92,7 @@ export async function createPostAction(
       data: postData,
     };
   } catch (error) {
-    return handleApiError(error, "게시글 작성에 실패했습니다.");
+    return handleApiError(error, "게시글 작성에 실패했습니다.", "POST /community/posts");
   }
 }
 
@@ -116,8 +114,6 @@ export async function updatePostAction(
         },
       }
     );
-
-    console.log("Update post response:", response.data);
 
     // 응답 구조 확인: { post: ... } 형태인지, 직접 post 객체인지
     const postData = 'post' in response.data ? response.data.post : response.data;

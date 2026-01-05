@@ -143,9 +143,6 @@ export async function updateProfileAction(
   accessToken: string
 ): Promise<ApiResponse<UpdateProfileResponse>> {
   try {
-    console.log("Updating profile with data:", data);
-    console.log("Access token (first 20 chars):", accessToken.substring(0, 20) + "...");
-
     const response = await apiClient.put<UpdateProfileResponse>("/auth/me", data, {
       headers: {
         Authorization: `Bearer ${accessToken}`,

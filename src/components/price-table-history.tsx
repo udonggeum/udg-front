@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, memo } from "react";
 import type { GoldType, HistoryPeriod } from "@/types/goldPrices";
 import { getGoldPriceHistoryAction } from "@/actions/goldPrices";
 
@@ -17,7 +17,7 @@ interface PriceTableHistoryProps {
   currentPrice?: number;
 }
 
-export default function PriceTableHistory({ type, period }: PriceTableHistoryProps) {
+function PriceTableHistory({ type, period }: PriceTableHistoryProps) {
   const [rawHistoryData, setRawHistoryData] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -202,3 +202,5 @@ export default function PriceTableHistory({ type, period }: PriceTableHistoryPro
     </>
   );
 }
+
+export default memo(PriceTableHistory);

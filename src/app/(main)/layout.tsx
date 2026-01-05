@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 export default function MainLayout({
   children,
@@ -17,7 +18,9 @@ export default function MainLayout({
   return (
     <>
       <Header />
-      {children}
+      <ErrorBoundary>
+        {children}
+      </ErrorBoundary>
       {!hideFooter && <Footer />}
     </>
   );

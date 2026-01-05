@@ -381,7 +381,7 @@ function StoresPageContent() {
   }, [searchParams, stores.length, handleStoreClick]); // ✅ handleStoreClick 의존성 추가
 
   // 좋아요 토글 핸들러
-  const handleStoreLike = async (storeId: number, e: React.MouseEvent) => {
+  const handleStoreLike = useCallback(async (storeId: number, e: React.MouseEvent) => {
     e.stopPropagation(); // 부모 클릭 이벤트 방지
 
     if (!user) {
@@ -426,7 +426,7 @@ function StoresPageContent() {
       console.error("Toggle store like error:", error);
       toast.error("좋아요 처리 중 오류가 발생했습니다");
     }
-  };
+  }, [user, accessToken, router, selectedStore]);
 
   const filteredStores = useMemo(() => {
     // 1. 필터링
@@ -505,7 +505,7 @@ function StoresPageContent() {
     setTimeout(() => setSelectedStore(null), 300); // 애니메이션 후 상태 초기화
   };
 
-  const handleSearch = (e: React.FormEvent) => {
+  const handleSearch = useCallback((e: React.FormEvent) => {
     e.preventDefault();
 
     // 검색 결과가 있으면 첫 번째 매장으로 지도 이동
@@ -519,7 +519,7 @@ function StoresPageContent() {
     } else {
       console.log("🔍 Search: No results found");
     }
-  };
+  }, [filteredStores, handleStoreClick]);
 
   // 현재 위치 가져오기 (Geolocation API)
   const getCurrentLocation = () => {

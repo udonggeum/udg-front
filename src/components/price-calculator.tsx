@@ -127,10 +127,12 @@ export default function PriceCalculator({ prices }: PriceCalculatorProps) {
           <div className="space-y-4">
             {/* 금 유형 선택 */}
             <div>
-              <label className="block text-small font-medium text-gray-700 mb-2">금 유형</label>
+              <label htmlFor="gold-type-select" className="block text-small font-medium text-gray-700 mb-2">금 유형</label>
               <select
+                id="gold-type-select"
                 value={selectedType}
                 onChange={(e) => setSelectedType(e.target.value as GoldType)}
+                aria-label="금 유형 선택"
                 className="w-full px-4 py-3 border border-gray-200 rounded-xl text-caption focus:outline-none focus:ring-2 focus:ring-[#C9A227] focus:border-transparent transition-all"
               >
                 {prices.map((price) => (
@@ -143,20 +145,25 @@ export default function PriceCalculator({ prices }: PriceCalculatorProps) {
 
             {/* 무게 입력 */}
             <div>
-              <label className="block text-small font-medium text-gray-700 mb-2">무게</label>
+              <label htmlFor="weight-input" className="block text-small font-medium text-gray-700 mb-2">무게</label>
               <div className="flex gap-2">
                 <input
+                  id="weight-input"
                   type="number"
                   value={weight}
                   onChange={(e) => setWeight(e.target.value)}
                   placeholder="0"
                   min="0"
                   step="0.01"
+                  aria-label="무게 입력"
+                  aria-describedby="weight-help-text"
                   className="flex-1 px-4 py-3 border border-gray-200 rounded-xl text-caption focus:outline-none focus:ring-2 focus:ring-[#C9A227] focus:border-transparent transition-all tabular-nums"
                 />
                 <select
+                  id="unit-select"
                   value={unit}
                   onChange={(e) => setUnit(e.target.value as WeightUnit)}
+                  aria-label="무게 단위 선택"
                   className="px-4 py-3 border border-gray-200 rounded-xl text-caption focus:outline-none focus:ring-2 focus:ring-[#C9A227] focus:border-transparent transition-all"
                 >
                   <option value="g">g</option>
@@ -164,7 +171,7 @@ export default function PriceCalculator({ prices }: PriceCalculatorProps) {
                   <option value="oz">oz</option>
                 </select>
               </div>
-              <p className="text-[11px] text-gray-400 mt-1">* 1돈 = 3.75g, 1oz = 31.1035g</p>
+              <p id="weight-help-text" className="text-[11px] text-gray-400 mt-1">* 1돈 = 3.75g, 1oz = 31.1035g</p>
             </div>
 
             {/* 그램 환산 정보 */}

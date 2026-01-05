@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo, Fragment } from "react";
+import { useEffect, useState, useMemo, Fragment, memo } from "react";
 import { Map, MapMarker, CustomOverlayMap } from "react-kakao-maps-sdk";
 import { DollarSign } from "lucide-react";
 import type { Tag } from "@/types/stores";
@@ -43,7 +43,7 @@ interface StoreMapProps {
  * - 지도 중심 이동
  * - 커스텀 오버레이 (매장명 표시)
  */
-export default function StoreMap({
+function StoreMap({
   stores,
   selectedStoreId,
   onStoreClick,
@@ -141,14 +141,12 @@ export default function StoreMap({
             <CustomOverlayMap
               key={`marker-${store.id}`}
               position={{ lat: store.lat, lng: store.lng }}
+              xAnchor={0.5}
               yAnchor={1}
             >
               <div
                 onClick={() => handleMarkerClick(store)}
                 className="relative cursor-pointer"
-                style={{
-                  transform: "translate(-50%, -100%)",
-                }}
               >
                 {/* 마커 핀 */}
                 <div
@@ -198,12 +196,12 @@ export default function StoreMap({
               <CustomOverlayMap
                 key={`info-${store.id}`}
                 position={{ lat: store.lat, lng: store.lng }}
+                xAnchor={0.5}
                 yAnchor={2.2}
               >
                 <div
                   className="bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden"
                   style={{
-                    transform: "translate(-50%, 0)",
                     pointerEvents: "auto",
                     minWidth: "200px",
                     maxWidth: "280px",
@@ -272,12 +270,9 @@ export default function StoreMap({
 
       {/* 현재 위치 마커 (propCenter가 서울시청이 아닐 때) */}
       {propCenter && (propCenter.lat !== 37.5665 || propCenter.lng !== 126.978) && (
-        <CustomOverlayMap key="current-location" position={propCenter} yAnchor={1}>
+        <CustomOverlayMap key="current-location" position={propCenter} xAnchor={0.5} yAnchor={1}>
           <div
             className="relative"
-            style={{
-              transform: "translate(-50%, -100%)",
-            }}
           >
             {/* 현재 위치 마커 */}
             <div className="flex items-center justify-center w-10 h-10 rounded-full bg-blue-500 border-4 border-white shadow-lg">
@@ -303,3 +298,5 @@ export default function StoreMap({
     </Map>
   );
 }
+
+export default memo(StoreMap);

@@ -14,7 +14,13 @@ export const ERROR_MESSAGES: Record<string, string> = {
   // ==================== 토큰 관련 ====================
   "Invalid or expired refresh token": "로그인이 만료되었습니다. 다시 로그인해주세요.",
   "Invalid token": "잘못된 인증 정보입니다.",
+  "invalid token": "잘못된 인증 정보입니다.",
   "Token expired": "로그인이 만료되었습니다. 다시 로그인해주세요.",
+  "token has expired": "로그인이 만료되었습니다. 다시 로그인해주세요.",
+  "Invalid authentication token": "잘못된 인증 토큰입니다. 다시 로그인해주세요.",
+  "Authorization header is required": "로그인이 필요합니다.",
+  "Invalid authorization header format": "잘못된 인증 형식입니다. 다시 로그인해주세요.",
+  "Please refresh your access token": "로그인이 만료되었습니다. 다시 로그인해주세요.",
 
   // ==================== 검증 관련 ====================
   "Invalid request data": "입력 정보를 확인해주세요.",
@@ -26,6 +32,8 @@ export const ERROR_MESSAGES: Record<string, string> = {
   "Insufficient permissions": "권한이 없습니다.",
   "Authentication required": "로그인이 필요합니다.",
   "Access denied": "접근 권한이 없습니다.",
+  "User not authenticated": "로그인이 필요합니다.",
+  "Role information not found": "권한 정보를 확인할 수 없습니다.",
 
   // ==================== 매장 관련 ====================
   "Store not found": "매장을 찾을 수 없습니다.",

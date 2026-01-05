@@ -2,14 +2,36 @@ import axios, { AxiosError, InternalAxiosRequestConfig, AxiosResponse } from "ax
 import { translateErrorMessage } from "./error-messages";
 
 /**
+ * URL에서 민감한 파라미터 제거 (안전한 로깅용)
+ */
+function sanitizeUrl(url?: string): string {
+  if (!url) return 'unknown';
+  // Query params 제거, path params는 ID만 마스킹
+  return url.split('?')[0].replace(/\/\d+/g, '/:id');
+}
+
+/**
+ * 에러 정보에서 민감한 데이터 제거
+ */
+function sanitizeErrorData(data: any): any {
+  if (!data) return {};
+  const { password, token, refresh_token, access_token, authorization, ...safe } = data;
+  return safe;
+}
+
+/**
  * Shared axios instance for all API calls
  * Includes automatic token injection and 401 error detection with token refresh
  */
 export const apiClient = axios.create({
   baseURL: `${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://43.200.249.22:8080'}/api/v1`,
-  timeout: 10000,
+  timeout: 15000, // 15초로 증가
   headers: {
     "Content-Type": "application/json",
+  },
+  validateStatus: (status) => {
+    // 401은 interceptor에서 처리하므로 정상으로 간주하지 않음
+    return status >= 200 && status < 300;
   },
 });
 
@@ -21,10 +43,16 @@ let failedQueue: Array<{
 }> = [];
 
 /**
- * Request interceptor to automatically inject access token
+ * Request interceptor to automatically inject access token and log requests
  */
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
+    const requestId = Math.random().toString(36).substring(7);
+
+    // Config에 request ID 저장 (에러 추적용)
+    (config as any)._requestId = requestId;
+    (config as any)._requestStartTime = Date.now();
+
     // refresh 엔드포인트는 토큰 자동 추가 제외 (수동으로 refresh_token 전달)
     if (config.url?.includes('/auth/refresh')) {
       return config;
@@ -44,7 +72,7 @@ apiClient.interceptors.request.use(
           }
         }
       } catch (error) {
-        console.error('[Axios] Failed to inject token:', error);
+        // 토큰 주입 실패는 조용히 처리 (보안)
       }
     }
 
@@ -71,8 +99,25 @@ const processQueue = (error: any = null) => {
  * Response interceptor to detect 401 Unauthorized errors and auto-refresh tokens
  */
 apiClient.interceptors.response.use(
-  (response: AxiosResponse) => response,
-  async (error: AxiosError) => {
+  (response: AxiosResponse) => {
+    // 성공 응답은 조용히 처리 (성능 및 보안)
+    return response;
+  },
+  async (error: AxiosError<{ error?: string; message?: string; token_expired?: boolean }>) => {
+    // 에러만 안전하게 로깅 (민감정보 제거)
+    const config = error.config as any;
+    const method = error.config?.method?.toUpperCase();
+    const url = sanitizeUrl(error.config?.url);
+    const status = error.response?.status;
+    const backendError = error.response?.data?.error;
+
+    // 최소한의 정보만 로깅
+    console.error(`❌ API Error [${method} ${url}]`, {
+      status: status || 'Network Error',
+      error: backendError || error.message,
+      code: error.code,
+    });
+
     const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
 
     // Handle 401 Unauthorized errors
@@ -91,7 +136,8 @@ apiClient.interceptors.response.use(
             clearAuth();
 
             import("sonner").then(({ toast }) => {
-              toast.error("로그인이 만료되었습니다. 다시 로그인해주세요.");
+              const errorMsg = error.response?.data?.error || error.response?.data?.message;
+              toast.error(errorMsg ? `로그인 세션이 만료되었습니다: ${errorMsg}` : "로그인이 만료되었습니다. 다시 로그인해주세요.");
             });
 
             setTimeout(() => {
@@ -101,6 +147,9 @@ apiClient.interceptors.response.use(
         }
         return Promise.reject(error);
       }
+
+      // 백엔드에서 token_expired 플래그 확인
+      const isTokenExpired = error.response?.data?.token_expired === true;
 
       // 토큰 갱신 시도
       if (isRefreshing) {
@@ -128,10 +177,11 @@ apiClient.interceptors.response.use(
             throw new Error("No refresh token available");
           }
 
-          // 리프레시 토큰으로 새 액세스 토큰 요청
+          // 리프레시 토큰으로 새 액세스 토큰 요청 (타임아웃 5초)
           const response = await axios.post(
             `${apiClient.defaults.baseURL}/auth/refresh`,
-            { refresh_token: tokens.refresh_token }
+            { refresh_token: tokens.refresh_token },
+            { timeout: 5000 }
           );
 
           if (response.data.tokens) {
@@ -166,11 +216,24 @@ apiClient.interceptors.response.use(
           clearAuth();
 
           const { toast } = await import("sonner");
-          toast.error("로그인이 만료되었습니다. 다시 로그인해주세요.");
+
+          // 더 구체적인 에러 메시지 제공
+          let errorMessage = "로그인이 만료되었습니다. 다시 로그인해주세요.";
+          if (axios.isAxiosError(refreshError)) {
+            if (refreshError.code === 'ECONNABORTED' || refreshError.message?.includes('timeout')) {
+              errorMessage = "네트워크 연결이 불안정합니다. 다시 로그인해주세요.";
+            } else if (!refreshError.response) {
+              errorMessage = "서버에 연결할 수 없습니다. 네트워크를 확인 후 다시 로그인해주세요.";
+            } else if (refreshError.response.status === 401) {
+              errorMessage = "로그인 세션이 만료되었습니다. 다시 로그인해주세요.";
+            }
+          }
+
+          toast.error(errorMessage);
 
           setTimeout(() => {
             window.location.href = "/login";
-          }, 1000);
+          }, 1500);
 
           return Promise.reject(refreshError);
         }
@@ -193,12 +256,35 @@ export interface ApiResponse<T = unknown> {
 
 /**
  * Helper function to handle API errors consistently
+ * @param error - The error object
+ * @param defaultMessage - Default user-friendly message
+ * @param apiName - API endpoint/action name for debugging (optional)
  */
-export function handleApiError<T = unknown>(error: unknown, defaultMessage: string): ApiResponse<T> {
-  console.error("API error:", error);
+export function handleApiError<T = unknown>(
+  error: unknown,
+  defaultMessage: string,
+  apiName?: string
+): ApiResponse<T> {
+  // apiName은 interceptor에서 이미 로깅됨
 
   if (axios.isAxiosError(error)) {
     const axiosError = error as AxiosError<{ error?: string; message?: string }> & { isUnauthorized?: boolean };
+
+    // Timeout 에러 처리
+    if (axiosError.code === 'ECONNABORTED' || axiosError.message?.includes('timeout')) {
+      return {
+        success: false,
+        error: "요청 시간이 초과되었습니다. 네트워크 상태를 확인해주세요.",
+      };
+    }
+
+    // 네트워크 에러 처리 (서버 응답 없음)
+    if (!axiosError.response) {
+      return {
+        success: false,
+        error: "서버에 연결할 수 없습니다. 네트워크를 확인해주세요.",
+      };
+    }
 
     // 401 Unauthorized 처리
     if (axiosError.response?.status === 401) {

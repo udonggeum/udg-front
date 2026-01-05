@@ -218,7 +218,7 @@ function CommunityPageContent() {
     };
   }, [hasMore, isLoadingMore, loadMorePosts]);
 
-  const handleMainCategoryChange = (category: MainCategory) => {
+  const handleMainCategoryChange = useCallback((category: MainCategory) => {
     setMainCategory(category);
     if (category === "market") {
       setSelectedCategory("gold_trade");
@@ -228,7 +228,7 @@ function CommunityPageContent() {
       setSelectedType("product_news");
     }
     setCurrentPage(1);
-  };
+  }, []);
 
   // 뷰 모드 결정 (타입별 최적화)
   // 카드형: sell_gold, product_news

@@ -105,7 +105,9 @@ export default function ChatRoomPage() {
 
           // Mark as read if not my message
           if (data.message.sender_id !== user?.id && tokens?.access_token) {
-            markAsReadAction(roomId, tokens.access_token);
+            markAsReadAction(roomId, tokens.access_token).catch((error) => {
+              console.error("Failed to mark message as read:", error);
+            });
           }
         }
       } else if (data.type === "read" && data.chat_room_id === roomId) {
@@ -163,8 +165,51 @@ export default function ChatRoomPage() {
       return;
     }
 
-    fetchRoomData();
-  }, [isAuthenticated, tokens?.access_token, roomId]); // ✅ tokens 대신 tokens?.access_token 사용
+    let isMounted = true;
+
+    const fetchData = async () => {
+      if (!tokens?.access_token) return;
+
+      setIsLoading(true);
+
+      const roomResult = await getChatRoomAction(roomId, tokens.access_token);
+      if (!isMounted) return; // Unmount 체크
+
+      if (roomResult.success && roomResult.data) {
+        setRoom(roomResult.data.room);
+      } else {
+        console.error("Failed to fetch chat room:", roomResult.error);
+        router.push("/chats");
+        return;
+      }
+
+      const messagesResult = await getMessagesAction(roomId, tokens.access_token);
+      if (!isMounted) return; // Unmount 체크
+
+      if (messagesResult.success && messagesResult.data) {
+        const sortedMessages = messagesResult.data.messages.sort(
+          (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+        );
+        setMessages(sortedMessages);
+      }
+
+      try {
+        await markAsReadAction(roomId, tokens.access_token);
+      } catch (error) {
+        console.error("Failed to mark messages as read:", error);
+      }
+
+      if (isMounted) {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [isAuthenticated, tokens?.access_token, roomId, router]); // ✅ tokens 대신 tokens?.access_token 사용
 
   // Join chat room for WebSocket (WebSocket disconnect는 useWebSocket hook에서 자동 처리)
   useEffect(() => {
@@ -180,40 +225,6 @@ export default function ChatRoomPage() {
       setTimeout(() => scrollToBottom(), 100);
     }
   }, [messages.length]); // messages 대신 messages.length로 변경하여 불필요한 재렌더링 방지
-
-  const fetchRoomData = async () => {
-    if (!tokens?.access_token) return;
-
-    setIsLoading(true);
-
-    // Fetch room details
-    const roomResult = await getChatRoomAction(roomId, tokens.access_token);
-    if (!roomResult.success || !roomResult.data) {
-      handleApiError(roomResult.error);
-      toast.error(roomResult.error || "대화방을 찾을 수 없습니다.");
-      router.push("/chats");
-      return;
-    }
-    setRoom(roomResult.data.room);
-
-    // Fetch messages
-    const messagesResult = await getMessagesAction(
-      roomId,
-      tokens.access_token
-    );
-    if (messagesResult.success && messagesResult.data) {
-      // created_at 기준으로 오래된 메시지부터 최신 메시지 순으로 정렬
-      const sortedMessages = messagesResult.data.messages.sort(
-        (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-      );
-      setMessages(sortedMessages);
-    }
-
-    // Mark as read
-    await markAsReadAction(roomId, tokens.access_token);
-
-    setIsLoading(false);
-  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -704,7 +715,9 @@ export default function ChatRoomPage() {
 
   const getOtherUser = () => {
     if (!room || !user) return null;
-    return room.user1_id === user.id ? room.user2 : room.user1;
+    const other = room.user1_id === user.id ? room.user2 : room.user1;
+    // room.user1 또는 room.user2가 undefined일 수 있으므로 체크
+    return other || null;
   };
 
   // 채팅 타입 레이블 가져오기

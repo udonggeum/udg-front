@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, memo } from "react";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -35,7 +35,7 @@ interface GoldPriceChartProps {
   period: HistoryPeriod;
 }
 
-export default function GoldPriceChart({ type, period }: GoldPriceChartProps) {
+function GoldPriceChart({ type, period }: GoldPriceChartProps) {
   const [historyData, setHistoryData] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -216,3 +216,5 @@ export default function GoldPriceChart({ type, period }: GoldPriceChartProps) {
     </div>
   );
 }
+
+export default memo(GoldPriceChart);

@@ -312,29 +312,17 @@ export function Header() {
                       마이페이지
                     </Link>
 
-                    {/* Admin 전용: 내 매장 정보 */}
+                    {/* Admin 전용: 내 매장 */}
                     {user?.role === "admin" && myStoreId && (
                       <Link
                         href={`/stores/${myStoreId}`}
                         onClick={() => setIsDropdownOpen(false)}
                         className="flex items-center gap-2 px-4 py-2.5 text-caption text-gray-700 hover:bg-gray-50 smooth-transition"
                       >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                        </svg>
-                        내 매장 정보
+                        <Store className="w-4 h-4" />
+                        내 매장
                       </Link>
                     )}
-
-                    {/* 프로필 수정 */}
-                    <Link
-                      href="/mypage/edit"
-                      onClick={() => setIsDropdownOpen(false)}
-                      className="flex items-center gap-2 px-4 py-2.5 text-caption text-gray-700 hover:bg-gray-50 smooth-transition"
-                    >
-                      <Settings className="w-4 h-4" />
-                      프로필 수정
-                    </Link>
 
                     {/* 구분선 */}
                     <div className="border-t border-gray-100 my-1" />
