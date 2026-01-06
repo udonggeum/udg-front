@@ -130,16 +130,47 @@ export function useWebSocket({
             return;
           }
 
-          // 401 Unauthorized - 토큰 만료
+          // 비정상 종료 (1006) - 원인 파악 필요
           if (event.code === 1006 || event.reason?.includes("401") || event.reason?.includes("Unauthorized")) {
-            console.warn("[WebSocket] 인증 실패 감지, 토큰 갱신 시도");
+            console.warn("[WebSocket] 비정상 종료 감지, 토큰 상태 확인 중...");
 
-            // 토큰 갱신 시도
-            const newToken = await refreshTokenRef.current();
-            if (newToken) {
-              console.log("[WebSocket] 새 토큰으로 재연결 시도");
-              // 새 토큰으로 즉시 재연결
-              setTimeout(() => connect(newToken), 1000);
+            try {
+              // HTTP 요청으로 토큰 유효성 확인
+              const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://43.200.249.22:8080';
+              await axios.get(
+                `${apiBaseUrl}/api/v1/auth/me`,
+                {
+                  headers: { Authorization: `Bearer ${tokenRef.current}` },
+                  timeout: 5000
+                }
+              );
+
+              // 토큰이 유효한데 WebSocket 연결 실패 = 네트워크 문제
+              console.log("[WebSocket] 토큰 유효함, 네트워크 문제로 판단하여 재연결");
+              if (autoReconnect && reconnectAttemptsRef.current < maxReconnectAttempts) {
+                reconnectAttemptsRef.current++;
+                const delay = Math.min(1000 * reconnectAttemptsRef.current, 5000);
+                setTimeout(() => connect(tokenRef.current), delay);
+              }
+            } catch (error: any) {
+              // 401 에러 = 토큰 만료
+              if (error.response?.status === 401) {
+                console.warn("[WebSocket] 토큰 만료 확인됨, 갱신 시도");
+                const newToken = await refreshTokenRef.current();
+                if (newToken) {
+                  console.log("[WebSocket] 새 토큰으로 재연결 시도");
+                  setTimeout(() => connect(newToken), 1000);
+                }
+                return;
+              }
+
+              // 다른 에러 = 일반 재연결
+              console.error("[WebSocket] 토큰 확인 실패, 일반 재연결 시도:", error.message);
+              if (autoReconnect && reconnectAttemptsRef.current < maxReconnectAttempts) {
+                reconnectAttemptsRef.current++;
+                const delay = Math.min(1000 * reconnectAttemptsRef.current, 5000);
+                setTimeout(() => connect(tokenRef.current), delay);
+              }
             }
             return;
           }
