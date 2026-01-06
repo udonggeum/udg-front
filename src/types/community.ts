@@ -28,6 +28,7 @@ export interface PostAuthor {
 export interface PostStore {
   id: number;
   name: string;
+  slug?: string;
   region?: string;
   district?: string;
   address?: string;
