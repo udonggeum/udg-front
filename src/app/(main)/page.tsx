@@ -210,8 +210,8 @@ export default function Home() {
 
           {/* 인기 검색어 */}
           <div className="flex items-center gap-2 mt-4 flex-wrap">
-            <span className="text-small text-gray-600">인기</span>
-            {["강남", "종로", "24K 반지", "금목걸이"].map((keyword) => (
+            <span className="text-small font-bold text-gray-600">인기</span>
+            {["강남", "종로", "명동", "잠실"].map((keyword) => (
               <Badge
                 key={keyword}
                 variant="secondary"
@@ -228,7 +228,7 @@ export default function Home() {
       {/* 빠른 메뉴 */}
       <Section className="pb-12">
         <Container>
-          <div className={`grid gap-8 ${isAuthenticated ? 'grid-cols-3 sm:grid-cols-4 md:grid-cols-6' : 'grid-cols-3 sm:grid-cols-4'}`}>
+          <div className={`grid gap-4 md:gap-6 ${isAuthenticated ? 'grid-cols-3 sm:grid-cols-4 md:grid-cols-6' : 'grid-cols-3 sm:grid-cols-4'}`}>
             {/* 금시세 */}
             <Link
               href="/prices"

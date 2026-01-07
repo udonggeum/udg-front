@@ -72,18 +72,31 @@ export default function SignupPage() {
   });
 
   /**
+   * 비밀번호 조건 충족 여부 확인
+   */
+  const getPasswordRequirements = (password: string) => {
+    return {
+      minLength: password.length >= 8,
+      hasLowerCase: /[a-z]/.test(password),
+      hasUpperCase: /[A-Z]/.test(password),
+      hasNumber: /[0-9]/.test(password),
+    };
+  };
+
+  /**
    * 비밀번호 강도 계산
    */
   const getPasswordStrength = (password: string): number => {
+    const requirements = getPasswordRequirements(password);
     let strength = 0;
-    if (password.length >= 8) strength++;
-    if (/[a-z]/.test(password)) strength++;
-    if (/[A-Z]/.test(password)) strength++;
-    if (/[0-9]/.test(password)) strength++;
-    if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) strength++;
-    return Math.min(strength, 4);
+    if (requirements.minLength) strength++;
+    if (requirements.hasLowerCase) strength++;
+    if (requirements.hasUpperCase) strength++;
+    if (requirements.hasNumber) strength++;
+    return strength;
   };
 
+  const passwordRequirements = getPasswordRequirements(formData.password);
   const passwordStrength = getPasswordStrength(formData.password);
   const passwordStrengthText =
     passwordStrength === 0
@@ -709,7 +722,7 @@ export default function SignupPage() {
                 <Input
                   type={showPassword ? "text" : "password"}
                   name="password"
-                  placeholder="8자 이상, 영문/숫자/특수문자 조합"
+                  placeholder="8자 이상, 영문 대소문자, 숫자 포함"
                   value={formData.password}
                   onChange={handleChange}
                   onBlur={() => handleBlur("password")}
@@ -763,6 +776,52 @@ export default function SignupPage() {
                       {passwordStrengthText}
                     </span>
                   </p>
+
+                  {/* 비밀번호 조건 체크리스트 */}
+                  {formData.password && (
+                    <div className="mt-3 space-y-1.5 bg-gray-50 p-3 rounded-lg">
+                      <div className="flex items-center gap-2">
+                        {passwordRequirements.minLength ? (
+                          <CheckCircle2 className="w-4 h-4 text-green-600" />
+                        ) : (
+                          <AlertCircle className="w-4 h-4 text-gray-400" />
+                        )}
+                        <span className={`text-[12px] ${passwordRequirements.minLength ? "text-green-600" : "text-gray-500"}`}>
+                          8자 이상
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {passwordRequirements.hasLowerCase ? (
+                          <CheckCircle2 className="w-4 h-4 text-green-600" />
+                        ) : (
+                          <AlertCircle className="w-4 h-4 text-gray-400" />
+                        )}
+                        <span className={`text-[12px] ${passwordRequirements.hasLowerCase ? "text-green-600" : "text-gray-500"}`}>
+                          영문 소문자 포함
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {passwordRequirements.hasUpperCase ? (
+                          <CheckCircle2 className="w-4 h-4 text-green-600" />
+                        ) : (
+                          <AlertCircle className="w-4 h-4 text-gray-400" />
+                        )}
+                        <span className={`text-[12px] ${passwordRequirements.hasUpperCase ? "text-green-600" : "text-gray-500"}`}>
+                          영문 대문자 포함
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {passwordRequirements.hasNumber ? (
+                          <CheckCircle2 className="w-4 h-4 text-green-600" />
+                        ) : (
+                          <AlertCircle className="w-4 h-4 text-gray-400" />
+                        )}
+                        <span className={`text-[12px] ${passwordRequirements.hasNumber ? "text-green-600" : "text-gray-500"}`}>
+                          숫자 포함
+                        </span>
+                      </div>
+                    </div>
+                  )}
                 </>
               )}
             </div>
@@ -1037,12 +1096,12 @@ export default function SignupPage() {
               </div>
             </div>
 
-            {/* 가입 버튼 */}
+            {/* 가입 버튼 (데스크탑만) */}
             <Button
               type="submit"
               disabled={isPending || !isFormValid()}
               variant="brand-primary"
-              className="w-full py-6 mt-8 h-auto text-[16px]"
+              className="hidden md:flex w-full py-6 mt-8 h-auto text-[16px]"
             >
               {isPending ? (
                 <>
@@ -1056,7 +1115,7 @@ export default function SignupPage() {
           </form>
 
           {/* 로그인 링크 */}
-          <p className="text-center text-caption text-gray-500 mt-6">
+          <p className="text-center text-caption text-gray-500 mt-6 mb-24 md:mb-0">
             이미 회원이신가요?
             <Link href="/login" className="font-semibold text-gray-900 hover:underline ml-1">
               로그인
@@ -1066,7 +1125,7 @@ export default function SignupPage() {
       </main>
 
       {/* 하단 고정 영역 (모바일) */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-100">
+      <div className="md:hidden fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-100 shadow-lg">
         <Button
           onClick={(e) => {
             e.preventDefault();
@@ -1075,7 +1134,7 @@ export default function SignupPage() {
               form.requestSubmit();
             }
           }}
-          disabled={isPending}
+          disabled={isPending || !isFormValid()}
           variant="brand-primary"
           className="w-full py-6 h-auto text-[16px]"
         >

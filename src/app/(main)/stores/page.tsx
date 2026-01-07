@@ -90,16 +90,14 @@ const PAGE_SIZE = 50;
 // 페이지를 dynamic으로 설정 (useSearchParams 사용을 위해)
 export const dynamic = 'force-dynamic';
 
-type FilterTag = "all" | "open" | "24k" | "diamond" | "repair";
+type FilterTag = "all" | "open" | "gold" | "liked";
 
 /**
  * 프론트엔드 필터 → 백엔드 태그 매핑
- * UI는 5개 필터로 간결하게 유지하되, 백엔드의 세부 태그들을 그룹화하여 검색
+ * UI는 4개 필터로 간결하게 유지하되, 백엔드의 세부 태그들을 그룹화하여 검색
  */
 const filterTagMap: Record<string, string[]> = {
-  "24k": ["금 매입", "24K 취급", "18K 취급", "14K 취급", "24k", "18k", "14k"],
-  "diamond": ["다이아몬드", "diamond"],
-  "repair": ["수리가능", "수리", "리폼"],
+  "gold": ["금 매입", "24K 취급", "18K 취급", "14K 취급", "24k", "18k", "14k"],
 };
 
 /**
@@ -456,7 +454,12 @@ function StoresPageContent() {
           return store.isOpen === true;
         }
 
-        // 나머지 필터는 filterTagMap을 사용하여 매칭
+        // 관심매장 필터
+        if (selectedFilter === "liked") {
+          return store.isLiked === true;
+        }
+
+        // 금 매입 필터는 filterTagMap을 사용하여 매칭
         const tagKeywords = filterTagMap[selectedFilter];
         if (tagKeywords) {
           return store.tags?.some((tag) =>
@@ -495,9 +498,8 @@ function StoresPageContent() {
   const filterTags: Array<{ id: FilterTag; label: string }> = [
     { id: "all", label: "전체" },
     { id: "open", label: "영업중" },
-    { id: "24k", label: "금 매입" },
-    { id: "diamond", label: "다이아몬드" },
-    { id: "repair", label: "수리가능" },
+    { id: "gold", label: "금 매입" },
+    { id: "liked", label: "관심매장" },
   ];
 
   const closeDetailPanel = () => {
@@ -572,9 +574,9 @@ function StoresPageContent() {
         {/* 좌측 패널 - 검색 및 리스트 */}
         <div className="w-full md:w-[420px] lg:w-[480px] flex-shrink-0 border-r border-gray-100 flex flex-col bg-white">
           {/* 검색 영역 */}
-          <div className="p-5 border-b border-gray-100">
+          <div className="p-3 md:p-5 border-b border-gray-100">
             {/* 모바일 리스트/지도 탭 */}
-            <div className="md:hidden flex gap-2 mb-4">
+            <div className="md:hidden flex gap-2 mb-3">
               <button
                 onClick={() => setIsMobileMapOpen(false)}
                 className={`flex-1 py-2.5 text-sm font-semibold rounded-lg transition-colors ${
@@ -599,15 +601,15 @@ function StoresPageContent() {
 
             {/* 검색바 */}
             <form onSubmit={handleSearch}>
-              <div className="bg-gray-100 rounded-xl p-1 flex items-center transition-all duration-200 mb-4">
-                <div className="flex-1 flex items-center gap-3 px-3">
-                  <Search className="w-5 h-5 text-gray-400" />
+              <div className="bg-gray-100 rounded-xl p-1 flex items-center transition-all duration-200 mb-3">
+                <div className="flex-1 flex items-center gap-2 md:gap-3 px-2 md:px-3">
+                  <Search className="w-4 h-4 md:w-5 md:h-5 text-gray-400" />
                   <input
                     type="text"
-                    placeholder="매장명, 지역, 주소로 검색 (예: 강남, 종로)"
+                    placeholder="매장명, 지역, 주소로 검색"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="flex-1 py-2.5 text-body text-gray-900 placeholder-gray-400 bg-transparent outline-none"
+                    className="flex-1 py-2 md:py-2.5 text-small md:text-body text-gray-900 placeholder-gray-400 bg-transparent outline-none"
                   />
                   {searchQuery && (
                     <button
@@ -630,24 +632,32 @@ function StoresPageContent() {
               </div>
             </form>
 
-            {/* 현재 위치 버튼 */}
+            {/* 현재 위치 버튼 (데스크탑만) */}
             <button
               type="button"
               onClick={getCurrentLocation}
-              className="w-full flex items-center justify-center gap-2 py-3 bg-white border border-gray-200 rounded-xl text-caption font-medium text-gray-700 hover:bg-gray-50 transition-colors duration-200 mb-4"
+              className="hidden md:flex w-full items-center justify-center gap-2 py-3 bg-white border border-gray-200 rounded-xl text-caption font-medium text-gray-700 hover:bg-gray-50 transition-colors duration-200 mb-4"
             >
               <MapPin className="w-5 h-5 text-blue-500" />
               현재 위치로 검색
             </button>
 
             {/* 필터 태그 */}
-            <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
+            <div className="flex items-center gap-1.5 md:gap-2 overflow-x-auto pb-1 scrollbar-hide">
               {filterTags.map((tag) => (
                 <button
                   key={tag.id}
                   type="button"
-                  onClick={() => setSelectedFilter(tag.id)}
-                  className={`px-4 py-2.5 min-h-[44px] text-small font-medium rounded-full border whitespace-nowrap transition-all duration-200 ${
+                  onClick={() => {
+                    // 관심매장 필터 클릭 시 로그인 여부 확인
+                    if (tag.id === "liked" && !user) {
+                      toast.error("로그인이 필요합니다");
+                      router.push("/login");
+                      return;
+                    }
+                    setSelectedFilter(tag.id);
+                  }}
+                  className={`px-3 md:px-4 py-2 md:py-2.5 min-h-[40px] md:min-h-[44px] text-small font-medium rounded-full border whitespace-nowrap transition-all duration-200 ${
                     selectedFilter === tag.id
                       ? "bg-[#C9A227] text-white border-[#C9A227] active:bg-[#8A6A00]"
                       : "bg-white text-gray-600 border-gray-200 hover:border-gray-400 active:bg-gray-50"
@@ -660,7 +670,7 @@ function StoresPageContent() {
           </div>
 
           {/* 결과 헤더 - 모바일에서 리스트 탭일 때만 표시 */}
-          <div className={`px-page py-4 flex items-center justify-between border-b border-gray-50 ${
+          <div className={`px-3 md:px-page py-3 md:py-4 flex items-center justify-between border-b border-gray-50 ${
             isMobileMapOpen ? "hidden md:flex" : "flex"
           }`}>
             <div className="flex items-center gap-2">
@@ -722,70 +732,70 @@ function StoresPageContent() {
                 itemContent={(index, store) => (
                   <div
                     onClick={() => handleStoreClick(store)}
-                    className={`p-5 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors duration-200 border-l-4 ${
+                    className={`p-3 md:p-5 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors duration-200 border-l-4 ${
                       selectedStore?.id === store.id
                         ? "bg-gray-50 border-l-gray-900"
                         : "border-l-transparent"
                     }`}
                   >
-                  <div className="flex gap-4">
-                    <div className="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0">
-                      <StoreImage
-                        imageUrl={store.image_url}
-                        storeName={store.name}
-                        iconBg={store.iconBg}
-                        iconColor={store.iconColor}
-                        size="sm"
-                      />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className="text-[16px] font-semibold text-gray-900 truncate flex-1">
-                          {store.name}
-                        </h3>
-                        <span className={`px-1.5 py-0.5 text-[11px] font-medium rounded flex-shrink-0 ${
-                          store.isOpen
-                            ? "bg-[#FEF9E7] text-[#8A6A00]"
-                            : "bg-gray-100 text-gray-600"
-                        }`}>
-                          {store.isOpen ? "영업중" : "준비중"}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={(e) => handleStoreLike(store.id, e)}
-                          className="flex-shrink-0 p-1 hover:bg-gray-100 rounded-lg transition-colors"
-                        >
-                          <Heart
-                            className={`w-4 h-4 transition-colors ${
-                              store.isLiked ? "fill-red-500 text-red-500" : "text-gray-400"
-                            }`}
-                          />
-                        </button>
+                    <div className="flex gap-3 md:gap-4">
+                      <div className="w-16 h-16 md:w-20 md:h-20 rounded-xl overflow-hidden flex-shrink-0">
+                        <StoreImage
+                          imageUrl={store.image_url}
+                          storeName={store.name}
+                          iconBg={store.iconBg}
+                          iconColor={store.iconColor}
+                          size="sm"
+                        />
                       </div>
-                      {store.distance && (
-                        <div className="flex items-center gap-1.5 text-small mb-2">
-                          <span className="text-blue-600 font-semibold">
-                            {store.distance}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="text-[16px] font-semibold text-gray-900 truncate flex-1">
+                            {store.name}
+                          </h3>
+                          <span className={`px-1.5 py-0.5 text-[11px] font-medium rounded flex-shrink-0 ${
+                            store.isOpen
+                              ? "bg-[#FEF9E7] text-[#8A6A00]"
+                              : "bg-gray-100 text-gray-600"
+                          }`}>
+                            {store.isOpen ? "영업중" : "준비중"}
                           </span>
+                          <button
+                            type="button"
+                            onClick={(e) => handleStoreLike(store.id, e)}
+                            className="flex-shrink-0 p-1 hover:bg-gray-100 rounded-lg transition-colors"
+                          >
+                            <Heart
+                              className={`w-4 h-4 transition-colors ${
+                                store.isLiked ? "fill-red-500 text-red-500" : "text-gray-400"
+                              }`}
+                            />
+                          </button>
                         </div>
-                      )}
-                      <p className="text-small text-gray-500 mb-2 truncate">
-                        {store.address || "주소 정보 없음"}
-                      </p>
-                      {store.tags && store.tags.length > 0 && (
-                        <div className="flex items-center gap-2">
-                          {store.tags.slice(0, 3).map((tag) => (
-                            <span
-                              key={tag.id}
-                              className="px-2 py-1 bg-gray-100 text-gray-600 text-[11px] font-medium rounded"
-                            >
-                              {tag.name}
+                        {store.distance && (
+                          <div className="flex items-center gap-1.5 text-small mb-2">
+                            <span className="text-blue-600 font-semibold">
+                              {store.distance}
                             </span>
-                          ))}
-                        </div>
-                      )}
+                          </div>
+                        )}
+                        <p className="text-small text-gray-500 mb-2 truncate">
+                          {store.address || "주소 정보 없음"}
+                        </p>
+                        {store.tags && store.tags.length > 0 && (
+                          <div className="flex items-center gap-2">
+                            {store.tags.slice(0, 3).map((tag) => (
+                              <span
+                                key={tag.id}
+                                className="px-2 py-1 bg-gray-100 text-gray-600 text-[11px] font-medium rounded"
+                              >
+                                {tag.name}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
                   </div>
                 )}
               />

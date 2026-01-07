@@ -116,7 +116,7 @@ export default function PriceCalculator({ prices }: PriceCalculatorProps) {
           <h2 className="text-[18px] font-bold text-gray-900">시세 계산기</h2>
         </div>
         <p className="text-small text-gray-500">
-          무게를 입력하면 예상 매입/매도 가격을 확인할 수 있습니다
+          무게를 입력하면 예상 매입/매도 가격을 확인할 수 있습니다.
         </p>
       </div>
 
