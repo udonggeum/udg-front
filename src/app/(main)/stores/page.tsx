@@ -6,7 +6,6 @@ import {
   Search,
   MapPin,
   X,
-  ChevronLeft,
   Heart,
   Store as StoreIcon,
   Phone,
@@ -836,15 +835,15 @@ function StoresPageContent() {
               className={`transition-opacity duration-200 ${isDetailPanelOpen ? "opacity-100" : "opacity-0"}`}
             >
               {/* 헤더 */}
-              <div className="sticky top-0 bg-white border-b border-gray-100 px-4 py-3 flex items-center gap-3 z-10">
+              <div className="sticky top-0 bg-white border-b border-gray-100 px-4 py-3 flex items-center justify-between z-10">
+                <span className="text-body font-medium text-gray-900">매장 정보</span>
                 <button
                   type="button"
                   onClick={closeDetailPanel}
                   className="w-8 h-8 flex items-center justify-center text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
                 >
-                  <ChevronLeft className="w-5 h-5" />
+                  <X className="w-5 h-5" />
                 </button>
-                <span className="text-body font-medium text-gray-900">매장 정보</span>
               </div>
 
               {/* 사진 갤러리 */}

@@ -32,6 +32,7 @@ export default function CommunityWritePage() {
   const [goldType, setGoldType] = useState("");
   const [goldTypeUnknown, setGoldTypeUnknown] = useState(false);
   const [weight, setWeight] = useState("");
+  const [weightUnit, setWeightUnit] = useState<"g" | "don">("g"); // 중량 단위 (g 또는 돈)
   const [weightUnknown, setWeightUnknown] = useState(false);
   const [price, setPrice] = useState("");
   const [priceNegotiable, setPriceNegotiable] = useState(false);
@@ -183,13 +184,18 @@ export default function CommunityWritePage() {
     setIsGenerating(true);
 
     try {
+      // 중량을 g 단위로 변환
+      const weightInGrams = weight && !weightUnknown
+        ? (weightUnit === "don" ? parseFloat(weight) * 3.75 : parseFloat(weight))
+        : undefined;
+
       const result = await generateContentAction(
         {
           type: selectedType,
           keywords,
           title: title || undefined,
           gold_type: goldType || (goldTypeUnknown ? "알 수 없음" : undefined),
-          weight: weight ? parseFloat(weight) : undefined,
+          weight: weightInGrams,
           price: price ? parseInt(price, 10) : (priceNegotiable ? 0 : undefined),
           location: location || undefined,
         },
@@ -198,6 +204,12 @@ export default function CommunityWritePage() {
 
       if (result.success && result.data) {
         setContent(result.data.content);
+        // AI 생성 성공 시 content 에러 제거
+        setErrors((prev) => {
+          const newErrors = { ...prev };
+          delete newErrors.content;
+          return newErrors;
+        });
         toast.success("AI가 글 내용을 생성했습니다!");
       } else {
         toast.error(result.error || "글 생성에 실패했습니다.");
@@ -235,9 +247,12 @@ export default function CommunityWritePage() {
         requestData.gold_type = goldType;
       }
 
-      // 중량: "모름"이면 저장 안 함, 아니면 입력값
+      // 중량: "모름"이면 저장 안 함, 아니면 입력값 (돈 단위면 g로 변환)
       if (!weightUnknown && weight) {
-        requestData.weight = parseFloat(weight);
+        const weightInGrams = weightUnit === "don"
+          ? parseFloat(weight) * 3.75  // 돈 -> g 변환
+          : parseFloat(weight);
+        requestData.weight = weightInGrams;
       }
 
       // 가격: "가격 문의"면 0으로 저장, 아니면 입력값
@@ -270,9 +285,13 @@ export default function CommunityWritePage() {
     const result = await createPostAction(requestData, tokens.access_token);
 
     if (result.success && result.data) {
-      router.push(`/community/posts/${result.data.id}`);
+      // 게시글 작성 성공 시 상세 페이지로 이동 (slug 포함)
+      const postId = result.data.id;
+      const postSlug = result.data.slug || postId.toString();
+      toast.success("게시글이 작성되었습니다!");
+      router.push(`/community/posts/${postId}/${postSlug}`);
     } else {
-      alert(result.error || "게시글 작성에 실패했습니다.");
+      toast.error(result.error || "게시글 작성에 실패했습니다.");
       setIsSubmitting(false);
     }
   };
@@ -406,17 +425,38 @@ export default function CommunityWritePage() {
                     {/* 중량 */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        중량 (g) <span className="text-red-500">*</span>
+                        중량 <span className="text-red-500">*</span>
                       </label>
-                      <input
-                        type="number"
-                        step="0.01"
-                        className={`w-full p-3 rounded-lg border ${errors.weight ? "border-red-500" : "border-gray-200"} focus:outline-none focus:ring-2 focus:ring-[#C9A227] focus:border-transparent disabled:bg-gray-100`}
-                        placeholder="예: 18.75"
-                        value={weight}
-                        onChange={(e) => setWeight(e.target.value)}
-                        disabled={weightUnknown}
-                      />
+                      <div className="flex gap-2">
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          className={`flex-1 p-3 rounded-lg border ${errors.weight ? "border-red-500" : "border-gray-200"} focus:outline-none focus:ring-2 focus:ring-[#C9A227] focus:border-transparent disabled:bg-gray-100`}
+                          placeholder={weightUnit === "g" ? "예: 18.75" : "예: 5 (= 18.75g)"}
+                          value={weight}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            // 음수 방지
+                            if (value === "" || parseFloat(value) >= 0) {
+                              setWeight(value);
+                            }
+                          }}
+                          disabled={weightUnknown}
+                        />
+                        <select
+                          value={weightUnit}
+                          onChange={(e) => setWeightUnit(e.target.value as "g" | "don")}
+                          disabled={weightUnknown}
+                          className="px-3 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#C9A227] focus:border-transparent disabled:bg-gray-100"
+                        >
+                          <option value="g">g</option>
+                          <option value="don">돈</option>
+                        </select>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {weightUnit === "don" ? "1돈 = 3.75g" : "1g = 약 0.27돈"}
+                      </p>
                       <label className="flex items-center mt-2 cursor-pointer">
                         <input
                           type="checkbox"
@@ -441,10 +481,17 @@ export default function CommunityWritePage() {
                       </label>
                       <input
                         type="number"
+                        min="0"
                         className={`w-full p-3 rounded-lg border ${errors.price ? "border-red-500" : "border-gray-200"} focus:outline-none focus:ring-2 focus:ring-[#C9A227] focus:border-transparent disabled:bg-gray-100`}
                         placeholder="예: 3500000"
                         value={price}
-                        onChange={(e) => setPrice(e.target.value)}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          // 음수 방지
+                          if (value === "" || parseInt(value, 10) >= 0) {
+                            setPrice(value);
+                          }
+                        }}
                         disabled={priceNegotiable}
                       />
                       <label className="flex items-center mt-2 cursor-pointer">

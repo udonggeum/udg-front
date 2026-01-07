@@ -749,7 +749,7 @@ export default function MyStoreEditPage() {
                   ) : (
                     <>
                       <Save className="w-4 h-4" />
-                      <span>변경사항 저장</span>
+                      <span>저장</span>
                     </>
                   )}
                 </Button>

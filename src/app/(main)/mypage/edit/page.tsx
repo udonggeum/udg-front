@@ -61,11 +61,38 @@ export default function ProfileEditPage() {
   // 기존 주소 파싱 (초기 로드 시)
   useEffect(() => {
     if (user?.address && !baseAddress && !zipCode && !detailAddress) {
-      // 간단한 파싱: "[우편번호] 기본주소 상세주소" 형식 가정
+      // 주소 형식: "[우편번호] 기본주소 상세주소"
       const match = user.address.match(/^\[(\d+)\]\s*(.+)$/);
       if (match) {
-        setZipCode(match[1]);
-        setBaseAddress(match[2]);
+        const zipCodeStr = match[1];
+        const restAddress = match[2].trim();
+
+        // 기본주소와 상세주소를 분리
+        // 일반적으로 시/도, 구/군, 동/읍/면 까지가 기본주소
+        // 나머지가 상세주소로 추정
+        const addressParts = restAddress.split(' ');
+
+        // 최소 3개 이상의 부분이 있으면 마지막 부분을 상세주소로 간주
+        if (addressParts.length >= 4) {
+          // 예: "서울특별시 강남구 테헤란로 123" -> "서울특별시 강남구 테헤란로" + "123"
+          const detailStartIdx = addressParts.findIndex((part, idx) =>
+            idx >= 3 && /\d/.test(part) // 3번째 이후 숫자가 포함된 부분부터 상세주소
+          );
+
+          if (detailStartIdx > 0) {
+            setZipCode(zipCodeStr);
+            setBaseAddress(addressParts.slice(0, detailStartIdx).join(' '));
+            setDetailAddress(addressParts.slice(detailStartIdx).join(' '));
+          } else {
+            // 분리 실패 시 전체를 기본주소로
+            setZipCode(zipCodeStr);
+            setBaseAddress(restAddress);
+          }
+        } else {
+          // 부분이 적으면 전체를 기본주소로
+          setZipCode(zipCodeStr);
+          setBaseAddress(restAddress);
+        }
       } else {
         // 우편번호 없이 주소만 있는 경우
         setBaseAddress(user.address);
@@ -402,7 +429,7 @@ export default function ProfileEditPage() {
             onClick={() => router.push("/mypage")}
             variant="outline"
             size="sm"
-            className="gap-2 mb-4"
+            className="md:hidden gap-2 mb-4"
           >
             <ArrowLeft className="w-4 h-4" />
             마이페이지로 돌아가기
@@ -660,17 +687,27 @@ export default function ProfileEditPage() {
                       labels={{
                         zipCode: "우편번호 (선택)",
                         address: "기본 주소",
-                        detailAddress: "상세 주소 (선택)",
+                        detailAddress: "상세 주소",
                       }}
                       placeholders={{
                         zipCode: "우편번호",
                         address: "주소 검색 버튼을 클릭하세요",
-                        detailAddress: "동/호수, 건물명 등",
+                        detailAddress: "동/호수, 건물명 등을 입력하세요",
                       }}
-                      required={{ address: false }}
+                      required={{ address: false, detailAddress: true }}
+                      errors={{
+                        detailAddress: touched.address && baseAddress && !detailAddress
+                          ? "상세 주소를 입력해주세요"
+                          : undefined
+                      }}
                     />
                     <p className="text-xs text-gray-500 mt-2">
-                      거주지 또는 사업장 주소를 입력하세요
+                      거주지 또는 사업장 주소를 입력하세요<br />
+                      {baseAddress && !detailAddress && (
+                        <span className="text-red-500 font-medium">
+                          ⚠ 상세 주소를 반드시 입력해야 저장할 수 있습니다
+                        </span>
+                      )}
                     </p>
                   </div>
                 </div>
@@ -689,7 +726,7 @@ export default function ProfileEditPage() {
                   type="submit"
                   variant="brand-primary"
                   className="gap-2"
-                  disabled={isPending}
+                  disabled={isPending || (!!baseAddress && !detailAddress)}
                 >
                   {isPending ? (
                     <>
@@ -699,7 +736,7 @@ export default function ProfileEditPage() {
                   ) : (
                     <>
                       <Save className="w-4 h-4" />
-                      <span>변경사항 저장</span>
+                      <span>저장</span>
                     </>
                   )}
                 </Button>
