@@ -53,6 +53,11 @@ export interface StoreDetail {
   category_counts?: StoreCategoryCounts;
   products?: unknown[];
   is_liked?: boolean;
+
+  // 2단계 검증 시스템
+  is_managed?: boolean; // 관리매장 여부 (소유자가 있는 매장)
+  is_verified?: boolean; // 인증 매장 여부 (사업자등록증 검증 완료)
+  verified_at?: string; // 인증 완료 일시
 }
 
 /**
@@ -165,4 +170,68 @@ export interface StoreRegisterRequest {
 export interface StoreRegisterResponse {
   message: string;
   store: StoreDetail;
+}
+
+/**
+ * Claim store request type
+ * 매장 소유권 신청 요청
+ */
+export interface ClaimStoreRequest {
+  business_number: string;      // 사업자등록번호 (10자리, 하이픈 제외)
+  business_start_date: string;  // 개업일자 (YYYYMMDD)
+  representative_name: string;  // 대표자명
+}
+
+/**
+ * Claim store response type
+ * 매장 소유권 신청 응답
+ */
+export interface ClaimStoreResponse {
+  message: string;
+  store: StoreDetail;
+  is_verified: boolean;
+}
+
+/**
+ * Store verification type
+ * 매장 인증 정보
+ */
+export interface StoreVerification {
+  id: number;
+  store_id: number;
+  business_license_url: string;  // 사업자등록증 이미지 URL
+  status: 'pending' | 'approved' | 'rejected';  // 인증 상태
+  submitted_at?: string;         // 제출 일시
+  reviewed_at?: string;          // 검토 완료 일시
+  reviewed_by?: number;          // 검토한 관리자 ID
+  rejection_reason?: string;     // 반려 사유
+  created_at: string;
+  updated_at: string;
+}
+
+/**
+ * Submit verification request type
+ * 매장 인증 신청 요청
+ */
+export interface SubmitVerificationRequest {
+  business_license_url: string;  // S3에 업로드된 사업자등록증 URL
+}
+
+/**
+ * Submit verification response type
+ * 매장 인증 신청 응답
+ */
+export interface SubmitVerificationResponse {
+  message: string;
+  verification: StoreVerification;
+  status: string;
+}
+
+/**
+ * Verification status response type
+ * 인증 상태 조회 응답
+ */
+export interface VerificationStatusResponse {
+  is_verified: boolean;
+  verification: StoreVerification | null;
 }

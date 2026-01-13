@@ -9,6 +9,11 @@ import type {
   StoreLikeResponse,
   StoreRegisterRequest,
   StoreRegisterResponse,
+  ClaimStoreRequest,
+  ClaimStoreResponse,
+  SubmitVerificationRequest,
+  SubmitVerificationResponse,
+  VerificationStatusResponse,
 } from "@/types/stores";
 import type { UpdateStoreRequest } from "@/schemas/stores";
 import { apiClient, handleApiError, type ApiResponse } from "@/lib/axios";
@@ -213,5 +218,85 @@ export async function registerStoreAction(
     };
   } catch (error) {
     return handleApiError(error, "매장 등록에 실패했습니다.");
+  }
+}
+
+/**
+ * 매장 소유권 신청 (1단계 검증)
+ */
+export async function claimStoreAction(
+  storeId: number,
+  data: ClaimStoreRequest,
+  accessToken: string
+): Promise<ApiResponse<ClaimStoreResponse>> {
+  try {
+    const response = await apiClient.post<ClaimStoreResponse>(
+      `/stores/${storeId}/claim`,
+      data,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+
+    return {
+      success: true,
+      data: response.data,
+    };
+  } catch (error) {
+    return handleApiError(error, "매장 소유권 신청에 실패했습니다.");
+  }
+}
+
+/**
+ * 매장 인증 신청 (2단계 검증)
+ */
+export async function submitVerificationAction(
+  data: SubmitVerificationRequest,
+  accessToken: string
+): Promise<ApiResponse<SubmitVerificationResponse>> {
+  try {
+    const response = await apiClient.post<SubmitVerificationResponse>(
+      "/stores/verification",
+      data,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+
+    return {
+      success: true,
+      data: response.data,
+    };
+  } catch (error) {
+    return handleApiError(error, "매장 인증 신청에 실패했습니다.");
+  }
+}
+
+/**
+ * 내 매장 인증 상태 조회
+ */
+export async function getVerificationStatusAction(
+  accessToken: string
+): Promise<ApiResponse<VerificationStatusResponse>> {
+  try {
+    const response = await apiClient.get<VerificationStatusResponse>(
+      "/users/me/store/verification",
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+
+    return {
+      success: true,
+      data: response.data,
+    };
+  } catch (error) {
+    return handleApiError(error, "인증 상태 조회에 실패했습니다.");
   }
 }
