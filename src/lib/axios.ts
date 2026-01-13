@@ -158,6 +158,16 @@ apiClient.interceptors.response.use(
           failedQueue.push({ resolve, reject });
         })
           .then(() => {
+            // 최신 토큰을 가져와서 헤더에 적용
+            const authStorage = localStorage.getItem('auth-storage');
+            if (authStorage) {
+              const parsed = JSON.parse(authStorage);
+              const latestToken = parsed.state?.tokens?.access_token;
+
+              if (originalRequest.headers && latestToken) {
+                originalRequest.headers.Authorization = `Bearer ${latestToken}`;
+              }
+            }
             return apiClient(originalRequest);
           })
           .catch((err) => {
@@ -185,9 +195,14 @@ apiClient.interceptors.response.use(
           );
 
           if (response.data.tokens) {
+            // 백엔드는 항상 새 refresh_token을 보내야 함 (token rotation)
+            if (!response.data.tokens.access_token || !response.data.tokens.refresh_token) {
+              throw new Error("Invalid token response: missing access_token or refresh_token");
+            }
+
             const newTokens = {
               access_token: response.data.tokens.access_token,
-              refresh_token: response.data.tokens.refresh_token || tokens.refresh_token,
+              refresh_token: response.data.tokens.refresh_token, // fallback 제거
             };
 
             // 새 토큰 저장
@@ -217,7 +232,7 @@ apiClient.interceptors.response.use(
 
           const { toast } = await import("sonner");
 
-          // 더 구체적인 에러 메시지 제공
+          // 백엔드에서 보낸 세분화된 에러를 활용하여 구체적인 메시지 제공
           let errorMessage = "로그인이 만료되었습니다. 다시 로그인해주세요.";
           if (axios.isAxiosError(refreshError)) {
             if (refreshError.code === 'ECONNABORTED' || refreshError.message?.includes('timeout')) {
@@ -225,7 +240,22 @@ apiClient.interceptors.response.use(
             } else if (!refreshError.response) {
               errorMessage = "서버에 연결할 수 없습니다. 네트워크를 확인 후 다시 로그인해주세요.";
             } else if (refreshError.response.status === 401) {
-              errorMessage = "로그인 세션이 만료되었습니다. 다시 로그인해주세요.";
+              const backendError = refreshError.response.data?.error;
+              const backendMessage = refreshError.response.data?.message;
+
+              // 백엔드에서 보낸 세분화된 에러 처리
+              if (backendError === "refresh_token_revoked") {
+                errorMessage = "토큰이 이미 사용되었습니다. 보안을 위해 다시 로그인해주세요.";
+              } else if (backendError === "refresh_token_expired") {
+                errorMessage = "로그인 세션이 만료되었습니다 (7일). 다시 로그인해주세요.";
+              } else if (backendError === "invalid_refresh_token") {
+                errorMessage = "유효하지 않은 토큰입니다. 다시 로그인해주세요.";
+              } else if (backendMessage) {
+                // 백엔드에서 보낸 메시지가 있으면 사용
+                errorMessage = backendMessage;
+              } else {
+                errorMessage = "로그인 세션이 만료되었습니다. 다시 로그인해주세요.";
+              }
             }
           }
 

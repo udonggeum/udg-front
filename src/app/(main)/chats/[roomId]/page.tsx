@@ -54,6 +54,7 @@ export default function ChatRoomPage() {
   const virtuosoRef = useRef<VirtuosoHandle>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const messageInputRef = useRef<HTMLInputElement>(null);
   const searchDebounceRef = useRef<NodeJS.Timeout | null>(null);
 
   // Virtuoso를 맨 아래로 스크롤
@@ -297,6 +298,8 @@ export default function ChatRoomPage() {
     setNewMessage("");
     // 내가 메시지를 보낼 때는 항상 스크롤 (사용자의 의도가 명확함)
     scrollToBottom();
+    // 입력창에 다시 포커스
+    setTimeout(() => messageInputRef.current?.focus(), 0);
 
     const result = await sendMessageAction(
       roomId,
@@ -491,6 +494,8 @@ export default function ChatRoomPage() {
       setNewMessage("");
       handleCancelFile();
       scrollToBottom();
+      // 입력창에 다시 포커스
+      setTimeout(() => messageInputRef.current?.focus(), 0);
 
       const result = await sendMessageAction(
         roomId,
@@ -1169,6 +1174,7 @@ export default function ChatRoomPage() {
           </Button>
 
           <input
+            ref={messageInputRef}
             type="text"
             value={newMessage}
             onChange={handleInputChange}

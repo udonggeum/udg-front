@@ -30,6 +30,7 @@ export function NotificationDropdown() {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const tokenRef = useRef(tokens?.access_token); // 토큰을 ref로 관리하여 클로저 문제 해결
 
   // fetchNotifications를 ref로 저장하여 dependency 문제 방지
   const fetchNotificationsRef = useRef(async (showLoading = false) => {
@@ -64,6 +65,11 @@ export function NotificationDropdown() {
     return fetchNotificationsRef.current(showLoading);
   }, []);
 
+  // 토큰이 변경되면 ref 업데이트
+  useEffect(() => {
+    tokenRef.current = tokens?.access_token;
+  }, [tokens?.access_token]);
+
   // 드롭다운 열 때 알림 조회
   useEffect(() => {
     if (isOpen && tokens?.access_token) {
@@ -73,26 +79,27 @@ export function NotificationDropdown() {
 
   // WebSocket 연결 및 실시간 알림 수신
   useEffect(() => {
-    if (!tokens?.access_token) return;
+    if (!tokenRef.current) return;
 
-    console.log("[알림 WebSocket] 토큰 변경 감지, 연결 초기화");
+    console.log("[알림 WebSocket] 연결 초기화");
 
     // 초기 로드
     fetchNotificationsRef.current(false);
 
     // WebSocket 연결
-    const wsProtocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    const wsUrl = `${wsProtocol}//${window.location.host}/api/v1/chats/ws?token=${tokens.access_token}`;
+    const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8080/api/v1/chats/ws';
 
     let ws: WebSocket | null = null;
     let reconnectTimeout: NodeJS.Timeout;
     let shouldReconnect = true; // 재연결 플래그
 
     const connect = () => {
-      if (!shouldReconnect) return;
+      if (!shouldReconnect || !tokenRef.current) return;
 
       try {
-        ws = new WebSocket(wsUrl);
+        // 최신 토큰으로 연결 (재연결 시에도 갱신된 토큰 사용)
+        const wsUrlWithToken = `${wsUrl}?token=${tokenRef.current}`;
+        ws = new WebSocket(wsUrlWithToken);
 
         ws.onopen = () => {
           console.log("[알림 WebSocket] 연결됨");
@@ -150,25 +157,45 @@ export function NotificationDropdown() {
 
           // 정상 종료가 아닌 경우에만 재연결
           if (shouldReconnect && event.code !== 1000) {
-            console.log("[알림 WebSocket] 5초 후 재연결 시도");
+            const baseDelay = 5000;
+            const jitter = Math.random() * 1000; // 0-1초 jitter (thundering herd 방지)
+            const delay = baseDelay + jitter;
+            console.log(`[알림 WebSocket] ${Math.round(delay)}ms 후 재연결 시도 (jitter: ${Math.round(jitter)}ms)`);
             reconnectTimeout = setTimeout(() => {
               connect();
-            }, 5000);
+            }, delay);
           }
         };
       } catch (error) {
         console.error("[알림 WebSocket] 연결 오류:", error);
         if (shouldReconnect) {
+          const baseDelay = 5000;
+          const jitter = Math.random() * 1000; // 0-1초 jitter
+          const delay = baseDelay + jitter;
           reconnectTimeout = setTimeout(() => {
             connect();
-          }, 5000);
+          }, delay);
         }
       }
     };
 
     connect();
 
+    // 페이지 포커스 시 즉시 재연결 (탭 전환 후 돌아왔을 때)
+    const handleVisibilityChange = () => {
+      if (!document.hidden && ws?.readyState !== WebSocket.OPEN && shouldReconnect) {
+        console.log("[알림 WebSocket] 페이지 포커스 복귀, 재연결 시도");
+        if (reconnectTimeout) {
+          clearTimeout(reconnectTimeout);
+        }
+        connect();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
     return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
       shouldReconnect = false; // cleanup 시 재연결 중단
       if (ws) {
         ws.close(1000); // 정상 종료 코드
@@ -177,7 +204,7 @@ export function NotificationDropdown() {
         clearTimeout(reconnectTimeout);
       }
     };
-  }, [tokens?.access_token, setUnreadCount]);
+  }, [setUnreadCount]); // ✅ tokens를 의존성에서 제거하여 토큰 변경 시 재연결 방지
 
   // 외부 클릭 감지
   useEffect(() => {

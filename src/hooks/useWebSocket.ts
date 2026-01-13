@@ -22,7 +22,6 @@ export function useWebSocket({
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const onMessageRef = useRef(onMessage);
   const reconnectAttemptsRef = useRef(0);
-  const maxReconnectAttempts = 5;
   const isRefreshingRef = useRef(false);
   const tokenRef = useRef(token); // 토큰을 ref로 관리하여 클로저 문제 해결
 
@@ -147,9 +146,12 @@ export function useWebSocket({
 
               // 토큰이 유효한데 WebSocket 연결 실패 = 네트워크 문제
               console.log("[WebSocket] 토큰 유효함, 네트워크 문제로 판단하여 재연결");
-              if (autoReconnect && reconnectAttemptsRef.current < maxReconnectAttempts) {
+              if (autoReconnect) {
                 reconnectAttemptsRef.current++;
-                const delay = Math.min(1000 * reconnectAttemptsRef.current, 5000);
+                const baseDelay = Math.min(1000 * reconnectAttemptsRef.current, 5000);
+                const jitter = Math.random() * 500; // 0-0.5초 jitter
+                const delay = baseDelay + jitter;
+                console.log(`[WebSocket] ${Math.round(delay)}ms 후 재연결 시도 (${reconnectAttemptsRef.current}번째, jitter: ${Math.round(jitter)}ms)`);
                 setTimeout(() => connect(tokenRef.current), delay);
               }
             } catch (error: any) {
@@ -166,28 +168,30 @@ export function useWebSocket({
 
               // 다른 에러 = 일반 재연결
               console.error("[WebSocket] 토큰 확인 실패, 일반 재연결 시도:", error.message);
-              if (autoReconnect && reconnectAttemptsRef.current < maxReconnectAttempts) {
+              if (autoReconnect) {
                 reconnectAttemptsRef.current++;
-                const delay = Math.min(1000 * reconnectAttemptsRef.current, 5000);
+                const baseDelay = Math.min(1000 * reconnectAttemptsRef.current, 5000);
+                const jitter = Math.random() * 500; // 0-0.5초 jitter
+                const delay = baseDelay + jitter;
+                console.log(`[WebSocket] ${Math.round(delay)}ms 후 재연결 시도 (${reconnectAttemptsRef.current}번째, jitter: ${Math.round(jitter)}ms)`);
                 setTimeout(() => connect(tokenRef.current), delay);
               }
             }
             return;
           }
 
-          // Auto reconnect (최대 재시도 횟수 제한)
-          if (autoReconnect && reconnectAttemptsRef.current < maxReconnectAttempts) {
+          // Auto reconnect (무제한 재시도, exponential backoff + jitter로 서버 부하 최소화)
+          if (autoReconnect) {
             reconnectAttemptsRef.current++;
-            const delay = Math.min(1000 * Math.pow(2, reconnectAttemptsRef.current - 1), 30000); // Exponential backoff
-            console.log(`[WebSocket] ${delay}ms 후 재연결 시도 (${reconnectAttemptsRef.current}/${maxReconnectAttempts})`);
+            const baseDelay = Math.min(1000 * Math.pow(2, reconnectAttemptsRef.current - 1), 30000); // Exponential backoff
+            const jitter = Math.random() * 1000; // 0-1초 랜덤 jitter (thundering herd 방지)
+            const delay = baseDelay + jitter;
+            console.log(`[WebSocket] ${Math.round(delay)}ms 후 재연결 시도 (${reconnectAttemptsRef.current}번째, jitter: ${Math.round(jitter)}ms)`);
 
             reconnectTimeoutRef.current = setTimeout(() => {
               // 최신 토큰을 ref에서 가져와서 사용 (클로저 문제 해결)
               connect(tokenRef.current);
             }, delay) as NodeJS.Timeout;
-          } else if (reconnectAttemptsRef.current >= maxReconnectAttempts) {
-            console.error("[WebSocket] 최대 재연결 시도 횟수 초과");
-            toast.error("채팅 서버 연결에 실패했습니다. 페이지를 새로고침해주세요.");
           }
         };
       } catch (error) {
@@ -200,7 +204,22 @@ export function useWebSocket({
       connect(token);
     }
 
+    // 페이지 포커스 시 즉시 재연결 (탭 전환 후 돌아왔을 때)
+    const handleVisibilityChange = () => {
+      if (!document.hidden && wsRef.current?.readyState !== WebSocket.OPEN) {
+        console.log("[WebSocket] 페이지 포커스 복귀, 재연결 시도");
+        reconnectAttemptsRef.current = 0; // 재시도 카운터 리셋
+        if (reconnectTimeoutRef.current) {
+          clearTimeout(reconnectTimeoutRef.current);
+        }
+        connect(tokenRef.current);
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
     return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current);
       }
