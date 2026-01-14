@@ -16,7 +16,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { claimStoreAction } from "@/actions/stores";
-import { useAuthStore } from "@/store/auth";
+import { useAuthStore } from "@/stores/useAuthStore";
 import type { ClaimStoreRequest } from "@/types/stores";
 
 interface StoreClaimModalProps {
