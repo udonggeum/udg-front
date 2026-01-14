@@ -751,6 +751,11 @@ function StoresPageContent() {
                         <div className="flex items-center gap-2 mb-1">
                           <h3 className="text-[16px] font-semibold text-gray-900 truncate flex-1">
                             {store.name}
+                            {store.branch_name && (
+                              <span className="text-small font-normal text-gray-600 ml-1">
+                                ({store.branch_name})
+                              </span>
+                            )}
                           </h3>
                           <span className={`px-1.5 py-0.5 text-[11px] font-medium rounded flex-shrink-0 ${
                             store.isOpen
@@ -779,7 +784,15 @@ function StoresPageContent() {
                           </div>
                         )}
                         <p className="text-small text-gray-500 mb-2 truncate">
-                          {store.address || "주소 정보 없음"}
+                          {store.address ? (
+                            <>
+                              {store.dong && <span className="font-medium">{store.dong} </span>}
+                              {store.building_name && <span>({store.building_name}) </span>}
+                              {!store.dong && !store.building_name && store.address}
+                            </>
+                          ) : (
+                            "주소 정보 없음"
+                          )}
                         </p>
                         {store.tags && store.tags.length > 0 && (
                           <div className="flex items-center gap-2">

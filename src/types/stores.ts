@@ -33,10 +33,16 @@ export interface StoreDetail {
   id: number;
   user_id?: number;
   name: string;
+  branch_name?: string; // 지점명
   slug: string; // URL용 고유 식별자 (SEO)
   region?: string;
   district?: string;
+  dong?: string; // 행정동명
   address?: string;
+  building_name?: string; // 건물명
+  floor?: string; // 층정보
+  unit?: string; // 호정보
+  postal_code?: string; // 우편번호
   latitude?: number;
   longitude?: number;
   phone_number?: string;

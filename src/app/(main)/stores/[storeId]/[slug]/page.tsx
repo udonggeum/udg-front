@@ -858,7 +858,14 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
                         placeholder="매장 이름"
                       />
                     ) : (
-                      <h1 className="text-[28px] font-bold text-gray-900">{store.name}</h1>
+                      <h1 className="text-[28px] font-bold text-gray-900">
+                        {store.name}
+                        {store.branch_name && (
+                          <span className="text-[20px] font-normal text-gray-600 ml-2">
+                            ({store.branch_name})
+                          </span>
+                        )}
+                      </h1>
                     )}
                     {/* 매장명 수정 중이 아닐 때만 영업 상태 표시 */}
                     {!editSections.name && (
@@ -1632,8 +1639,29 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
                               placeholder="매장 주소"
                             />
                           ) : (
-                            <div className={store.address ? "text-gray-600" : "text-gray-400 italic"}>
-                              {store.address || "주소를 입력해주세요"}
+                            <div className={store.address ? "text-gray-600 space-y-1" : "text-gray-400 italic"}>
+                              {store.address ? (
+                                <>
+                                  <div className="font-medium">
+                                    {store.address}
+                                    {store.building_name && ` (${store.building_name})`}
+                                  </div>
+                                  {(store.floor || store.unit) && (
+                                    <div className="text-small text-gray-500">
+                                      {store.floor && store.floor}
+                                      {store.floor && store.unit && " "}
+                                      {store.unit && store.unit}
+                                    </div>
+                                  )}
+                                  {store.postal_code && (
+                                    <div className="text-small text-gray-400">
+                                      우편번호: {store.postal_code}
+                                    </div>
+                                  )}
+                                </>
+                              ) : (
+                                "주소를 입력해주세요"
+                              )}
                             </div>
                           )}
                         </div>
