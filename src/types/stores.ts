@@ -115,10 +115,13 @@ export interface StoresRequest {
   region?: string;
   district?: string;
   category?: string;
+  search?: string; // 검색어
   page?: number;
   page_size?: number;
   user_lat?: number; // 사용자 위도 (거리순 정렬용)
   user_lng?: number; // 사용자 경도 (거리순 정렬용)
+  is_verified?: boolean; // 인증 매장 필터
+  is_managed?: boolean; // 관리 매장 필터
 }
 
 /**

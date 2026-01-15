@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useMemo, Fragment, memo } from "react";
+import { useRouter } from "next/navigation";
 import { Map, MapMarker, CustomOverlayMap } from "react-kakao-maps-sdk";
 import { DollarSign } from "lucide-react";
 import type { Tag } from "@/types/stores";
@@ -15,12 +16,15 @@ declare global {
 interface StoreLocation {
   id: number;
   name: string;
+  slug?: string;
   lat: number;
   lng: number;
   address?: string;
   isOpen?: boolean;
   tags?: Tag[];
   distance?: string;
+  is_verified?: boolean;
+  is_managed?: boolean;
 }
 
 interface StoreMapProps {
@@ -29,6 +33,7 @@ interface StoreMapProps {
   onStoreClick?: (store: StoreLocation) => void;
   center?: { lat: number; lng: number };
   onCenterChange?: (center: { lat: number; lng: number }) => void;
+  userLocation?: { lat: number; lng: number } | null;
 }
 
 /**
@@ -49,7 +54,9 @@ function StoreMap({
   onStoreClick,
   center: propCenter,
   onCenterChange,
+  userLocation,
 }: StoreMapProps) {
+  const router = useRouter();
   const [map, setMap] = useState<kakao.maps.Map | null>(null);
   const [center, setCenter] = useState(
     propCenter || { lat: 37.5665, lng: 126.978 } // 서울시청 기본 좌표
@@ -135,6 +142,38 @@ function StoreMap({
         const isSelected = selectedStoreId === store.id;
         const isOpen = store.isOpen !== false; // 기본값 true
 
+        // 매장 상태에 따른 색상 결정
+        const getMarkerColor = () => {
+          if (store.is_verified) {
+            // 인증 매장: 골드색
+            return {
+              bg: isSelected
+                ? "bg-gradient-to-br from-[#C9A227] to-[#8A6A00]"
+                : "bg-gradient-to-br from-[#C9A227] to-[#C9A227]",
+              border: "border-t-[#8A6A00]",
+              pulse: "bg-[#C9A227]",
+            };
+          } else if (store.is_managed) {
+            // 관리 매장: 블루색
+            return {
+              bg: isSelected
+                ? "bg-gradient-to-br from-blue-500 to-blue-700"
+                : "bg-gradient-to-br from-blue-500 to-blue-500",
+              border: "border-t-blue-700",
+              pulse: "bg-blue-500",
+            };
+          } else {
+            // 미관리 매장: 회색
+            return {
+              bg: "bg-gray-400",
+              border: "border-t-gray-400",
+              pulse: "bg-gray-400",
+            };
+          }
+        };
+
+        const markerColor = getMarkerColor();
+
         return (
           <Fragment key={store.id}>
             {/* 커스텀 마커 (금은방 브랜드) */}
@@ -153,13 +192,8 @@ function StoreMap({
                   className={`
                     flex items-center justify-center rounded-full border-2 border-white shadow-lg
                     transition-all duration-200
-                    ${isSelected ? "w-12 h-12 shadow-xl" : "w-10 h-10"}
-                    ${isOpen
-                      ? isSelected
-                        ? "bg-gradient-to-br from-[#C9A227] to-[#8A6A00] scale-110"
-                        : "bg-gradient-to-br from-[#C9A227] to-[#C9A227] hover:scale-110"
-                      : "bg-gray-400"
-                    }
+                    ${isSelected ? "w-12 h-12 shadow-xl scale-110" : "w-10 h-10 hover:scale-110"}
+                    ${markerColor.bg}
                   `}
                 >
                   <DollarSign
@@ -172,7 +206,7 @@ function StoreMap({
                 <div
                   className={`
                     absolute left-1/2 -translate-x-1/2
-                    ${isOpen ? "border-t-[#8A6A00]" : "border-t-gray-400"}
+                    ${markerColor.border}
                   `}
                   style={{
                     width: 0,
@@ -186,7 +220,7 @@ function StoreMap({
 
                 {/* 선택 시 펄스 효과 */}
                 {isSelected && (
-                  <div className="absolute inset-0 rounded-full bg-[#C9A227] opacity-30 animate-ping" />
+                  <div className={`absolute inset-0 rounded-full ${markerColor.pulse} opacity-30 animate-ping`} />
                 )}
               </div>
             </CustomOverlayMap>
@@ -240,23 +274,30 @@ function StoreMap({
                       </div>
                     )}
 
-                    {/* 영업 상태 */}
-                    <div className="flex items-center gap-1.5 text-[11px]">
-                      <span
-                        className={`
-                          w-2 h-2 rounded-full
-                          ${isOpen ? "bg-green-500" : "bg-gray-400"}
-                        `}
-                      />
-                      <span className={isOpen ? "text-green-600 font-medium" : "text-gray-500"}>
-                        {isOpen ? "영업중" : "준비중"}
-                      </span>
-                    </div>
+                    {/* 영업 상태 - 관리매장만 표시 */}
+                    {store.is_managed && (
+                      <div className="flex items-center gap-1.5 text-[11px]">
+                        <span
+                          className={`
+                            w-2 h-2 rounded-full
+                            ${isOpen ? "bg-green-500" : "bg-gray-400"}
+                          `}
+                        />
+                        <span className={isOpen ? "text-green-600 font-medium" : "text-gray-500"}>
+                          {isOpen ? "영업중" : "준비중"}
+                        </span>
+                      </div>
+                    )}
                   </div>
 
                   {/* 상세보기 버튼 */}
                   <button
-                    onClick={() => handleMarkerClick(store)}
+                    onClick={() => {
+                      const url = store.slug
+                        ? `/stores/${store.id}/${store.slug}`
+                        : `/stores/${store.id}`;
+                      router.push(url);
+                    }}
                     className="w-full py-2 bg-gray-50 hover:bg-gray-100 text-gray-700 text-[12px] font-medium transition-colors"
                   >
                     상세보기 →
@@ -268,9 +309,9 @@ function StoreMap({
         );
       })}
 
-      {/* 현재 위치 마커 (propCenter가 서울시청이 아닐 때) */}
-      {propCenter && (propCenter.lat !== 37.5665 || propCenter.lng !== 126.978) && (
-        <CustomOverlayMap key="current-location" position={propCenter} xAnchor={0.5} yAnchor={1}>
+      {/* 현재 위치 마커 */}
+      {userLocation && (
+        <CustomOverlayMap key="current-location" position={userLocation} xAnchor={0.5} yAnchor={1}>
           <div
             className="relative"
           >

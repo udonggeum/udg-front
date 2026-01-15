@@ -1612,6 +1612,32 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
           {/* 우측: 사이드바 */}
           <div className="lg:col-span-1">
             <div className="sticky top-[180px] space-y-4">
+              {/* 소유권 등록 CTA - 로그인 했고, 내 매장이 아니고, 관리되지 않은 매장일 때만 표시 */}
+              {user && !isMyStore && !store?.is_managed && (
+                <div className="bg-gradient-to-br from-[#FEF9E7] to-[#FAF4DC] border-2 border-[#C9A227]/30 rounded-2xl p-5 shadow-sm">
+                  <div className="flex items-start gap-3 mb-3">
+                    <div className="w-10 h-10 bg-[#C9A227] rounded-lg flex items-center justify-center flex-shrink-0">
+                      <StoreIcon className="w-5 h-5 text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-[16px] font-bold text-gray-900 mb-1">
+                        이 매장의 사장님이신가요?
+                      </h3>
+                      <p className="text-small text-gray-600 leading-relaxed">
+                        매장을 관리하고 고객과 소통하세요
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => router.push(`/stores/${store.id}/claim`)}
+                    className="w-full bg-[#C9A227] hover:bg-[#8A6A00] text-white text-caption font-semibold py-3 rounded-lg transition-colors flex items-center justify-center gap-2"
+                  >
+                    <Check className="w-4 h-4" />
+                    소유권 등록하기
+                  </button>
+                </div>
+              )}
+
               {/* 매장 정보 카드 */}
               <div className="bg-white rounded-2xl p-5 shadow-sm">
                 <h3 className="text-[16px] font-bold text-gray-900 mb-3">매장 정보</h3>

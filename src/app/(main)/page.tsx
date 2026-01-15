@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import StoreSearchModal from "@/components/store-search-modal";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -45,6 +46,9 @@ export default function Home() {
 
   // 검색 상태
   const [searchQuery, setSearchQuery] = useState<string>("");
+
+  // 매장 검색 모달 상태
+  const [isStoreSearchModalOpen, setIsStoreSearchModalOpen] = useState(false);
 
   // 검색 핸들러
   const handleSearch = (e: React.FormEvent) => {
@@ -502,16 +506,25 @@ export default function Home() {
           <div className="bg-gray-900 rounded-3xl p-8 md:p-12 flex flex-col md:flex-row items-center justify-between gap-6">
             <div>
               <h3 className="text-[24px] md:text-[28px] font-bold text-white mb-2">금은방 사장님이신가요?</h3>
-              <p className="text-body text-gray-400">무료로 매장을 등록하고 더 많은 고객을 만나보세요</p>
+              <p className="text-body text-gray-400">내 매장을 찾아 소유권을 등록하고 더 많은 고객을 만나보세요</p>
             </div>
-            <Link href="/stores/register">
-              <Button variant="brand-primary" size="lg" className="px-8 py-4 flex-shrink-0">
-                매장 등록하기
-              </Button>
-            </Link>
+            <Button
+              variant="brand-primary"
+              size="lg"
+              className="px-8 py-4 flex-shrink-0"
+              onClick={() => setIsStoreSearchModalOpen(true)}
+            >
+              매장 관리하기
+            </Button>
           </div>
         </Container>
       </Section>
+
+      {/* 매장 검색 모달 */}
+      <StoreSearchModal
+        isOpen={isStoreSearchModalOpen}
+        onClose={() => setIsStoreSearchModalOpen(false)}
+      />
     </main>
   );
 }

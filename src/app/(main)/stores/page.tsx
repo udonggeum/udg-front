@@ -10,6 +10,7 @@ import {
   Store as StoreIcon,
   Phone,
   Clock,
+  CheckCircle,
 } from "lucide-react";
 import { getStoresAction, toggleStoreLikeAction } from "@/actions/stores";
 import type { StoreDetail, Tag } from "@/types/stores";
@@ -84,20 +85,13 @@ const StoreImage = memo(function StoreImage({
   );
 });
 
-const PAGE_SIZE = 50;
+const PAGE_SIZE = 20;
 
 // 페이지를 dynamic으로 설정 (useSearchParams 사용을 위해)
 export const dynamic = 'force-dynamic';
 
-type FilterTag = "all" | "open" | "gold" | "liked";
+type FilterTag = "all" | "open" | "liked" | "managed" | "verified";
 
-/**
- * 프론트엔드 필터 → 백엔드 태그 매핑
- * UI는 4개 필터로 간결하게 유지하되, 백엔드의 세부 태그들을 그룹화하여 검색
- */
-const filterTagMap: Record<string, string[]> = {
-  "gold": ["금 매입", "24K 취급", "18K 취급", "14K 취급", "24k", "18k", "14k"],
-};
 
 /**
  * 현재 시간이 영업 시간 내인지 확인
@@ -154,7 +148,8 @@ function StoresPageContent() {
   const { user, tokens } = useAuthStore();
   const accessToken = tokens?.access_token;
   const { checkAndHandleUnauthorized } = useAuthenticatedAction();
-  const [searchQuery, setSearchQuery] = useState(searchParams.get("search") || "");
+  const [searchQuery, setSearchQuery] = useState(searchParams.get("search") || ""); // input 필드 값
+  const [appliedSearchQuery, setAppliedSearchQuery] = useState(searchParams.get("search") || ""); // 실제 적용된 검색어
   const [selectedFilter, setSelectedFilter] = useState<FilterTag>("all");
   const [selectedStore, setSelectedStore] = useState<StoreWithExtras | null>(null);
   const [isDetailPanelOpen, setIsDetailPanelOpen] = useState(false);
@@ -168,6 +163,8 @@ function StoresPageContent() {
   const [stores, setStores] = useState<StoreWithExtras[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
 
   // 매장 클릭 핸들러 (useCallback으로 메모이제이션)
   const handleStoreClick = useCallback((store: StoreWithExtras) => {
@@ -235,20 +232,39 @@ function StoresPageContent() {
     };
   }, []);
 
-  // 매장 목록 로드
+  // 매장 목록 로드 (currentPage, selectedFilter, userLocation 변경 시마다 실행)
   useEffect(() => {
     const loadStores = async () => {
       setIsLoading(true);
       setError(null);
 
       try {
-        const result = await getStoresAction(
-          {
-            page: 1,
-            page_size: PAGE_SIZE,
-          },
-          accessToken
-        );
+        // 필터에 따른 API 파라미터 설정
+        const params: any = {
+          page: currentPage,
+          page_size: PAGE_SIZE,
+        };
+
+        // 사용자 위치를 백엔드로 전달 (거리순 정렬용)
+        if (userLocation) {
+          params.user_lat = userLocation.lat;
+          params.user_lng = userLocation.lng;
+        }
+
+        // 검색어를 백엔드로 전달
+        if (appliedSearchQuery) {
+          params.search = appliedSearchQuery;
+        }
+
+        // 백엔드 필터 (verified, managed)
+        if (selectedFilter === "verified") {
+          params.is_verified = true;
+        } else if (selectedFilter === "managed") {
+          params.is_managed = true;
+        }
+        // open, liked 필터는 클라이언트에서 처리
+
+        const result = await getStoresAction(params, accessToken);
 
         if (result.success && result.data) {
           // 백엔드 데이터에 UI용 추가 정보 추가
@@ -307,6 +323,10 @@ function StoresPageContent() {
           );
 
           setStores(transformedStores);
+
+          // 총 개수 저장
+          setTotalCount(result.data.count);
+          console.log(`📊 Loaded ${transformedStores.length} of ${result.data.count} stores`);
         } else {
           setError(result.error || "매장 목록을 불러올 수 없습니다.");
         }
@@ -318,57 +338,19 @@ function StoresPageContent() {
     };
 
     loadStores();
-  }, [accessToken]);
-
-  // 사용자 위치 변경 시 거리 재계산
-  useEffect(() => {
-    if (userLocation && stores.length > 0) {
-      console.log("🔄 Recalculating distances for user location:", userLocation);
-      setStores((prevStores) =>
-        prevStores.map((store, idx) => {
-          const distance = getDistanceText(
-            userLocation.lat,
-            userLocation.lng,
-            store.lat || 37.5665,
-            store.lng || 126.978
-          );
-          if (idx === 0) {
-            console.log("  - First store distance:", distance);
-          }
-          return {
-            ...store,
-            distance: distance || undefined,
-          };
-        })
-      );
-      console.log("✅ Distance recalculation complete");
-    }
-  }, [userLocation]); // ✅ stores.length 제거하여 무한 루프 방지
+  }, [accessToken, currentPage, selectedFilter, appliedSearchQuery, userLocation]);
 
   // URL 파라미터에서 검색어 처리 (메인 화면의 인기 검색어 클릭 시)
   useEffect(() => {
     const searchParam = searchParams.get("search");
-    if (searchParam && stores.length > 0) {
+    if (searchParam) {
       // 검색어가 있으면 자동으로 검색 실행
       setSearchQuery(searchParam);
+      setAppliedSearchQuery(searchParam);
 
-      // 검색 결과의 첫 번째 매장으로 지도 이동
-      const filtered = stores.filter((store) => {
-        const query = searchParam.toLowerCase();
-        const searchableText = [
-          store.name,
-          store.address,
-          store.region,
-          store.district,
-        ]
-          .filter(Boolean)
-          .join(" ")
-          .toLowerCase();
-        return searchableText.includes(query);
-      });
-
-      if (filtered.length > 0) {
-        const firstStore = filtered[0];
+      // 검색 결과가 로드되면 첫 번째 매장으로 지도 이동
+      if (stores.length > 0) {
+        const firstStore = stores[0];
         if (firstStore.lat && firstStore.lng) {
           setMapCenter({ lat: firstStore.lat, lng: firstStore.lng });
           handleStoreClick(firstStore);
@@ -426,78 +408,32 @@ function StoresPageContent() {
   }, [user, accessToken, router, selectedStore]);
 
   const filteredStores = useMemo(() => {
-    // 1. 필터링
+    // 1. 필터링 (백엔드에서 verified, managed, search 필터는 이미 처리됨)
     const filtered = stores.filter((store) => {
-      // 검색어 필터 (매장명 + 주소 + 지역)
-      if (searchQuery) {
-        const query = searchQuery.toLowerCase();
-        const searchableText = [
-          store.name,
-          store.address,
-          store.region,
-          store.district,
-        ]
-          .filter(Boolean)
-          .join(" ")
-          .toLowerCase();
-
-        if (!searchableText.includes(query)) {
-          return false;
-        }
+      // 클라이언트 전용 필터 (open, liked)
+      if (selectedFilter === "open") {
+        // 영업중 필터 (관리매장만)
+        return store.is_managed === true && store.isOpen === true;
       }
 
-      // 태그 필터
-      if (selectedFilter !== "all") {
-        // 영업중 필터는 별도 처리
-        if (selectedFilter === "open") {
-          return store.isOpen === true;
-        }
-
+      if (selectedFilter === "liked") {
         // 관심매장 필터
-        if (selectedFilter === "liked") {
-          return store.isLiked === true;
-        }
-
-        // 금 매입 필터는 filterTagMap을 사용하여 매칭
-        const tagKeywords = filterTagMap[selectedFilter];
-        if (tagKeywords) {
-          return store.tags?.some((tag) =>
-            tagKeywords.some((keyword) =>
-              tag.name.toLowerCase().includes(keyword.toLowerCase())
-            )
-          );
-        }
+        return store.isLiked === true;
       }
 
+      // verified, managed, all, search 필터는 백엔드에서 이미 처리됨
       return true;
     });
 
-    // 2. 정렬
-    const sorted = [...filtered].sort((a, b) => {
-      switch (sortBy) {
-        case "distance":
-          // 거리 없는 매장은 맨 뒤로
-          if (!a.distance && !b.distance) return 0;
-          if (!a.distance) return 1;
-          if (!b.distance) return -1;
-
-          // "1.2km" -> 1.2로 변환
-          const distA = parseFloat(a.distance.replace("km", "").replace("m", "")) / (a.distance.includes("m") && !a.distance.includes("km") ? 1000 : 1);
-          const distB = parseFloat(b.distance.replace("km", "").replace("m", "")) / (b.distance.includes("m") && !b.distance.includes("km") ? 1000 : 1);
-          return distA - distB;
-
-        default:
-          return 0;
-      }
-    });
-
-    return sorted;
-  }, [stores, searchQuery, selectedFilter, sortBy]);
+    // 백엔드에서 이미 거리순으로 정렬되어 있으므로 클라이언트에서는 정렬하지 않음
+    return filtered;
+  }, [stores, selectedFilter]);
 
   const filterTags: Array<{ id: FilterTag; label: string }> = [
     { id: "all", label: "전체" },
+    { id: "verified", label: "인증매장" },
+    { id: "managed", label: "관리매장" },
     { id: "open", label: "영업중" },
-    { id: "gold", label: "금 매입" },
     { id: "liked", label: "관심매장" },
   ];
 
@@ -509,18 +445,12 @@ function StoresPageContent() {
   const handleSearch = useCallback((e: React.FormEvent) => {
     e.preventDefault();
 
-    // 검색 결과가 있으면 첫 번째 매장으로 지도 이동
-    if (filteredStores.length > 0) {
-      const firstStore = filteredStores[0];
-      if (firstStore.lat && firstStore.lng) {
-        setMapCenter({ lat: firstStore.lat, lng: firstStore.lng });
-        handleStoreClick(firstStore);
-        console.log("🔍 Search: Moving to first result -", firstStore.name);
-      }
-    } else {
-      console.log("🔍 Search: No results found");
-    }
-  }, [filteredStores, handleStoreClick]);
+    // 검색어를 적용하고 페이지를 1로 리셋
+    setAppliedSearchQuery(searchQuery);
+    setCurrentPage(1);
+
+    console.log("🔍 Search initiated:", searchQuery);
+  }, [searchQuery]);
 
   // 현재 위치 가져오기 (Geolocation API)
   const getCurrentLocation = () => {
@@ -565,6 +495,19 @@ function StoresPageContent() {
       handleStoreClick(fullStore);
     }
   };
+
+  // 페이지 변경 핸들러
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage);
+    // 리스트 최상단으로 스크롤
+    const listElement = document.querySelector('.stores-list');
+    if (listElement) {
+      listElement.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  // 총 페이지 수 계산
+  const totalPages = Math.ceil(totalCount / PAGE_SIZE);
 
   return (
     <>
@@ -655,6 +598,7 @@ function StoresPageContent() {
                       return;
                     }
                     setSelectedFilter(tag.id);
+                    setCurrentPage(1); // 필터 변경 시 1페이지로 리셋
                   }}
                   className={`px-3 md:px-4 py-2 md:py-2.5 min-h-[40px] md:min-h-[44px] text-small font-medium rounded-full border whitespace-nowrap transition-all duration-200 ${
                     selectedFilter === tag.id
@@ -697,9 +641,10 @@ function StoresPageContent() {
           </div>
 
           {/* 매장 리스트 - 모바일에서 리스트 탭일 때만 표시 */}
-          <div className={`flex-1 overflow-y-auto ${
-            isMobileMapOpen ? "hidden md:block" : "block"
+          <div className={`flex-1 flex flex-col ${
+            isMobileMapOpen ? "hidden md:flex" : "flex"
           }`}>
+            <div className="flex-1 overflow-y-auto stores-list">
             {isLoading ? (
               <div className="flex items-center justify-center py-20">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
@@ -728,7 +673,7 @@ function StoresPageContent() {
             ) : (
               <Virtuoso
                 data={filteredStores}
-                itemContent={(index, store) => (
+                itemContent={(_index, store) => (
                   <div
                     onClick={() => handleStoreClick(store)}
                     className={`p-3 md:p-5 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors duration-200 border-l-4 ${
@@ -749,21 +694,37 @@ function StoresPageContent() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
-                          <h3 className="text-[16px] font-semibold text-gray-900 truncate flex-1">
-                            {store.name}
-                            {store.branch_name && (
-                              <span className="text-small font-normal text-gray-600 ml-1">
-                                ({store.branch_name})
+                          <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                            <h3 className="text-[16px] font-semibold text-gray-900 truncate">
+                              {store.name}
+                              {store.branch_name && (
+                                <span className="text-small font-normal text-gray-600 ml-1">
+                                  ({store.branch_name})
+                                </span>
+                              )}
+                            </h3>
+                            {/* 인증/관리 배지 */}
+                            {store.is_verified ? (
+                              <span className="flex items-center gap-1 px-2 py-0.5 bg-[#FEF9E7] text-[#8A6A00] text-[11px] font-medium rounded flex-shrink-0">
+                                <CheckCircle className="w-3 h-3" />
+                                인증
                               </span>
-                            )}
-                          </h3>
-                          <span className={`px-1.5 py-0.5 text-[11px] font-medium rounded flex-shrink-0 ${
-                            store.isOpen
-                              ? "bg-[#FEF9E7] text-[#8A6A00]"
-                              : "bg-gray-100 text-gray-600"
-                          }`}>
-                            {store.isOpen ? "영업중" : "준비중"}
-                          </span>
+                            ) : store.is_managed ? (
+                              <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-[11px] font-medium rounded flex-shrink-0">
+                                관리
+                              </span>
+                            ) : null}
+                          </div>
+                          {/* 영업 상태는 관리매장만 표시 */}
+                          {store.is_managed && (
+                            <span className={`px-1.5 py-0.5 text-[11px] font-medium rounded flex-shrink-0 ${
+                              store.isOpen
+                                ? "bg-[#FEF9E7] text-[#8A6A00]"
+                                : "bg-gray-100 text-gray-600"
+                            }`}>
+                              {store.isOpen ? "영업중" : "준비중"}
+                            </span>
+                          )}
                           <button
                             type="button"
                             onClick={(e) => handleStoreLike(store.id, e)}
@@ -784,12 +745,15 @@ function StoresPageContent() {
                           </div>
                         )}
                         <p className="text-small text-gray-500 mb-2 truncate">
-                          {store.address ? (
+                          {/* 매장 리스트: 간단하게 구·동만 표시 */}
+                          {store.district || store.dong || store.building_name ? (
                             <>
-                              {store.dong && <span className="font-medium">{store.dong} </span>}
-                              {store.building_name && <span>({store.building_name}) </span>}
-                              {!store.dong && !store.building_name && store.address}
+                              {store.district && <span>{store.district} </span>}
+                              {store.dong && <span className="font-medium">{store.dong}</span>}
+                              {store.building_name && <span> ({store.building_name})</span>}
                             </>
+                          ) : store.address ? (
+                            store.address
                           ) : (
                             "주소 정보 없음"
                           )}
@@ -812,6 +776,30 @@ function StoresPageContent() {
                 )}
               />
             )}
+            </div>
+
+            {/* 페이지네이션 */}
+            {!isLoading && !error && stores.length > 0 && (
+              <div className="p-3 md:p-5 border-t border-gray-100 flex items-center justify-between bg-white">
+                <button
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className="px-4 py-2 text-sm font-medium rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  이전
+                </button>
+                <span className="text-sm text-gray-600">
+                  {currentPage} / {totalPages > 0 ? totalPages : 1} 페이지 (총 {totalCount}개)
+                </span>
+                <button
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage >= totalPages}
+                  className="px-4 py-2 text-sm font-medium rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  다음
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
@@ -823,17 +811,21 @@ function StoresPageContent() {
             stores={filteredStores.map((store) => ({
               id: store.id,
               name: store.name,
+              slug: store.slug,
               lat: store.lat || 37.5665,
               lng: store.lng || 126.978,
               isOpen: store.isOpen,
               tags: store.tags,
               distance: store.distance,
               address: store.address,
+              is_verified: store.is_verified,
+              is_managed: store.is_managed,
             }))}
             selectedStoreId={selectedStore?.id}
             onStoreClick={handleMapStoreClick}
-            center={userLocation || mapCenter}
+            center={mapCenter}
             onCenterChange={setMapCenter}
+            userLocation={userLocation}
           />
         </div>
 
@@ -877,7 +869,7 @@ function StoresPageContent() {
                 {/* 매장명 & 기본 정보 */}
                 <div className="pb-4 border-b border-gray-100">
                   <div className="flex items-start justify-between mb-2">
-                    <div>
+                    <div className="flex-1 min-w-0">
                       <button
                         type="button"
                         onClick={() => router.push(`/stores/${selectedStore.id}/${selectedStore.slug}`)}
@@ -887,6 +879,19 @@ function StoresPageContent() {
                           {selectedStore.name}
                         </h3>
                       </button>
+                      {/* 인증/관리 배지 */}
+                      <div className="flex items-center gap-2 mt-1">
+                        {selectedStore.is_verified ? (
+                          <span className="flex items-center gap-1 px-2.5 py-1 bg-[#FEF9E7] text-[#8A6A00] text-small font-medium rounded">
+                            <CheckCircle className="w-4 h-4" />
+                            인증 매장
+                          </span>
+                        ) : selectedStore.is_managed ? (
+                          <span className="px-2.5 py-1 bg-gray-100 text-gray-600 text-small font-medium rounded">
+                            관리 매장
+                          </span>
+                        ) : null}
+                      </div>
                     </div>
                     <button
                       type="button"
@@ -900,18 +905,20 @@ function StoresPageContent() {
                       />
                     </button>
                   </div>
-                  {/* 영업 상태 */}
-                  <div className="flex items-center gap-2 text-caption">
-                    <span className={selectedStore.isOpen ? "text-[#8A6A00] font-medium" : "text-gray-500"}>
-                      {selectedStore.isOpen ? "영업중" : "준비중"}
-                    </span>
-                    {selectedStore.close_time && (
-                      <>
-                        <span className="text-gray-400">·</span>
-                        <span className="text-gray-500">{selectedStore.close_time} 마감</span>
-                      </>
-                    )}
-                  </div>
+                  {/* 영업 상태는 관리매장만 표시 */}
+                  {selectedStore.is_managed && (
+                    <div className="flex items-center gap-2 text-caption">
+                      <span className={selectedStore.isOpen ? "text-[#8A6A00] font-medium" : "text-gray-500"}>
+                        {selectedStore.isOpen ? "영업중" : "준비중"}
+                      </span>
+                      {selectedStore.close_time && (
+                        <>
+                          <span className="text-gray-400">·</span>
+                          <span className="text-gray-500">{selectedStore.close_time} 마감</span>
+                        </>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {/* 전문분야 */}
@@ -943,11 +950,19 @@ function StoresPageContent() {
                     <div className="flex items-start gap-3">
                       <MapPin className="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0" />
                       <div className="flex-1">
+                        {/* 매장 상세: 전체 주소 표시 */}
                         <p className="text-caption text-gray-900">
-                          {selectedStore.address || "주소 정보 없음"}
+                          {selectedStore.address ? (
+                            <>
+                              {selectedStore.address}
+                              {selectedStore.building_name && ` (${selectedStore.building_name})`}
+                            </>
+                          ) : (
+                            "주소 정보 없음"
+                          )}
                         </p>
                         {selectedStore.distance && (
-                          <p className="text-small text-blue-600 font-medium">
+                          <p className="text-small text-blue-600 font-medium mt-1">
                             {selectedStore.distance}
                           </p>
                         )}
