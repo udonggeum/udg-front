@@ -32,7 +32,14 @@
       "Bash(git merge:*)",
       "Bash(npm uninstall:*)",
       "Bash(git rebase:*)",
-      "Bash(git log:*)"
+      "Bash(git log:*)",
+      "Bash(for file in internal/app/controller/*.go)",
+      "Bash(do if grep -q 'http\\\\.' \"$file\")",
+      "Bash(! grep -q '\"\"net/http\"\"' \"$file\")",
+      "Bash(fi)",
+      "Bash(done)",
+      "Bash(then if grep -q 'net/http' \"$file\")",
+      "Bash(then continue)"
     ],
     "deny": [],
     "ask": []

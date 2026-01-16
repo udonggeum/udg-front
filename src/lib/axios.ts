@@ -318,11 +318,12 @@ export function handleApiError<T = unknown>(
 
     // 401 Unauthorized 처리
     if (axiosError.response?.status === 401) {
-      // 백엔드에서 온 에러 메시지가 있으면 우선 사용 (로그인 실패 등)
-      const backendError = axiosError.response?.data?.error || axiosError.response?.data?.message;
+      // 백엔드 응답: { error: "ERROR_CODE", message: "사용자 친화적 메시지" }
+      const errorCode = axiosError.response?.data?.error;
+      const errorMessage = axiosError.response?.data?.message;
 
-      // isUnauthorized 플래그가 있거나 백엔드 메시지가 없을 때만 "로그인 만료" 메시지 사용
-      if (axiosError.isUnauthorized || !backendError) {
+      // isUnauthorized 플래그가 있거나 에러 정보가 없을 때만 기본 메시지
+      if (axiosError.isUnauthorized || (!errorCode && !errorMessage)) {
         return {
           success: false,
           error: "로그인이 만료되었습니다. 다시 로그인해주세요.",
@@ -330,20 +331,34 @@ export function handleApiError<T = unknown>(
         };
       }
 
-      // 백엔드 에러 메시지를 한국어로 번역
+      // 에러 코드 우선, 없으면 message 사용
+      // message가 이미 한글이면 그대로 사용, 아니면 error 코드를 번역
+      const displayMessage = errorMessage && errorMessage.length > 0
+        ? errorMessage
+        : translateErrorMessage(errorCode || "AUTH_UNAUTHORIZED");
+
       return {
         success: false,
-        error: translateErrorMessage(backendError),
+        error: displayMessage,
         isUnauthorized: true,
       };
     }
 
-    // 다른 HTTP 에러도 번역
-    const backendError = axiosError.response?.data?.error || axiosError.response?.data?.message;
-    if (backendError) {
+    // 다른 HTTP 에러 처리
+    // 백엔드 응답 형식: { error: "ERROR_CODE", message: "사용자 친화적 메시지" }
+    const errorCode = axiosError.response?.data?.error;
+    const errorMessage = axiosError.response?.data?.message;
+
+    if (errorCode || errorMessage) {
+      // message가 있고 한글이면 그대로 사용 (백엔드가 명확한 메시지 제공)
+      // message가 없거나 영문이면 error 코드를 번역
+      const displayMessage = errorMessage && errorMessage.length > 0
+        ? errorMessage
+        : translateErrorMessage(errorCode || "");
+
       return {
         success: false,
-        error: translateErrorMessage(backendError),
+        error: displayMessage || defaultMessage,
       };
     }
 

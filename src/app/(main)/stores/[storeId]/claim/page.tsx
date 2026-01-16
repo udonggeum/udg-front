@@ -37,12 +37,12 @@ export default function StoreClaimPage() {
       try {
         const result = await getStoreDetailAction(parseInt(storeId));
         if (result.success && result.data) {
-          setStore(result.data);
+          setStore(result.data.store);
 
           // 이미 관리되는 매장인 경우
-          if (result.data.is_managed) {
+          if (result.data.store.is_managed) {
             toast.error("이미 등록된 매장입니다");
-            router.push(`/stores/${storeId}/${result.data.slug}`);
+            router.push(`/stores/${storeId}/${result.data.store.slug}`);
           }
         } else {
           toast.error("매장 정보를 불러올 수 없습니다");
