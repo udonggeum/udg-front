@@ -6,6 +6,7 @@ import Link from "next/link";
 import { createPostAction, generateContentAction } from "@/actions/community";
 import { getMyStoreAction } from "@/actions/stores";
 import { useAuthStore } from "@/stores/useAuthStore";
+import { useAuthenticatedAction } from "@/hooks/useAuthenticatedAction";
 import { toast } from "sonner";
 import { Sparkles } from "lucide-react";
 import { ImageUploader } from "@/components/image-uploader";
@@ -23,6 +24,7 @@ import {
 export default function CommunityWritePage() {
   const router = useRouter();
   const { user, tokens } = useAuthStore();
+  const { withTokenRefresh } = useAuthenticatedAction();
 
   const [selectedCategory, setSelectedCategory] =
     useState<PostCategory>("gold_trade");
@@ -91,9 +93,9 @@ export default function CommunityWritePage() {
   useEffect(() => {
     const loadStoreLocation = async () => {
       // Admin이고 매장 주인만 작성 가능한 타입일 때
-      if (user.role === "admin" && ADMIN_ONLY_TYPES.includes(selectedType) && tokens?.access_token) {
+      if (user.role === "admin" && ADMIN_ONLY_TYPES.includes(selectedType)) {
         try {
-          const result = await getMyStoreAction(tokens.access_token);
+          const result = await withTokenRefresh((token) => getMyStoreAction(token));
           if (result.success && result.data?.store) {
             const storeRegion = result.data.store.region || "";
             const storeDistrict = result.data.store.district || "";
@@ -106,6 +108,7 @@ export default function CommunityWritePage() {
             const storeLocation = `${storeRegion} ${storeDistrict}`;
             setLocation(storeLocation);
           }
+          // 401은 withTokenRefresh에서 자동 처리됨
         } catch (error) {
           // 에러는 조용히 무시 (매장이 없을 수도 있음)
           console.error("Failed to load store location:", error);
@@ -114,7 +117,7 @@ export default function CommunityWritePage() {
     };
 
     loadStoreLocation();
-  }, [user.role, selectedType, tokens?.access_token]);
+  }, [user.role, selectedType, withTokenRefresh]);
 
   // region과 district가 변경되면 location 자동 업데이트
   useEffect(() => {
@@ -165,11 +168,6 @@ export default function CommunityWritePage() {
 
   // AI 글 자동생성
   const handleGenerateContent = async () => {
-    if (!tokens?.access_token) {
-      toast.error("로그인이 필요합니다.");
-      return;
-    }
-
     if (!title.trim()) {
       toast.error("제목을 먼저 입력해주세요.");
       return;
@@ -189,17 +187,19 @@ export default function CommunityWritePage() {
         ? (weightUnit === "don" ? parseFloat(weight) * 3.75 : parseFloat(weight))
         : undefined;
 
-      const result = await generateContentAction(
-        {
-          type: selectedType,
-          keywords,
-          title: title || undefined,
-          gold_type: goldType || (goldTypeUnknown ? "알 수 없음" : undefined),
-          weight: weightInGrams,
-          price: price ? parseInt(price, 10) : (priceNegotiable ? 0 : undefined),
-          location: location || undefined,
-        },
-        tokens.access_token
+      const result = await withTokenRefresh((token) =>
+        generateContentAction(
+          {
+            type: selectedType,
+            keywords,
+            title: title || undefined,
+            gold_type: goldType || (goldTypeUnknown ? "알 수 없음" : undefined),
+            weight: weightInGrams,
+            price: price ? parseInt(price, 10) : (priceNegotiable ? 0 : undefined),
+            location: location || undefined,
+          },
+          token
+        )
       );
 
       if (result.success && result.data) {
@@ -212,7 +212,10 @@ export default function CommunityWritePage() {
         });
         toast.success("AI가 글 내용을 생성했습니다!");
       } else {
-        toast.error(result.error || "글 생성에 실패했습니다.");
+        // 401은 withTokenRefresh에서 자동 처리됨, 다른 에러만 표시
+        if (!result.isUnauthorized) {
+          toast.error(result.error || "글 생성에 실패했습니다.");
+        }
       }
     } catch (error) {
       console.error("Generate content error:", error);
@@ -282,7 +285,9 @@ export default function CommunityWritePage() {
       requestData.image_urls = imageUrls;
     }
 
-    const result = await createPostAction(requestData, tokens.access_token);
+    const result = await withTokenRefresh((token) =>
+      createPostAction(requestData, token)
+    );
 
     if (result.success && result.data) {
       // 게시글 작성 성공 시 상세 페이지로 이동 (slug 포함)
@@ -291,7 +296,10 @@ export default function CommunityWritePage() {
       toast.success("게시글이 작성되었습니다!");
       router.push(`/community/posts/${postId}/${postSlug}`);
     } else {
-      toast.error(result.error || "게시글 작성에 실패했습니다.");
+      // 401은 withTokenRefresh에서 자동 처리됨, 다른 에러만 표시
+      if (!result.isUnauthorized) {
+        toast.error(result.error || "게시글 작성에 실패했습니다.");
+      }
       setIsSubmitting(false);
     }
   };

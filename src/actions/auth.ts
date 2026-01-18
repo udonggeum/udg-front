@@ -10,6 +10,7 @@ import type {
   UpdateProfileRequest,
   UpdateProfileResponse,
   User,
+  Tokens,
   SendEmailVerificationRequest,
   VerifyEmailRequest,
   SendPhoneVerificationRequest,
@@ -277,5 +278,27 @@ export async function verifyPhoneAction(
     };
   } catch (error) {
     return handleApiError(error, "휴대폰 인증에 실패했습니다.");
+  }
+}
+
+/**
+ * 토큰 갱신 Server Action
+ * Refresh token으로 새 access token을 발급받습니다.
+ */
+export async function refreshTokenAction(
+  refreshToken: string
+): Promise<ApiResponse<{ tokens: Tokens }>> {
+  try {
+    const response = await apiClient.post<{ tokens: Tokens }>(
+      "/auth/refresh",
+      { refresh_token: refreshToken }
+    );
+
+    return {
+      success: true,
+      data: response.data,
+    };
+  } catch (error) {
+    return handleApiError(error, "토큰 갱신에 실패했습니다.");
   }
 }

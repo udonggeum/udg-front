@@ -6,6 +6,7 @@ import Link from "next/link";
 import { User as UserIcon, ArrowLeft, Save, Mail, Phone, MapPin, Camera, CheckCircle2, Store as StoreIcon } from "lucide-react";
 import AddressSearchInput from "@/components/AddressSearchInput";
 import { useAuthStore } from "@/stores/useAuthStore";
+import { useAuthenticatedAction } from "@/hooks/useAuthenticatedAction";
 import { updateProfileAction, sendPhoneVerificationAction, verifyPhoneAction, getMeAction } from "@/actions/auth";
 import { getPresignedUrlAction, uploadToS3 } from "@/actions/upload";
 import { UpdateProfileRequestSchema } from "@/schemas/auth";
@@ -25,7 +26,8 @@ interface FormErrors {
 
 export default function ProfileEditPage() {
   const router = useRouter();
-  const { user, isAuthenticated, tokens, updateUser } = useAuthStore();
+  const { user, isAuthenticated, updateUser } = useAuthStore();
+  const { withTokenRefresh } = useAuthenticatedAction();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isPending, setIsPending] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -209,7 +211,7 @@ export default function ProfileEditPage() {
 
   const handleProfileImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !tokens?.access_token) return;
+    if (!file) return;
 
     // 파일 크기 제한 (5MB)
     if (file.size > 5 * 1024 * 1024) {
@@ -228,17 +230,20 @@ export default function ProfileEditPage() {
 
     try {
       // 1. Presigned URL 가져오기
-      const presignedResult = await getPresignedUrlAction(
-        {
-          filename: file.name,
-          content_type: file.type,
-          file_size: file.size,
-          folder: "uploads",
-        },
-        tokens.access_token
+      const presignedResult = await withTokenRefresh((token) =>
+        getPresignedUrlAction(
+          {
+            filename: file.name,
+            content_type: file.type,
+            file_size: file.size,
+            folder: "uploads",
+          },
+          token
+        )
       );
 
       if (!presignedResult.success || !presignedResult.data) {
+        if (presignedResult.isUnauthorized) return; // 자동 로그아웃됨
         throw new Error(presignedResult.error || "Presigned URL 생성 실패");
       }
 
@@ -252,15 +257,18 @@ export default function ProfileEditPage() {
       }
 
       // 3. 프로필 업데이트
-      const updateResult = await updateProfileAction(
-        {
-          ...formData,
-          profile_image: file_url,
-        },
-        tokens.access_token
+      const updateResult = await withTokenRefresh((token) =>
+        updateProfileAction(
+          {
+            ...formData,
+            profile_image: file_url,
+          },
+          token
+        )
       );
 
       if (!updateResult.success || !updateResult.data) {
+        if (updateResult.isUnauthorized) return; // 자동 로그아웃됨
         throw new Error(updateResult.error || "프로필 업데이트 실패");
       }
 
@@ -291,24 +299,18 @@ export default function ProfileEditPage() {
       return;
     }
 
-    if (!tokens?.access_token) {
-      toast.error("인증 토큰이 없습니다. 다시 로그인해주세요.");
-      router.push("/login");
-      return;
-    }
-
     setIsVerifyingPhone(true);
 
     try {
-      const result = await sendPhoneVerificationAction(
-        { phone: formData.phone },
-        tokens.access_token
+      const result = await withTokenRefresh((token) =>
+        sendPhoneVerificationAction({ phone: formData.phone! }, token)
       );
 
       if (result.success) {
         setIsPhoneVerificationSent(true);
         toast.success("인증 코드가 휴대폰으로 전송되었습니다.");
       } else {
+        if (result.isUnauthorized) return; // 자동 로그아웃됨
         toast.error(result.error || "인증 코드 전송에 실패했습니다.");
       }
     } catch (error) {
@@ -327,36 +329,35 @@ export default function ProfileEditPage() {
       return;
     }
 
-    if (!tokens?.access_token) {
-      toast.error("인증 토큰이 없습니다. 다시 로그인해주세요.");
-      router.push("/login");
-      return;
-    }
-
     setIsVerifyingPhone(true);
 
     try {
-      const result = await verifyPhoneAction(
-        {
-          phone: formData.phone || "",
-          code: phoneVerificationCode,
-        },
-        tokens.access_token
+      const result = await withTokenRefresh((token) =>
+        verifyPhoneAction(
+          {
+            phone: formData.phone || "",
+            code: phoneVerificationCode,
+          },
+          token
+        )
       );
 
       if (result.success) {
         toast.success("휴대폰 인증이 완료되었습니다.");
 
         // 사용자 정보 새로고침 (phone_verified 상태 업데이트)
-        const userResult = await getMeAction(tokens.access_token);
+        const userResult = await withTokenRefresh((token) => getMeAction(token));
         if (userResult.success && userResult.data?.user) {
           updateUser(userResult.data.user);
+        } else if (userResult.isUnauthorized) {
+          return; // 자동 로그아웃됨
         }
 
         // 인증 성공 후 상태 초기화
         setIsPhoneVerificationSent(false);
         setPhoneVerificationCode("");
       } else {
+        if (result.isUnauthorized) return; // 자동 로그아웃됨
         toast.error(result.error || "인증 코드가 올바르지 않습니다.");
       }
     } catch (error) {
@@ -380,12 +381,6 @@ export default function ProfileEditPage() {
       return;
     }
 
-    if (!tokens?.access_token) {
-      toast.error("인증 토큰이 없습니다. 다시 로그인해주세요.");
-      router.push("/login");
-      return;
-    }
-
     setIsPending(true);
 
     try {
@@ -398,7 +393,9 @@ export default function ProfileEditPage() {
           }
         : formData;
 
-      const result = await updateProfileAction(updateData, tokens.access_token);
+      const result = await withTokenRefresh((token) =>
+        updateProfileAction(updateData, token)
+      );
 
       if (result.success && result.data) {
         setIsSuccess(true);
@@ -406,6 +403,7 @@ export default function ProfileEditPage() {
         updateUser(result.data.user);
         toast.success("프로필이 성공적으로 업데이트되었습니다!");
       } else {
+        if (result.isUnauthorized) return; // 자동 로그아웃됨
         toast.error(result.error || "프로필 업데이트에 실패했습니다.");
       }
     } catch (error) {
