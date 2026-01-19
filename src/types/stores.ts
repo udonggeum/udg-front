@@ -26,6 +26,22 @@ export interface Tag {
 }
 
 /**
+ * Store background type
+ * 매장 배경 타입
+ */
+export type StoreBackgroundType = 'preset' | 'color' | 'image';
+
+/**
+ * Store background settings
+ * 매장 배경 설정
+ */
+export interface StoreBackground {
+  type: StoreBackgroundType;
+  value: string; // preset ID, color ID, 또는 이미지 URL
+  pattern?: string; // 패턴 ID (color 타입일 때)
+}
+
+/**
  * Store detail type
  * 매장 상세 정보
  */
@@ -64,6 +80,9 @@ export interface StoreDetail {
   is_managed?: boolean; // 관리매장 여부 (소유자가 있는 매장)
   is_verified?: boolean; // 인증 매장 여부 (사업자등록증 검증 완료)
   verified_at?: string; // 인증 완료 일시
+
+  // 배경 커스터마이징
+  background?: StoreBackground; // 매장 배경 설정
 }
 
 /**

@@ -34,9 +34,11 @@ import { getTagsAction } from "@/actions/tags";
 import { createChatRoomAction } from "@/actions/chat";
 import { getPostsAction, getStoreGalleryAction, pinPostAction, unpinPostAction } from "@/actions/community";
 import type { CommunityPost, GalleryItem, PostType } from "@/types/community";
-import type { StoreDetail } from "@/types/stores";
+import type { StoreDetail, StoreBackground as StoreBackgroundType } from "@/types/stores";
 import type { Tag } from "@/types/tags";
 import TagEditModal from "@/components/tag-edit-modal";
+import { StoreBackground } from "@/components/store-background";
+import { StoreBackgroundModal } from "@/components/store-background-modal";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { getPresignedUrlAction, uploadToS3 } from "@/actions/upload";
 import { toast } from "sonner";
@@ -197,6 +199,8 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
   const [allTags, setAllTags] = useState<Tag[]>([]);
   const [isLoadingTags, setIsLoadingTags] = useState(false);
   const [isClaimModalOpen, setIsClaimModalOpen] = useState(false);
+  const [isBackgroundModalOpen, setIsBackgroundModalOpen] = useState(false);
+  const [storeBackground, setStoreBackground] = useState<StoreBackgroundType | undefined>(undefined);
 
   // 자기 매장인지 확인 (user_id가 있고, store의 user_id와 일치하는 경우)
   const isMyStore = user?.id && store?.user_id && user.id === store.user_id;
@@ -214,6 +218,11 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
         open_time: store.open_time || "",
         close_time: store.close_time || "",
       });
+
+      // 배경 설정 로드
+      if (store.background) {
+        setStoreBackground(store.background);
+      }
     }
   }, [store]);
 
@@ -695,6 +704,49 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
     }
   };
 
+  // 배경 저장
+  const handleSaveBackground = async (background: StoreBackgroundType) => {
+    if (!store) return;
+
+    const { tokens } = useAuthStore.getState();
+    if (!tokens?.access_token) {
+      toast.error("로그인이 필요합니다.");
+      return;
+    }
+
+    try {
+      const response = await apiClient.put(
+        `/stores/${store.id}`,
+        {
+          name: store.name,
+          region: store.region || "",
+          district: store.district || "",
+          address: store.address,
+          phone_number: store.phone_number,
+          image_url: store.image_url,
+          description: store.description,
+          open_time: store.open_time,
+          close_time: store.close_time,
+          tag_ids: store.tags?.map(tag => tag.id) || [],
+          background: background,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${tokens.access_token}`,
+          },
+        }
+      );
+
+      setStore(response.data.store);
+      setStoreBackground(background);
+      toast.success("배경이 저장되었습니다.");
+    } catch (error) {
+      console.error("Save background error:", error);
+      toast.error("배경 저장에 실패했습니다.");
+      throw error;
+    }
+  };
+
   // 매장 정보 업데이트 API 호출
   const updateStoreData = async (data: Partial<StoreDetail>) => {
     const { tokens } = useAuthStore.getState();
@@ -755,18 +807,20 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* 커버 이미지 */}
-      <div className="relative h-[280px] w-full overflow-hidden bg-gradient-to-br from-gray-50 via-gray-100 to-[#FEF9E7]">
-        <div className="absolute inset-0 opacity-20">
-          <svg className="h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none">
-            <defs>
-              <pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse">
-                <circle cx="5" cy="5" r="1" fill="#2e2b29ff" />
-              </pattern>
-            </defs>
-            <rect width="100" height="100" fill="url(#grid)" />
-          </svg>
-        </div>
-      </div>
+      <StoreBackground background={storeBackground} className="h-[280px]">
+        {/* 내 매장일 때 배경 편집 버튼 */}
+        {isMyStore && (
+          <div className="absolute top-4 right-4 z-20">
+            <button
+              onClick={() => setIsBackgroundModalOpen(true)}
+              className="flex items-center gap-2 px-3 py-2 bg-white/90 hover:bg-white text-gray-700 text-sm font-medium rounded-lg shadow-md backdrop-blur-sm transition-all"
+            >
+              <ImageIcon className="w-4 h-4" />
+              배경 편집
+            </button>
+          </div>
+        )}
+      </StoreBackground>
 
       {/* 매장 메인 정보 */}
       <div className="relative z-10 -mt-20 max-w-[1080px] mx-auto px-page w-full">
@@ -1909,6 +1963,16 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
         open={isClaimModalOpen}
         onOpenChange={setIsClaimModalOpen}
       />
+
+      {/* Store Background Modal */}
+      {isMyStore && (
+        <StoreBackgroundModal
+          open={isBackgroundModalOpen}
+          onOpenChange={setIsBackgroundModalOpen}
+          currentBackground={storeBackground}
+          onSave={handleSaveBackground}
+        />
+      )}
     </div>
   );
 }
