@@ -14,6 +14,7 @@ import type {
   SubmitVerificationRequest,
   SubmitVerificationResponse,
   VerificationStatusResponse,
+  StoreRegistrationRequestStatus,
 } from "@/types/stores";
 import type { UpdateStoreRequest } from "@/schemas/stores";
 import { apiClient, handleApiError, type ApiResponse } from "@/lib/axios";
@@ -298,5 +299,58 @@ export async function getVerificationStatusAction(
     };
   } catch (error) {
     return handleApiError(error, "인증 상태 조회에 실패했습니다.");
+  }
+}
+
+/**
+ * 매장 등록 요청 상태 조회 Server Action
+ */
+export async function getStoreRegistrationRequestStatusAction(
+  storeId: number,
+  accessToken?: string
+): Promise<ApiResponse<StoreRegistrationRequestStatus>> {
+  try {
+    const headers = accessToken
+      ? { Authorization: `Bearer ${accessToken}` }
+      : {};
+
+    const response = await apiClient.get<StoreRegistrationRequestStatus>(
+      `/stores/${storeId}/registration-request`,
+      { headers }
+    );
+
+    return {
+      success: true,
+      data: response.data,
+    };
+  } catch (error) {
+    return handleApiError(error, "매장 등록 요청 상태 조회에 실패했습니다.");
+  }
+}
+
+/**
+ * 매장 등록 요청 Server Action
+ */
+export async function requestStoreRegistrationAction(
+  storeId: number,
+  accessToken: string
+): Promise<ApiResponse<StoreRegistrationRequestStatus>> {
+  try {
+    const response = await apiClient.post<StoreRegistrationRequestStatus>(
+      `/stores/${storeId}/registration-request`,
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+
+    return {
+      success: true,
+      data: response.data,
+    };
+  } catch (error) {
+    return handleApiError(error, "매장 등록 요청에 실패했습니다.");
   }
 }

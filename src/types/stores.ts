@@ -72,6 +72,7 @@ export interface StoreDetail {
   image_url?: string;
   logo_url?: string;
   thumbnail_url?: string;
+  background?: StoreBackground; // 매장 배경 설정
   category_counts?: StoreCategoryCounts;
   products?: unknown[];
   is_liked?: boolean;
@@ -262,4 +263,25 @@ export interface SubmitVerificationResponse {
 export interface VerificationStatusResponse {
   is_verified: boolean;
   verification: StoreVerification | null;
+}
+
+/**
+ * Store background type
+ * 매장 배경 설정
+ */
+export type StoreBackgroundType = 'preset' | 'color' | 'image';
+
+export interface StoreBackground {
+  type: StoreBackgroundType;
+  value: string;
+  pattern?: string;
+}
+
+/**
+ * Store registration request status response
+ * 매장 등록 요청 상태 응답
+ */
+export interface StoreRegistrationRequestStatus {
+  request_count: number;
+  has_requested: boolean;
 }

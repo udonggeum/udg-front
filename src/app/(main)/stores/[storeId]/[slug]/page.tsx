@@ -28,7 +28,7 @@ import {
   Building2,
   BadgeCheck,
 } from "lucide-react";
-import { getStoreDetailAction, toggleStoreLikeAction } from "@/actions/stores";
+import { getStoreDetailAction, toggleStoreLikeAction, getStoreRegistrationRequestStatusAction, requestStoreRegistrationAction } from "@/actions/stores";
 import { StoreClaimModal } from "@/components/store-claim-modal";
 import { getTagsAction } from "@/actions/tags";
 import { createChatRoomAction } from "@/actions/chat";
@@ -202,6 +202,11 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
   const [isBackgroundModalOpen, setIsBackgroundModalOpen] = useState(false);
   const [storeBackground, setStoreBackground] = useState<StoreBackgroundType | undefined>(undefined);
 
+  // 매장 등록 요청 관련 상태
+  const [registrationRequestCount, setRegistrationRequestCount] = useState(0);
+  const [hasRequestedRegistration, setHasRequestedRegistration] = useState(false);
+  const [isRequestingRegistration, setIsRequestingRegistration] = useState(false);
+
   // 자기 매장인지 확인 (user_id가 있고, store의 user_id와 일치하는 경우)
   const isMyStore = user?.id && store?.user_id && user.id === store.user_id;
   const isAnyEditing = Object.values(editSections).some(Boolean);
@@ -331,6 +336,25 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
 
     loadPosts();
   }, [store?.id, activeTab]); // ✅ store 대신 store?.id 사용
+
+  // 매장 등록 요청 상태 로드 (관리되지 않은 매장일 때만)
+  useEffect(() => {
+    if (!store || store.is_managed || isMyStore) return;
+
+    const loadRegistrationRequestStatus = async () => {
+      try {
+        const result = await getStoreRegistrationRequestStatusAction(store.id, accessToken);
+        if (result.success && result.data) {
+          setRegistrationRequestCount(result.data.request_count);
+          setHasRequestedRegistration(result.data.has_requested);
+        }
+      } catch (err) {
+        console.error("매장 등록 요청 상태 조회 에러:", err);
+      }
+    };
+
+    loadRegistrationRequestStatus();
+  }, [store?.id, store?.is_managed, isMyStore, accessToken]);
 
   // 갤러리 로드
   useEffect(() => {
@@ -605,6 +629,45 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
   const handleOpenTagModal = async () => {
     await loadTags();
     setIsTagModalOpen(true);
+  };
+
+  // 매장 등록 요청 핸들러
+  const handleRequestRegistration = async () => {
+    if (!user || !accessToken) {
+      toast.error("로그인이 필요합니다.");
+      router.push("/login");
+      return;
+    }
+
+    if (!store) {
+      toast.error("매장 정보를 불러올 수 없습니다.");
+      return;
+    }
+
+    if (hasRequestedRegistration) {
+      toast.error("이미 등록 요청을 하셨습니다.");
+      return;
+    }
+
+    setIsRequestingRegistration(true);
+    const loadingToast = toast.loading("매장 등록 요청 중...");
+
+    try {
+      const result = await requestStoreRegistrationAction(store.id, accessToken);
+
+      if (result.success && result.data) {
+        setRegistrationRequestCount(result.data.request_count);
+        setHasRequestedRegistration(result.data.has_requested);
+        toast.success("매장 등록 요청이 완료되었습니다.", { id: loadingToast });
+      } else {
+        toast.error(result.error || "매장 등록 요청에 실패했습니다.", { id: loadingToast });
+      }
+    } catch (error) {
+      console.error("Request store registration error:", error);
+      toast.error("매장 등록 요청 중 오류가 발생했습니다.", { id: loadingToast });
+    } finally {
+      setIsRequestingRegistration(false);
+    }
   };
 
   // 태그 저장
@@ -1134,14 +1197,33 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
                   </>
                 ) : (
                   <>
-                    {/* 다른 매장: 문의하기(Primary CTA), 전화번호 복사(Secondary) */}
-                    <button
-                      onClick={handleInquiry}
-                      className="flex-1 flex items-center justify-center gap-2 py-3 bg-[#C9A227] hover:bg-[#8A6A00] text-white text-body font-semibold rounded-xl shadow-md hover:shadow-lg transition-all active:scale-[0.98]"
-                    >
-                      <MessageCircle className="w-5 h-5" />
-                      문의하기
-                    </button>
+                    {/* 다른 매장: 관리매장이면 문의하기, 아니면 매장등록 요청하기 */}
+                    {store.is_managed ? (
+                      <button
+                        onClick={handleInquiry}
+                        className="flex-1 flex items-center justify-center gap-2 py-3 bg-[#C9A227] hover:bg-[#8A6A00] text-white text-body font-semibold rounded-xl shadow-md hover:shadow-lg transition-all active:scale-[0.98]"
+                      >
+                        <MessageCircle className="w-5 h-5" />
+                        문의하기
+                      </button>
+                    ) : (
+                      <button
+                        onClick={handleRequestRegistration}
+                        disabled={hasRequestedRegistration || isRequestingRegistration}
+                        className={`flex-1 flex items-center justify-center gap-2 py-3 text-body font-semibold rounded-xl shadow-md transition-all active:scale-[0.98] ${
+                          hasRequestedRegistration
+                            ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                            : "bg-[#C9A227] hover:bg-[#8A6A00] text-white hover:shadow-lg"
+                        }`}
+                      >
+                        <StoreIcon className="w-5 h-5" />
+                        {hasRequestedRegistration ? (
+                          "요청 완료"
+                        ) : (
+                          <>매장등록 요청하기 {registrationRequestCount > 0 && `(${registrationRequestCount})`}</>
+                        )}
+                      </button>
+                    )}
                     {store.phone_number && (
                       <button
                         onClick={handleCopyPhoneNumber}
