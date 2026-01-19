@@ -20,6 +20,7 @@ export const UserSchema = z.object({
   id: z.number().int().positive(),
   email: z.string().email(AUTH_ERRORS.EMAIL_INVALID),
   name: z.string().min(1, AUTH_ERRORS.NAME_REQUIRED),
+  nickname: z.string().optional(),
   phone: z
     .string()
     .regex(
@@ -28,6 +29,7 @@ export const UserSchema = z.object({
     )
     .optional(),
   address: z.string().optional(),
+  profile_image: z.string().optional(),
   role: z.enum(['user', 'admin']),
   created_at: z.string().optional(),
   updated_at: z.string().optional(),
@@ -104,10 +106,10 @@ export type MeResponse = z.infer<typeof MeResponseSchema>;
 /**
  * Update profile request schema
  * 프로필 업데이트 사용자 입력 검증
- * 참고: name, phone, address만 업데이트 가능 (이메일과 비밀번호는 별도 플로우)
+ * 참고: 모든 필드는 선택적(partial update) - 제공된 필드만 업데이트됨
  */
 export const UpdateProfileRequestSchema = z.object({
-  name: z.string().min(1, AUTH_ERRORS.NAME_REQUIRED),
+  name: z.string().min(1, AUTH_ERRORS.NAME_REQUIRED).optional(),
   phone: z
     .string()
     .transform((val) => val === "" ? undefined : val) // 빈 문자열을 undefined로 변환
@@ -120,7 +122,9 @@ export const UpdateProfileRequestSchema = z.object({
         )
         .optional()
     ),
+  nickname: z.string().optional(),
   address: z.string().optional(),
+  profile_image: z.string().optional(),
 });
 
 export type UpdateProfileRequest = z.infer<typeof UpdateProfileRequestSchema>;

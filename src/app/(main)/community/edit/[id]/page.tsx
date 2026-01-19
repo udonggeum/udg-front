@@ -17,6 +17,7 @@ import {
   type PostCategory,
   type PostType,
   type CreatePostRequest,
+  type UpdatePostRequest,
 } from "@/types/community";
 
 export default function CommunityEditPage() {
@@ -226,11 +227,9 @@ export default function CommunityEditPage() {
 
     setIsSubmitting(true);
 
-    const requestData: any = {
+    const requestData: UpdatePostRequest = {
       title,
       content,
-      category: selectedCategory,
-      type: selectedType,
     };
 
     // 금거래 관련 정보 추가

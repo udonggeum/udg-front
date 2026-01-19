@@ -411,7 +411,21 @@ export default function MyStoreEditPage() {
     setIsPending(true);
 
     try {
-      const result = await updateMyStoreAction(formData, tokens.access_token);
+      // 빈 문자열을 undefined로 변환하여 전송 (변경되지 않은 필드는 백엔드에서 무시)
+      const cleanedData: UpdateStoreRequest = {
+        name: formData.name || undefined,
+        region: formData.region || undefined,
+        district: formData.district || undefined,
+        address: formData.address || undefined,
+        phone_number: formData.phone_number || undefined,
+        open_time: formData.open_time || undefined,
+        close_time: formData.close_time || undefined,
+        description: formData.description || undefined,
+        image_url: formData.image_url || undefined,
+        tag_ids: formData.tag_ids?.length ? formData.tag_ids : undefined,
+      };
+
+      const result = await updateMyStoreAction(cleanedData, tokens.access_token);
 
       if (result.success && result.data) {
         setIsSuccess(true);
