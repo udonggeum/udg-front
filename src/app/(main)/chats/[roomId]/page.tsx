@@ -3,7 +3,6 @@
 import { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { useAuthStore } from "@/stores/useAuthStore";
-import { useApiErrorHandler } from "@/hooks/useApiCall";
 import {
   getChatRoomAction,
   getMessagesAction,
@@ -35,7 +34,6 @@ export default function ChatRoomPage() {
   const params = useParams();
   const roomId = Number(params.roomId);
   const { user, tokens, isAuthenticated } = useAuthStore();
-  const { handleApiError } = useApiErrorHandler();
 
   const [room, setRoom] = useState<ChatRoom | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);

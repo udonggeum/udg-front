@@ -6,7 +6,6 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useLocationStore } from "@/stores/useLocationStore";
-import { useApiErrorHandler } from "@/hooks/useApiCall";
 import { logoutUserAction } from "@/actions/auth";
 import { getChatRoomsAction } from "@/actions/chat";
 import { getMyStoreAction } from "@/actions/stores";
@@ -26,7 +25,6 @@ export function Header() {
   const router = useRouter();
   const { isAuthenticated, user, tokens, clearAuth } = useAuthStore();
   const { currentLocation, initializeFromUserAddress } = useLocationStore();
-  const { handleApiError } = useApiErrorHandler();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
@@ -58,9 +56,6 @@ export function Header() {
           return sum + room.unread_count;
         }, 0);
         setUnreadChatCount(totalUnread);
-      } else {
-        // 401 에러 체크 및 자동 로그아웃
-        handleApiError(result.error);
       }
     } catch (error) {
       console.error("Failed to fetch unread chat count:", error);
@@ -110,8 +105,6 @@ export function Header() {
         if (result.success && result.data?.store) {
           setMyStoreId(result.data.store.id);
           setMyStoreSlug(result.data.store.slug);
-        } else {
-          console.error("Failed to fetch my store ID:", result.error);
         }
       } catch (error) {
         console.error("Failed to fetch my store ID:", error);

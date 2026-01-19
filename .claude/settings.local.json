@@ -39,7 +39,9 @@
       "Bash(fi)",
       "Bash(done)",
       "Bash(then if grep -q 'net/http' \"$file\")",
-      "Bash(then continue)"
+      "Bash(then continue)",
+      "Bash(make build:*)",
+      "Bash(git diff:*)"
     ],
     "deny": [],
     "ask": []

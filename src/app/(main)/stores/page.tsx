@@ -10,7 +10,8 @@ import {
   Store as StoreIcon,
   Phone,
   Clock,
-  CheckCircle,
+  BadgeCheck,
+  Building2,
 } from "lucide-react";
 import { getStoresAction, toggleStoreLikeAction } from "@/actions/stores";
 import type { StoreDetail, Tag } from "@/types/stores";
@@ -694,37 +695,30 @@ function StoresPageContent() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
-                          <div className="flex items-center gap-1.5 flex-1 min-w-0">
-                            <h3 className="text-[16px] font-semibold text-gray-900 truncate">
-                              {store.name}
-                              {store.branch_name && (
-                                <span className="text-small font-normal text-gray-600 ml-1">
-                                  ({store.branch_name})
-                                </span>
-                              )}
-                            </h3>
-                            {/* 인증/관리 배지 */}
-                            {store.is_verified ? (
-                              <span className="flex items-center gap-1 px-2 py-0.5 bg-[#FEF9E7] text-[#8A6A00] text-[11px] font-medium rounded flex-shrink-0">
-                                <CheckCircle className="w-3 h-3" />
-                                인증
-                              </span>
-                            ) : store.is_managed ? (
-                              <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-[11px] font-medium rounded flex-shrink-0">
-                                관리
-                              </span>
-                            ) : null}
-                          </div>
-                          {/* 영업 상태는 관리매장만 표시 */}
-                          {store.is_managed && (
-                            <span className={`px-1.5 py-0.5 text-[11px] font-medium rounded flex-shrink-0 ${
-                              store.isOpen
-                                ? "bg-[#FEF9E7] text-[#8A6A00]"
-                                : "bg-gray-100 text-gray-600"
-                            }`}>
-                              {store.isOpen ? "영업중" : "준비중"}
+                          <h3 className="text-[16px] font-semibold text-gray-900 truncate flex-1">
+                            {store.name}
+                          </h3>
+                          {/* 인증 매장 뱃지 */}
+                          {store.is_verified && (
+                            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-blue-50 text-blue-700 text-[11px] font-semibold rounded flex-shrink-0">
+                              <BadgeCheck className="w-3 h-3" />
+                              인증
                             </span>
                           )}
+                          {/* 관리 매장 뱃지 (인증되지 않은 경우) */}
+                          {store.is_managed && !store.is_verified && (
+                            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-gray-100 text-gray-600 text-[11px] font-medium rounded flex-shrink-0">
+                              <Building2 className="w-3 h-3" />
+                              관리
+                            </span>
+                          )}
+                          <span className={`px-1.5 py-0.5 text-[11px] font-medium rounded flex-shrink-0 ${
+                            store.isOpen
+                              ? "bg-[#FEF9E7] text-[#8A6A00]"
+                              : "bg-gray-100 text-gray-600"
+                          }`}>
+                            {store.isOpen ? "영업중" : "준비중"}
+                          </span>
                           <button
                             type="button"
                             onClick={(e) => handleStoreLike(store.id, e)}
@@ -869,28 +863,31 @@ function StoresPageContent() {
                 {/* 매장명 & 기본 정보 */}
                 <div className="pb-4 border-b border-gray-100">
                   <div className="flex items-start justify-between mb-2">
-                    <div className="flex-1 min-w-0">
-                      <button
-                        type="button"
-                        onClick={() => router.push(`/stores/${selectedStore.id}/${selectedStore.slug}`)}
-                        className="hover:underline"
-                      >
-                        <h3 className="text-[20px] font-bold text-gray-900">
-                          {selectedStore.name}
-                        </h3>
-                      </button>
-                      {/* 인증/관리 배지 */}
-                      <div className="flex items-center gap-2 mt-1">
-                        {selectedStore.is_verified ? (
-                          <span className="flex items-center gap-1 px-2.5 py-1 bg-[#FEF9E7] text-[#8A6A00] text-small font-medium rounded">
-                            <CheckCircle className="w-4 h-4" />
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <button
+                          type="button"
+                          onClick={() => router.push(`/stores/${selectedStore.id}/${selectedStore.slug}`)}
+                          className="hover:underline"
+                        >
+                          <h3 className="text-[20px] font-bold text-gray-900">
+                            {selectedStore.name}
+                          </h3>
+                        </button>
+                        {/* 인증 매장 뱃지 */}
+                        {selectedStore.is_verified && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-50 text-blue-700 text-[11px] font-semibold rounded">
+                            <BadgeCheck className="w-3.5 h-3.5" />
                             인증 매장
                           </span>
-                        ) : selectedStore.is_managed ? (
-                          <span className="px-2.5 py-1 bg-gray-100 text-gray-600 text-small font-medium rounded">
+                        )}
+                        {/* 관리 매장 뱃지 (인증되지 않은 경우) */}
+                        {selectedStore.is_managed && !selectedStore.is_verified && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-gray-100 text-gray-600 text-[11px] font-medium rounded">
+                            <Building2 className="w-3.5 h-3.5" />
                             관리 매장
                           </span>
-                        ) : null}
+                        )}
                       </div>
                     </div>
                     <button

@@ -160,8 +160,6 @@ export default function MyPage() {
         } else if (type === "store") {
           if (result.success && result.data?.store) {
             setMyStore(result.data.store);
-          } else {
-            console.error("Failed to fetch my store:", result.error);
           }
           setIsLoadingMyStore(false);
         } else if (type === "settings") {
@@ -171,8 +169,6 @@ export default function MyPage() {
               selected_regions: result.data.settings.selected_regions || [],
             };
             setNotificationSettings(settings);
-          } else {
-            console.error("Failed to fetch notification settings:", result.error);
           }
           setIsLoadingSettings(false);
         } else if (type === "likedStores") {

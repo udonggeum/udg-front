@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { getChatRoomsAction, leaveChatRoomAction } from "@/actions/chat";
-import { useApiErrorHandler } from "@/hooks/useApiCall";
 import type { ChatRoomWithUnread, ChatRoomType } from "@/types/chat";
 import { MessageCircle, User, Store, Trash2 } from "lucide-react";
 import { toast } from "sonner";
@@ -29,7 +28,6 @@ type ChatFilter = "all" | "STORE" | "received" | "sent";
 export default function ChatsPage() {
   const router = useRouter();
   const { user, tokens, isAuthenticated } = useAuthStore();
-  const { handleApiError } = useApiErrorHandler();
   const [rooms, setRooms] = useState<ChatRoomWithUnread[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [deleteRoomId, setDeleteRoomId] = useState<number | null>(null);
@@ -45,8 +43,6 @@ export default function ChatsPage() {
     if (result.success && result.data) {
       setRooms(result.data.rooms);
     } else {
-      // 401 에러 체크 및 자동 로그아웃
-      handleApiError(result.error);
       toast.error(result.error || "메시지 목록을 불러올 수 없습니다.");
     }
     setIsLoading(false);
@@ -111,8 +107,6 @@ export default function ChatsPage() {
       // 목록에서 제거
       setRooms((prev) => prev.filter((room) => room.id !== deleteRoomId));
     } else {
-      // 401 에러 체크 및 자동 로그아웃
-      handleApiError(result.error);
       toast.error(result.error || "대화방 나가기에 실패했습니다.");
     }
 

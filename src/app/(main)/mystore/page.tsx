@@ -2,10 +2,12 @@
 
 import { useState, useEffect, useRef, type FormEvent, type ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
-import { Store, ArrowLeft, Save, Phone, Clock, MapPin, FileText, Camera, Image as ImageIcon, Tags } from "lucide-react";
+import { Store, ArrowLeft, Save, Phone, Clock, MapPin, FileText, Camera, Image as ImageIcon, Tags, BadgeCheck, ShieldCheck, AlertCircle, Clock3, XCircle, Upload } from "lucide-react";
 import AddressSearchInput from "@/components/AddressSearchInput";
 import { useAuthStore } from "@/stores/useAuthStore";
-import { getMyStoreAction, updateMyStoreAction, getStoreLocationsAction } from "@/actions/stores";
+import { getMyStoreAction, updateMyStoreAction, getStoreLocationsAction, getVerificationStatusAction } from "@/actions/stores";
+import { StoreVerificationModal } from "@/components/store-verification-modal";
+import type { VerificationStatusResponse } from "@/types/stores";
 import { getPresignedUrlAction, uploadToS3 } from "@/actions/upload";
 import { getTagsAction } from "@/actions/tags";
 import { UpdateStoreRequestSchema } from "@/schemas/stores";
@@ -42,6 +44,10 @@ export default function MyStoreEditPage() {
   const [isSuccess, setIsSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [myStore, setMyStore] = useState<StoreDetail | null>(null);
+
+  // 인증 상태 관련
+  const [verificationStatus, setVerificationStatus] = useState<VerificationStatusResponse | null>(null);
+  const [isVerificationModalOpen, setIsVerificationModalOpen] = useState(false);
 
   // 이미지 업로드 관련
   const imageInputRef = useRef<HTMLInputElement>(null);
@@ -154,8 +160,13 @@ export default function MyStoreEditPage() {
               setBaseAddress(store.address);
             }
           }
+
+          // 인증 상태 로드
+          const verificationResult = await getVerificationStatusAction(tokens.access_token);
+          if (verificationResult.success && verificationResult.data) {
+            setVerificationStatus(verificationResult.data);
+          }
         } else {
-          console.error("Failed to load store from /users/me/store:", result.error);
           toast.error(result.error || "매장 정보를 불러올 수 없습니다.");
         }
       } catch (error) {
@@ -449,6 +460,75 @@ export default function MyStoreEditPage() {
           <h1 className="text-2xl font-bold text-gray-900">매장 정보 수정</h1>
           <p className="mt-1 text-sm text-gray-600">수정할 항목의 내용을 변경하세요</p>
         </div>
+
+        {/* 인증 상태 카드 */}
+        <Card className="mb-6 border-0 shadow-sm">
+          <CardContent className="p-6">
+            <div className="flex items-start justify-between">
+              <div className="flex items-start gap-4">
+                {/* 인증 상태 아이콘 */}
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
+                  myStore?.is_verified
+                    ? "bg-blue-100"
+                    : verificationStatus?.verification?.status === "pending"
+                    ? "bg-yellow-100"
+                    : verificationStatus?.verification?.status === "rejected"
+                    ? "bg-red-100"
+                    : "bg-gray-100"
+                }`}>
+                  {myStore?.is_verified ? (
+                    <BadgeCheck className="w-6 h-6 text-blue-600" />
+                  ) : verificationStatus?.verification?.status === "pending" ? (
+                    <Clock3 className="w-6 h-6 text-yellow-600" />
+                  ) : verificationStatus?.verification?.status === "rejected" ? (
+                    <XCircle className="w-6 h-6 text-red-600" />
+                  ) : (
+                    <ShieldCheck className="w-6 h-6 text-gray-400" />
+                  )}
+                </div>
+
+                {/* 인증 상태 정보 */}
+                <div>
+                  <h3 className="font-semibold text-gray-900 mb-1">
+                    {myStore?.is_verified
+                      ? "인증 매장"
+                      : verificationStatus?.verification?.status === "pending"
+                      ? "인증 심사 중"
+                      : verificationStatus?.verification?.status === "rejected"
+                      ? "인증 반려됨"
+                      : "매장 인증"}
+                  </h3>
+                  <p className="text-sm text-gray-600">
+                    {myStore?.is_verified
+                      ? "사업자등록증 검증이 완료된 인증 매장입니다."
+                      : verificationStatus?.verification?.status === "pending"
+                      ? "사업자등록증 심사가 진행 중입니다. 보통 1-2 영업일 내에 완료됩니다."
+                      : verificationStatus?.verification?.status === "rejected"
+                      ? verificationStatus.verification.rejection_reason || "인증이 반려되었습니다. 다시 신청해주세요."
+                      : "사업자등록증을 제출하여 인증 매장이 되어보세요."}
+                  </p>
+                  {myStore?.verified_at && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      인증일: {new Date(myStore.verified_at).toLocaleDateString("ko-KR")}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* 인증 신청 버튼 (인증되지 않은 경우 또는 반려된 경우) */}
+              {!myStore?.is_verified && verificationStatus?.verification?.status !== "pending" && (
+                <Button
+                  onClick={() => setIsVerificationModalOpen(true)}
+                  size="sm"
+                  className="gap-2"
+                >
+                  <Upload className="w-4 h-4" />
+                  {verificationStatus?.verification?.status === "rejected" ? "재신청" : "인증 신청"}
+                </Button>
+              )}
+            </div>
+          </CardContent>
+        </Card>
 
         {/* 매장 이미지 카드 */}
         <Card className="mb-6 border-0 shadow-sm">
@@ -758,6 +838,21 @@ export default function MyStoreEditPage() {
           </CardContent>
         </Card>
       </section>
+
+      {/* 인증 신청 모달 */}
+      <StoreVerificationModal
+        open={isVerificationModalOpen}
+        onOpenChange={setIsVerificationModalOpen}
+        onSuccess={async () => {
+          // 인증 상태 다시 로드
+          if (tokens?.access_token) {
+            const result = await getVerificationStatusAction(tokens.access_token);
+            if (result.success && result.data) {
+              setVerificationStatus(result.data);
+            }
+          }
+        }}
+      />
     </main>
   );
 }

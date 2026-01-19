@@ -25,8 +25,11 @@ import {
   Newspaper,
   Copy,
   Sparkles,
+  Building2,
+  BadgeCheck,
 } from "lucide-react";
 import { getStoreDetailAction, toggleStoreLikeAction } from "@/actions/stores";
+import { StoreClaimModal } from "@/components/store-claim-modal";
 import { getTagsAction } from "@/actions/tags";
 import { createChatRoomAction } from "@/actions/chat";
 import { getPostsAction, getStoreGalleryAction, pinPostAction, unpinPostAction } from "@/actions/community";
@@ -193,6 +196,7 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
   const [isTagModalOpen, setIsTagModalOpen] = useState(false);
   const [allTags, setAllTags] = useState<Tag[]>([]);
   const [isLoadingTags, setIsLoadingTags] = useState(false);
+  const [isClaimModalOpen, setIsClaimModalOpen] = useState(false);
 
   // 자기 매장인지 확인 (user_id가 있고, store의 user_id와 일치하는 경우)
   const isMyStore = user?.id && store?.user_id && user.id === store.user_id;
@@ -867,11 +871,27 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
                         )}
                       </h1>
                     )}
-                    {/* 매장명 수정 중이 아닐 때만 영업 상태 표시 */}
+                    {/* 매장명 수정 중이 아닐 때만 영업 상태 및 인증 뱃지 표시 */}
                     {!editSections.name && (
-                      <span className={`px-3 py-1 text-small font-semibold rounded-full ${status.className}`}>
-                        {status.label}
-                      </span>
+                      <>
+                        <span className={`px-3 py-1 text-small font-semibold rounded-full ${status.className}`}>
+                          {status.label}
+                        </span>
+                        {/* 인증 매장 뱃지 */}
+                        {store.is_verified && (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-50 text-blue-700 text-small font-semibold rounded-full">
+                            <BadgeCheck className="w-4 h-4" />
+                            인증 매장
+                          </span>
+                        )}
+                        {/* 관리 매장 뱃지 (인증되지 않은 경우) */}
+                        {store.is_managed && !store.is_verified && (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-gray-100 text-gray-600 text-small font-medium rounded-full">
+                            <Building2 className="w-4 h-4" />
+                            관리 매장
+                          </span>
+                        )}
+                      </>
                     )}
                     {isMyStore && !editSections.name && (
                       <button
@@ -975,13 +995,25 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
                       {isAnyEditing || isEditMode ? "편집 종료" : "편집"}
                     </button>
                   ) : (
-                    <button
-                      onClick={handleWishlistToggle}
-                      className="flex items-center gap-2 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-                    >
-                      <Heart className={`w-5 h-5 ${isWishlisted ? "fill-red-500 text-red-500" : "text-gray-600"}`} />
-                      <span className="text-caption font-semibold text-gray-900">찜하기</span>
-                    </button>
+                    <>
+                      {/* 관리되지 않는 매장 + 로그인 사용자 -> 내 매장으로 등록 버튼 */}
+                      {user && !store.is_managed && (
+                        <button
+                          onClick={() => setIsClaimModalOpen(true)}
+                          className="flex items-center gap-2 px-4 py-2.5 bg-[#C9A227] hover:bg-[#8A6A00] text-white rounded-lg transition-colors shadow-md"
+                        >
+                          <Building2 className="w-5 h-5" />
+                          <span className="text-caption font-semibold">내 매장으로 등록</span>
+                        </button>
+                      )}
+                      <button
+                        onClick={handleWishlistToggle}
+                        className="flex items-center gap-2 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                      >
+                        <Heart className={`w-5 h-5 ${isWishlisted ? "fill-red-500 text-red-500" : "text-gray-600"}`} />
+                        <span className="text-caption font-semibold text-gray-900">찜하기</span>
+                      </button>
+                    </>
                   )}
                 </div>
               </div>
@@ -1869,6 +1901,14 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
           onSave={handleSaveTags}
         />
       )}
+
+      {/* Store Claim Modal */}
+      <StoreClaimModal
+        storeId={store.id}
+        storeName={store.name}
+        open={isClaimModalOpen}
+        onOpenChange={setIsClaimModalOpen}
+      />
     </div>
   );
 }
