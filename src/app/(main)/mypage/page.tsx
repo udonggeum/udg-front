@@ -1028,7 +1028,7 @@ export default function MyPage() {
                     itemContent={(index, post) => (
                       <Link
                         key={post.id}
-                        href={`/community/posts/${post.id}`}
+                        href={`/community/posts/${post.id}/${post.slug}`}
                         className="block p-4 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors mb-3"
                       >
                         <div className="flex items-start justify-between gap-4">

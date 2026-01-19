@@ -1322,7 +1322,7 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
                           <div
                             key={post.id}
                             className="group border border-gray-200 rounded-xl p-5 hover:shadow-md transition-shadow cursor-pointer bg-[#FEF9E7] border-[#C9A227]/30"
-                            onClick={() => router.push(`/community/posts/${post.id}`)}
+                            onClick={() => router.push(`/community/posts/${post.id}/${post.slug}`)}
                           >
                             <div className="flex items-start justify-between gap-3 mb-3">
                               <div className="flex items-center gap-2">
@@ -1390,7 +1390,7 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
                           <div
                             key={post.id}
                             className="group border border-gray-200 rounded-xl p-5 hover:shadow-md transition-shadow cursor-pointer"
-                            onClick={() => router.push(`/community/posts/${post.id}`)}
+                            onClick={() => router.push(`/community/posts/${post.id}/${post.slug}`)}
                           >
                             <div className="flex items-start justify-between gap-3 mb-3">
                               <div className="flex items-center gap-2">
@@ -1552,7 +1552,7 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
                             <div
                               key={post.id}
                               className="group border border-gray-200 rounded-xl p-5 hover:shadow-md transition-shadow cursor-pointer bg-[#FEF9E7] border-[#C9A227]/30"
-                              onClick={() => router.push(`/community/posts/${post.id}`)}
+                              onClick={() => router.push(`/community/posts/${post.id}/${post.slug}`)}
                             >
                               <div className="flex items-start justify-between gap-3 mb-3">
                                 <div className="flex items-center gap-2">
@@ -1641,7 +1641,7 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
                             <div
                               key={post.id}
                               className="group border border-gray-200 rounded-xl p-5 hover:shadow-md transition-shadow cursor-pointer"
-                              onClick={() => router.push(`/community/posts/${post.id}`)}
+                              onClick={() => router.push(`/community/posts/${post.id}/${post.slug}`)}
                             >
                               <div className="flex items-start justify-between gap-3 mb-3">
                                 <div className="flex items-center gap-2">
@@ -1744,7 +1744,7 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
                           <div
                             key={`${item.post_id}-${item.image_url}`}
                             className="group relative aspect-square rounded-lg overflow-hidden cursor-pointer"
-                            onClick={() => router.push(`/community/posts/${item.post_id}`)}
+                            onClick={() => router.push(`/community/posts/${item.post_id}/gallery`)}
                           >
                             <img
                               src={item.image_url}
