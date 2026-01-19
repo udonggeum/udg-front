@@ -435,8 +435,16 @@ export default function Home() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {nearbyStores.map((store) => (
                 <Link key={store.id} href={`/stores/${store.id}/${store.slug}`} className="bg-white p-5 rounded-2xl card-shadow smooth-transition hover-lift flex gap-4">
-                  <div className="w-20 h-20 bg-[#FEF9E7] border border-[#C9A227]/20 rounded-xl flex items-center justify-center flex-shrink-0">
-                    <Store className="w-10 h-10 text-[#C9A227]" />
+                  <div className="w-20 h-20 bg-[#FEF9E7] border border-[#C9A227]/20 rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden">
+                    {store.image_url ? (
+                      <img
+                        src={store.image_url}
+                        alt={store.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <Store className="w-10 h-10 text-[#C9A227]" />
+                    )}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">

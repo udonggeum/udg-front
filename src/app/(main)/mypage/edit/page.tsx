@@ -9,8 +9,10 @@ import { useAuthStore } from "@/stores/useAuthStore";
 import { useAuthenticatedAction } from "@/hooks/useAuthenticatedAction";
 import { updateProfileAction, sendPhoneVerificationAction, verifyPhoneAction, getMeAction } from "@/actions/auth";
 import { getPresignedUrlAction, uploadToS3 } from "@/actions/upload";
+import { getMyStoreAction } from "@/actions/stores";
 import { UpdateProfileRequestSchema } from "@/schemas/auth";
 import type { UpdateProfileRequest } from "@/types/auth";
+import type { StoreDetail } from "@/types/stores";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -26,12 +28,15 @@ interface FormErrors {
 
 export default function ProfileEditPage() {
   const router = useRouter();
-  const { user, isAuthenticated, updateUser } = useAuthStore();
+  const { user, isAuthenticated, tokens, updateUser } = useAuthStore();
   const { withTokenRefresh } = useAuthenticatedAction();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isPending, setIsPending] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
+
+  // admin 사용자의 매장 정보
+  const [myStore, setMyStore] = useState<StoreDetail | null>(null);
 
   // 휴대폰 인증 상태
   const [isPhoneVerificationSent, setIsPhoneVerificationSent] = useState(false);
@@ -59,6 +64,24 @@ export default function ProfileEditPage() {
       router.push("/login");
     }
   }, [isAuthenticated, router]);
+
+  // admin 사용자의 매장 정보 가져오기
+  useEffect(() => {
+    const fetchMyStore = async () => {
+      if (user?.role === "admin" && tokens?.access_token) {
+        try {
+          const result = await getMyStoreAction(tokens.access_token);
+          if (result.success && result.data?.store) {
+            setMyStore(result.data.store);
+          }
+        } catch (error) {
+          console.error("Failed to fetch my store:", error);
+        }
+      }
+    };
+
+    fetchMyStore();
+  }, [user?.role, tokens?.access_token]);
 
   // 기존 주소 파싱 (초기 로드 시)
   useEffect(() => {
@@ -445,11 +468,11 @@ export default function ProfileEditPage() {
                 <>
                   <div className="relative mb-4">
                     <Avatar className="w-32 h-32 border-4 border-gray-100">
-                      {user?.store?.image_url ? (
-                        <AvatarImage src={user.store.image_url} alt={user.store.name} />
+                      {myStore?.image_url ? (
+                        <AvatarImage src={myStore.image_url} alt={myStore.name} />
                       ) : null}
                       <AvatarFallback className="bg-gradient-to-br from-[#C9A227] to-[#8A6A00] text-white text-4xl">
-                        {user?.store?.name?.charAt(0) || user?.name?.charAt(0) || "U"}
+                        {myStore?.name?.charAt(0) || user?.name?.charAt(0) || "U"}
                       </AvatarFallback>
                     </Avatar>
                   </div>
@@ -461,8 +484,8 @@ export default function ProfileEditPage() {
                     <p className="text-xs text-gray-500 mb-3">
                       매장 관리자는 별도 프로필 이미지를 설정할 수 없습니다
                     </p>
-                    {user?.store?.id && user?.store?.slug && (
-                      <Link href={`/stores/${user.store.id}/${user.store.slug}`}>
+                    {myStore?.id && myStore?.slug && (
+                      <Link href={`/stores/${myStore.id}/${myStore.slug}`}>
                         <Button variant="outline" size="sm" className="gap-2">
                           <StoreIcon className="w-4 h-4" />
                           매장 정보에서 이미지 수정하기

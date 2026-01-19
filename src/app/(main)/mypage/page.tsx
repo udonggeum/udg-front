@@ -366,11 +366,11 @@ export default function MyPage() {
                 {isAdmin ? (
                   // 매장 관리자: 매장 이미지 표시, 수정 불가
                   <Avatar className="w-24 h-24 border-4 border-gray-100">
-                    {user?.store?.image_url ? (
-                      <AvatarImage src={user.store.image_url} alt={user.store.name} />
+                    {myStore?.image_url ? (
+                      <AvatarImage src={myStore.image_url} alt={myStore.name} />
                     ) : null}
                     <AvatarFallback className="bg-gradient-to-br from-[#C9A227] to-[#8A6A00] text-white text-2xl">
-                      {user?.store?.name?.charAt(0) || user?.name?.charAt(0) || "U"}
+                      {myStore?.name?.charAt(0) || user?.name?.charAt(0) || "U"}
                     </AvatarFallback>
                   </Avatar>
                 ) : (
@@ -912,7 +912,17 @@ export default function MyPage() {
                           <Link key={store.id} href={`/stores/${store.id}/${store.slug}`}>
                             <div className="p-4 border rounded-lg hover:shadow-md transition-shadow cursor-pointer">
                               <div className="flex items-start gap-3">
-                                <Store className="w-10 h-10 text-gray-400 flex-shrink-0" />
+                                <div className="w-16 h-16 bg-[#FEF9E7] border border-[#C9A227]/20 rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden">
+                                  {store.image_url ? (
+                                    <img
+                                      src={store.image_url}
+                                      alt={store.name}
+                                      className="w-full h-full object-cover"
+                                    />
+                                  ) : (
+                                    <Store className="w-8 h-8 text-[#C9A227]" />
+                                  )}
+                                </div>
                                 <div className="flex-1 min-w-0">
                                   <h4 className="font-semibold text-gray-900 mb-1 truncate">{store.name}</h4>
                                   <div className="flex items-center gap-1 text-sm text-gray-600 mb-2">

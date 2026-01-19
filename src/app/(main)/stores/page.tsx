@@ -166,6 +166,7 @@ function StoresPageContent() {
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
+  const [isGettingLocation, setIsGettingLocation] = useState(false);
 
   // 매장 클릭 핸들러 (useCallback으로 메모이제이션)
   const handleStoreClick = useCallback((store: StoreWithExtras) => {
@@ -460,17 +461,22 @@ function StoresPageContent() {
       return;
     }
 
+    setIsGettingLocation(true);
+
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const { latitude, longitude } = position.coords;
         const location = { lat: latitude, lng: longitude };
         setUserLocation(location);
         setMapCenter(location);
+        setIsGettingLocation(false);
+        toast.success("현재 위치로 매장을 검색합니다");
         // TODO: Backend API 호출 - 반경 2km 내 매장 검색
         // fetchNearbyStores(latitude, longitude, 2000);
       },
       (error) => {
         console.error("위치 정보를 가져올 수 없습니다:", error);
+        setIsGettingLocation(false);
         let errorMessage = "위치 정보를 가져올 수 없습니다.";
         if (error.code === error.PERMISSION_DENIED) {
           errorMessage = "위치 권한을 허용해주세요.";
@@ -479,7 +485,7 @@ function StoresPageContent() {
         } else if (error.code === error.TIMEOUT) {
           errorMessage = "위치 정보를 가져오는 데 시간이 초과되었습니다.";
         }
-        alert(errorMessage);
+        toast.error(errorMessage);
       },
       {
         enableHighAccuracy: true,
@@ -579,10 +585,20 @@ function StoresPageContent() {
             <button
               type="button"
               onClick={getCurrentLocation}
-              className="hidden md:flex w-full items-center justify-center gap-2 py-3 bg-white border border-gray-200 rounded-xl text-caption font-medium text-gray-700 hover:bg-gray-50 transition-colors duration-200 mb-4"
+              disabled={isGettingLocation}
+              className="hidden md:flex w-full items-center justify-center gap-2 py-3 bg-white border border-gray-200 rounded-xl text-caption font-medium text-gray-700 hover:bg-gray-50 transition-colors duration-200 mb-4 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-white"
             >
-              <MapPin className="w-5 h-5 text-blue-500" />
-              현재 위치로 검색
+              {isGettingLocation ? (
+                <>
+                  <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                  위치 확인 중...
+                </>
+              ) : (
+                <>
+                  <MapPin className="w-5 h-5 text-blue-500" />
+                  현재 위치로 검색
+                </>
+              )}
             </button>
 
             {/* 필터 태그 */}
@@ -646,9 +662,15 @@ function StoresPageContent() {
             isMobileMapOpen ? "hidden md:flex" : "flex"
           }`}>
             <div className="flex-1 overflow-y-auto stores-list">
-            {isLoading ? (
-              <div className="flex items-center justify-center py-20">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+            {isGettingLocation ? (
+              <div className="flex flex-col items-center justify-center py-20">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mb-4"></div>
+                <p className="text-caption text-gray-600">현재 위치를 확인하는 중입니다...</p>
+              </div>
+            ) : isLoading ? (
+              <div className="flex flex-col items-center justify-center py-20">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mb-4"></div>
+                <p className="text-caption text-gray-600">매장 목록을 불러오는 중입니다...</p>
               </div>
             ) : error ? (
               <div className="flex flex-col items-center justify-center py-20 px-page text-center">
