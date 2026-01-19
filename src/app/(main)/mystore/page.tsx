@@ -244,7 +244,7 @@ export default function MyStoreEditPage() {
     let isValid = true;
 
     // 매장명 검증
-    const nameError = validateField("name", formData.name);
+    const nameError = validateField("name", formData.name || "");
     if (nameError) {
       errors.name = nameError;
       isValid = false;
