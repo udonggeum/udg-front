@@ -413,7 +413,7 @@ export default function CommunityDetailPage() {
                 {getUserImageUrl(postData.user) ? (
                   <div className="relative w-full h-full">
                     <Image
-                      src={getUserImageUrl(postData.user)}
+                      src={getUserImageUrl(postData.user) || ''}
                       alt={getUserDisplayName(postData.user)}
                       fill
                       className="object-cover"
@@ -635,7 +635,8 @@ export default function CommunityDetailPage() {
                 className="object-contain"
                 sizes="100vw"
                 quality={90}
-            />
+              />
+            </div>
           </div>
         )}
 
@@ -725,7 +726,7 @@ export default function CommunityDetailPage() {
                           {getUserImageUrl(comment.user) ? (
                             <div className="relative w-full h-full">
                               <Image
-                                src={getUserImageUrl(comment.user)}
+                                src={getUserImageUrl(comment.user) || ''}
                                 alt={getUserDisplayName(comment.user)}
                                 fill
                                 className="object-cover"

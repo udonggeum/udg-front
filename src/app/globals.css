@@ -780,8 +780,7 @@ textarea,
   /* 가격 텍스트 */
   [class*="price"],
   span:has([class*="toLocaleString"]),
-  span[class*="원"],
-  span:contains("원") {
+  span[class*="원"] {
     font-size: 16px !important;
     font-weight: 700 !important;
   }

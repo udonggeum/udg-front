@@ -81,9 +81,6 @@ export interface StoreDetail {
   is_managed?: boolean; // 관리매장 여부 (소유자가 있는 매장)
   is_verified?: boolean; // 인증 매장 여부 (사업자등록증 검증 완료)
   verified_at?: string; // 인증 완료 일시
-
-  // 배경 커스터마이징
-  background?: StoreBackground; // 매장 배경 설정
 }
 
 /**
@@ -263,18 +260,6 @@ export interface SubmitVerificationResponse {
 export interface VerificationStatusResponse {
   is_verified: boolean;
   verification: StoreVerification | null;
-}
-
-/**
- * Store background type
- * 매장 배경 설정
- */
-export type StoreBackgroundType = 'preset' | 'color' | 'image';
-
-export interface StoreBackground {
-  type: StoreBackgroundType;
-  value: string;
-  pattern?: string;
 }
 
 /**
