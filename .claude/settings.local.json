@@ -41,7 +41,11 @@
       "Bash(then if grep -q 'net/http' \"$file\")",
       "Bash(then continue)",
       "Bash(make build:*)",
-      "Bash(git diff:*)"
+      "Bash(git diff:*)",
+      "Bash(python3:*)",
+      "Bash(pip3 install:*)",
+      "Bash(node generate-icons.js:*)",
+      "Bash(node generate-favicon.js:*)"
     ],
     "deny": [],
     "ask": []

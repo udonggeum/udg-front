@@ -512,3 +512,714 @@
     min-height: 56px !important;
   }
 }
+
+/* ==================== 앱뷰 대응 (Safe Area & Touch) ==================== */
+
+/* Safe Area 변수 정의 (iOS 노치/홈 인디케이터 대응) */
+:root {
+  --safe-area-inset-top: env(safe-area-inset-top, 0px);
+  --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-area-inset-left: env(safe-area-inset-left, 0px);
+  --safe-area-inset-right: env(safe-area-inset-right, 0px);
+}
+
+/* 터치 최적화 - 탭 하이라이트 제거 (앱처럼 느껴지도록) */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* 버튼/링크는 적절한 터치 피드백 유지 */
+button,
+a,
+[role="button"],
+.cursor-pointer {
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0.05);
+  touch-action: manipulation; /* 더블탭 줌 방지 */
+}
+
+/* 스크롤 영역 - 자연스러운 모바일 스크롤 */
+.scroll-area,
+[data-scroll-area],
+.overflow-auto,
+.overflow-y-auto {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain; /* bounce 효과 제한 */
+}
+
+/* 텍스트 선택 방지 (앱처럼) - 필요한 곳만 선택적으로 적용 */
+.select-none-app {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none; /* iOS 길게 누르기 메뉴 방지 */
+}
+
+/* 입력 필드는 선택 가능하게 유지 */
+input,
+textarea,
+[contenteditable="true"] {
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
+  user-select: text;
+  -webkit-touch-callout: default;
+}
+
+/* Safe Area 유틸리티 클래스 */
+@layer utilities {
+  /* 상단 Safe Area 패딩 */
+  .pt-safe {
+    padding-top: max(1rem, var(--safe-area-inset-top));
+  }
+
+  .pt-safe-sm {
+    padding-top: max(0.5rem, var(--safe-area-inset-top));
+  }
+
+  .pt-safe-lg {
+    padding-top: max(1.5rem, var(--safe-area-inset-top));
+  }
+
+  /* 하단 Safe Area 패딩 */
+  .pb-safe {
+    padding-bottom: max(1rem, var(--safe-area-inset-bottom));
+  }
+
+  .pb-safe-sm {
+    padding-bottom: max(0.5rem, var(--safe-area-inset-bottom));
+  }
+
+  .pb-safe-lg {
+    padding-bottom: max(1.5rem, var(--safe-area-inset-bottom));
+  }
+
+  /* 좌우 Safe Area 패딩 */
+  .px-safe {
+    padding-left: max(1rem, var(--safe-area-inset-left));
+    padding-right: max(1rem, var(--safe-area-inset-right));
+  }
+
+  /* 전체 Safe Area 패딩 */
+  .p-safe {
+    padding-top: max(1rem, var(--safe-area-inset-top));
+    padding-bottom: max(1rem, var(--safe-area-inset-bottom));
+    padding-left: max(1rem, var(--safe-area-inset-left));
+    padding-right: max(1rem, var(--safe-area-inset-right));
+  }
+
+  /* Safe Area Inset만 (기존 패딩에 추가) */
+  .inset-safe-top {
+    padding-top: var(--safe-area-inset-top);
+  }
+
+  .inset-safe-bottom {
+    padding-bottom: var(--safe-area-inset-bottom);
+  }
+}
+
+/* 앱뷰 전용 스타일 (JavaScript로 .is-webview 클래스 추가 시 적용) */
+.is-webview body {
+  /* bounce 스크롤 방지 */
+  overscroll-behavior-y: none;
+}
+
+/* 키보드 대응 - iOS에서 키보드가 올라올 때 레이아웃 조정 */
+@supports (-webkit-touch-callout: none) {
+  /* iOS 전용 */
+  .fixed-bottom-input {
+    position: fixed;
+    bottom: 0;
+    /* iOS 키보드가 올라오면 window.visualViewport로 JavaScript에서 조정 */
+  }
+}
+
+/* ==================== 모바일/앱뷰 화면 비율 최적화 ==================== */
+
+/* 모바일 환경 (768px 이하) */
+@media (max-width: 768px) {
+  /* 버튼 터치 영역 최적화 - 최소 44px 높이 (iOS 기준) */
+  button,
+  [role="button"],
+  a[class*="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* 작은 버튼은 48px (Android 기준) */
+  button[class*="h-9"],
+  button[class*="sm"] {
+    min-height: 48px;
+  }
+
+  /* 일반 버튼은 52px */
+  button[class*="h-10"],
+  button:not([class*="h-"]):not([class*="sm"]):not([class*="lg"]) {
+    min-height: 52px;
+  }
+
+  /* 큰 버튼은 56px */
+  button[class*="h-12"],
+  button[class*="lg"] {
+    min-height: 56px;
+  }
+
+  /* 입력 필드 터치 영역 */
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="tel"],
+  input[type="number"],
+  input[type="search"],
+  textarea,
+  select {
+    min-height: 48px;
+    font-size: 16px; /* iOS 자동 줌 방지 (16px 이상) */
+  }
+
+  /* 텍스트 크기 조정 (가독성) */
+  body {
+    font-size: 15px; /* 모바일 기본 텍스트 */
+  }
+
+  h1 {
+    font-size: 24px;
+  }
+
+  h2 {
+    font-size: 20px;
+  }
+
+  h3 {
+    font-size: 18px;
+  }
+
+  /* ============ 추가: 작은 텍스트 요소 최적화 ============ */
+
+  /* 10px → 11px (너무 작은 텍스트) */
+  [class*="text-[10px]"],
+  .text-\[10px\] {
+    font-size: 11px !important;
+  }
+
+  /* 11px → 12px (뱃지, 레이블) */
+  [class*="text-[11px]"],
+  .text-\[11px\] {
+    font-size: 12px !important;
+  }
+
+  /* 12px → 13px (작은 텍스트) */
+  .text-xs,
+  [class*="text-xs"] {
+    font-size: 13px !important;
+  }
+
+  /* 13px → 14px (캡션) */
+  .text-caption,
+  [class*="text-caption"] {
+    font-size: 14px !important;
+  }
+
+  /* 매장명, 제목 등 중요 텍스트 */
+  [class*="text-[16px]"] {
+    font-size: 17px !important;
+  }
+
+  [class*="text-[18px]"] {
+    font-size: 19px !important;
+  }
+
+  /* 뱃지/태그 패딩 조정 */
+  [class*="badge"],
+  [class*="tag"],
+  span[class*="px-1.5"],
+  span[class*="px-2"] {
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+    padding-top: 0.375rem !important;
+    padding-bottom: 0.375rem !important;
+    min-height: 24px;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  /* 링크 터치 영역 (인라인 링크 제외) */
+  a:not([class*="inline"]) {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  /* 카드 내 패딩 조정 */
+  [class*="card"],
+  [class*="rounded-2xl"][class*="p-"] {
+    padding: clamp(14px, 4vw, 20px) !important;
+  }
+
+  /* 카드 제목 */
+  [class*="card"] h3,
+  [class*="card"] [class*="font-semibold"] {
+    font-size: 16px !important;
+    line-height: 1.4;
+  }
+
+  /* 카드 설명 */
+  [class*="card"] p {
+    font-size: 14px !important;
+    line-height: 1.5;
+  }
+
+  /* 아이콘 + 텍스트 조합 */
+  [class*="flex items-center gap"] svg + span,
+  [class*="inline-flex items-center gap"] svg + span {
+    font-size: max(12px, 1em);
+  }
+
+  /* ============ 가격 표시 최적화 ============ */
+
+  /* 가격 텍스트 */
+  [class*="price"],
+  span:has([class*="toLocaleString"]),
+  span[class*="원"],
+  span:contains("원") {
+    font-size: 16px !important;
+    font-weight: 700 !important;
+  }
+
+  /* 가격 뱃지 */
+  span[class*="bg-black"][class*="text-white"],
+  div[class*="bg-black"][class*="text-white"] {
+    min-height: 32px;
+    padding: 0.5rem 0.75rem !important;
+    font-size: 15px !important;
+  }
+
+  /* ============ 상태 뱃지 최적화 ============ */
+
+  /* 예약중, 거래완료 등 */
+  span[class*="rounded-full"][class*="shadow"],
+  span[class*="badge"] {
+    min-height: 28px;
+    padding: 0.375rem 0.75rem !important;
+    font-size: 12px !important;
+    font-weight: 700 !important;
+  }
+}
+
+/* 작은 모바일 (360px ~ 390px, 일반적인 스마트폰) */
+@media (max-width: 430px) {
+  /* 전체 레이아웃 여백 축소 */
+  .container {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  /* 버튼 패딩 조정 (화면이 좁을 때) */
+  button {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  /* 텍스트 줄바꿈 허용 */
+  button,
+  [role="button"] {
+    white-space: normal;
+    word-break: keep-all; /* 한글 단어 단위 줄바꿈 */
+  }
+
+  /* 모달 너비 조정 */
+  [role="dialog"],
+  [class*="modal"] {
+    width: calc(100vw - 32px);
+    max-width: 100%;
+  }
+}
+
+/* 앱뷰 전용 최적화 (JavaScript로 .is-webview 클래스 추가됨) */
+.is-webview {
+  /* 버튼을 더 명확하게 (앱 네이티브처럼) */
+  button:not([class*="ghost"]):not([class*="link"]) {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+
+  button:active {
+    transform: scale(0.98);
+  }
+
+  /* 입력 필드 포커스 스타일 강화 */
+  input:focus,
+  textarea:focus,
+  select:focus {
+    outline: none;
+    border-color: var(--brand-primary);
+    box-shadow: 0 0 0 3px rgba(201, 162, 39, 0.1);
+  }
+
+  /* 카드 호버 효과 제거 (터치 환경) */
+  [class*="card"]:hover {
+    transform: none;
+  }
+
+  /* 탭 표시줄 높이 고정 */
+  [role="tablist"] {
+    min-height: 48px;
+  }
+}
+
+/* 가로 모드 최적화 */
+@media (orientation: landscape) and (max-height: 500px) {
+  /* 가로 모드에서 헤더/푸터 축소 */
+  header,
+  [class*="header"] {
+    min-height: 48px;
+  }
+
+  /* 모달 높이 조정 */
+  [role="dialog"],
+  [class*="modal"] {
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+}
+
+/* 고해상도 디스플레이 (Retina 등) */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  /* 얇은 테두리를 더 선명하게 */
+  * {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* 터치 디바이스 전용 */
+@media (hover: none) and (pointer: coarse) {
+  /* 호버 효과 제거 (터치만 가능) */
+  *:hover {
+    /* 호버 스타일 무시 */
+  }
+
+  /* 대신 active 스타일 강화 */
+  button:active,
+  a:active,
+  [role="button"]:active {
+    opacity: 0.7;
+    transform: scale(0.98);
+  }
+}
+
+/* 아주 작은 화면 (iPhone SE 등, 375px 이하) */
+@media (max-width: 375px) {
+  /* 폰트 크기 미세 조정 */
+  body {
+    font-size: 14px;
+  }
+
+  /* 버튼 텍스트 크기 */
+  button {
+    font-size: 14px;
+  }
+
+  /* 입력 필드 패딩 */
+  input,
+  textarea,
+  select {
+    padding: 10px 12px;
+  }
+}
+
+/* 큰 화면에서는 최대 너비 제한 (태블릿/데스크톱) */
+@media (min-width: 769px) {
+  /* 앱을 태블릿에서 실행할 경우 */
+  .is-webview .container {
+    max-width: 600px; /* 모바일 앱처럼 중앙 정렬 */
+    margin: 0 auto;
+  }
+}
+
+/* ==================== 앱뷰 레이아웃 유틸리티 ==================== */
+
+@layer utilities {
+  /* 헤더 높이 (모바일 최적화) */
+  .header-height {
+    height: 60px;
+  }
+
+  @media (max-width: 768px) {
+    .header-height {
+      height: 56px; /* 모바일에서는 약간 축소 */
+    }
+  }
+
+  /* Safe Area를 고려한 헤더 (상단 고정) */
+  .header-safe {
+    padding-top: var(--safe-area-inset-top);
+  }
+
+  /* 컨테이너 최대 너비 (반응형) */
+  .container-responsive {
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 1.25rem; /* 20px */
+    padding-right: 1.25rem;
+  }
+
+  @media (max-width: 768px) {
+    .container-responsive {
+      padding-left: 1rem; /* 16px */
+      padding-right: 1rem;
+    }
+  }
+
+  /* 터치 영역 최소 크기 보장 */
+  .touch-target {
+    min-width: 44px;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* 모바일 전용 표시/숨김 */
+  .mobile-only {
+    display: none;
+  }
+
+  @media (max-width: 768px) {
+    .mobile-only {
+      display: block;
+    }
+
+    .mobile-hide {
+      display: none !important;
+    }
+  }
+
+  /* 텍스트 말줄임 (모바일) */
+  @media (max-width: 768px) {
+    .text-truncate-mobile {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  }
+
+  /* 버튼 전체 너비 (모바일) */
+  @media (max-width: 768px) {
+    .button-full-mobile {
+      width: 100%;
+    }
+  }
+
+  /* 스택 레이아웃 (모바일에서 세로 배치) */
+  @media (max-width: 768px) {
+    .stack-mobile {
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .stack-mobile > * {
+      width: 100%;
+    }
+  }
+}
+
+/* ==================== 특정 컴포넌트 최적화 ==================== */
+
+/* 헤더 최적화 */
+header {
+  /* Safe Area 적용 */
+  padding-top: var(--safe-area-inset-top);
+}
+
+@media (max-width: 768px) {
+  /* 모바일 헤더 높이 조정 */
+  header[class*="h-[60px]"],
+  header .h-\[60px\] {
+    height: calc(56px + var(--safe-area-inset-top)) !important;
+  }
+
+  /* 모바일 네비게이션 간격 */
+  nav a,
+  nav button {
+    padding: 0.5rem;
+    min-height: 44px;
+  }
+}
+
+/* 모달/다이얼로그 최적화 */
+@media (max-width: 768px) {
+  [role="dialog"],
+  [class*="modal"] {
+    /* 모바일에서는 전체 화면에 가깝게 */
+    width: calc(100vw - 32px);
+    max-width: calc(100vw - 32px);
+    max-height: calc(100vh - 64px);
+
+    /* Safe Area 고려 */
+    margin-top: max(16px, var(--safe-area-inset-top));
+    margin-bottom: max(16px, var(--safe-area-inset-bottom));
+  }
+}
+
+/* 폼 입력 필드 최적화 */
+@media (max-width: 768px) {
+  /* 입력 필드가 화면에서 잘리지 않도록 */
+  input,
+  textarea,
+  select {
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* 긴 텍스트 입력은 여러 줄로 */
+  input[type="text"]:focus,
+  input[type="email"]:focus {
+    /* iOS에서 입력 시 확대 방지 */
+    font-size: max(16px, 1em);
+  }
+}
+
+/* 카드/리스트 아이템 터치 최적화 */
+@media (max-width: 768px) {
+  /* 클릭 가능한 카드 */
+  [class*="cursor-pointer"],
+  [role="button"],
+  a[class*="card"],
+  a[class*="rounded-2xl"],
+  div[class*="cursor-pointer"] {
+    /* 터치 영역 충분히 */
+    min-height: 68px;
+    padding: 1rem !important;
+  }
+
+  /* 매장 카드, 글 카드 등 */
+  a[class*="card"],
+  a[class*="group"],
+  a[href*="/stores/"],
+  a[href*="/community/posts/"] {
+    min-height: 80px;
+    padding: 1rem !important;
+  }
+
+  /* 리스트 아이템 간격 */
+  [class*="space-y-"] > * + * {
+    margin-top: 0.875rem;
+  }
+
+  /* 그리드 간격 */
+  [class*="grid"] {
+    gap: 1rem;
+  }
+
+  /* 매장명/제목 영역 */
+  [class*="truncate"],
+  h3[class*="truncate"],
+  p[class*="truncate"] {
+    white-space: normal !important; /* 모바일에서는 줄바꿈 허용 */
+    overflow: visible !important;
+    text-overflow: clip !important;
+    display: -webkit-box;
+    -webkit-line-clamp: 2; /* 최대 2줄 */
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* 단일 라인 truncate만 유지 */
+  [class*="truncate"][class*="flex-1"] {
+    -webkit-line-clamp: 1;
+  }
+}
+
+/* 이미지 최적화 */
+@media (max-width: 768px) {
+  img {
+    max-width: 100%;
+    height: auto;
+  }
+
+  /* 아바타/프로필 이미지 크기 조정 */
+  img[class*="rounded-full"] {
+    min-width: 36px;
+    min-height: 36px;
+    max-width: 48px;
+    max-height: 48px;
+  }
+
+  /* ============ 아이콘 크기 최적화 ============ */
+
+  /* 작은 아이콘 (w-3, w-3.5, w-4) */
+  svg[class*="w-3"],
+  svg[class*="h-3"] {
+    width: 16px !important;
+    height: 16px !important;
+  }
+
+  svg[class*="w-4"],
+  svg[class*="h-4"] {
+    width: 18px !important;
+    height: 18px !important;
+  }
+
+  /* 중간 아이콘 (w-5) */
+  svg[class*="w-5"],
+  svg[class*="h-5"] {
+    width: 20px !important;
+    height: 20px !important;
+  }
+
+  /* 큰 아이콘 (w-6 이상은 유지) */
+  svg[class*="w-6"],
+  svg[class*="h-6"] {
+    width: 24px !important;
+    height: 24px !important;
+  }
+
+  /* 터치 가능한 아이콘 버튼 */
+  button svg,
+  a svg,
+  [class*="cursor-pointer"] svg {
+    min-width: 20px;
+    min-height: 20px;
+  }
+}
+
+/* 하단 고정 버튼 (CTA) */
+.fixed-bottom-cta {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 1rem;
+  padding-bottom: max(1rem, var(--safe-area-inset-bottom));
+  background: white;
+  border-top: 1px solid #e5e7eb;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+  z-index: 40;
+}
+
+@media (max-width: 768px) {
+  .fixed-bottom-cta button {
+    width: 100%;
+    min-height: 52px;
+  }
+}
+
+/* 탭/세그먼트 컨트롤 최적화 */
+@media (max-width: 768px) {
+  [role="tablist"] {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  [role="tablist"]::-webkit-scrollbar {
+    display: none;
+  }
+
+  [role="tab"] {
+    min-width: 80px;
+    min-height: 44px;
+    white-space: nowrap;
+  }
+}

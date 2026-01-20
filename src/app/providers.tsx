@@ -1,7 +1,9 @@
 "use client";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { ReactNode, useState } from "react";
+import { ReactNode, useState, useEffect } from "react";
+import { setupWebViewClass } from "@/lib/webview";
+import { useInputFocusScroll } from "@/hooks/useKeyboardAdjust";
 
 export function Providers({ children }: { children: ReactNode }) {
   // useState를 사용하여 QueryClient를 한 번만 생성
@@ -24,6 +26,14 @@ export function Providers({ children }: { children: ReactNode }) {
         },
       })
   );
+
+  // 웹뷰 환경 초기화
+  useEffect(() => {
+    setupWebViewClass();
+  }, []);
+
+  // 키보드 포커스 스크롤 처리 (모바일 전용)
+  useInputFocusScroll();
 
   return (
     <QueryClientProvider client={queryClient}>

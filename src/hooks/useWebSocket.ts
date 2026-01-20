@@ -3,6 +3,7 @@ import type { WebSocketMessage } from "@/types/chat";
 import { useAuthStore } from "@/stores/useAuthStore";
 import axios from "axios";
 import { toast } from "sonner";
+import { isWebView, onMessageFromNative } from "@/lib/webview";
 
 interface UseWebSocketOptions {
   url: string;
@@ -218,8 +219,42 @@ export function useWebSocket({
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
+    // 앱 라이프사이클 대응 (웹뷰 환경에서만)
+    let cleanupAppStateListener: (() => void) | undefined;
+
+    if (isWebView()) {
+      const handleAppStateChange = (event: MessageEvent) => {
+        try {
+          const data = JSON.parse(event.data);
+
+          if (data.type === 'APP_STATE_CHANGE') {
+            if (data.state === 'background') {
+              // 앱이 백그라운드로 갈 때 WebSocket 연결 유지 또는 종료
+              console.log("[WebSocket] 앱 백그라운드 진입");
+              // 필요시 연결 종료: wsRef.current?.close(1000, "App background");
+            } else if (data.state === 'active') {
+              // 앱이 포그라운드로 돌아올 때 재연결
+              if (wsRef.current?.readyState !== WebSocket.OPEN) {
+                console.log("[WebSocket] 앱 포그라운드 복귀, 재연결 시도");
+                reconnectAttemptsRef.current = 0;
+                if (reconnectTimeoutRef.current) {
+                  clearTimeout(reconnectTimeoutRef.current);
+                }
+                connect(tokenRef.current);
+              }
+            }
+          }
+        } catch (error) {
+          // JSON 파싱 실패 시 무시
+        }
+      };
+
+      cleanupAppStateListener = onMessageFromNative(handleAppStateChange);
+    }
+
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
+      cleanupAppStateListener?.();
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current);
       }
