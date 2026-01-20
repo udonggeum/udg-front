@@ -10,6 +10,8 @@ import PriceCalculator from "@/components/price-calculator";
 import { Container } from "@/components/layout-primitives";
 import { Button } from "@/components/ui/button";
 import type { GoldPrice, GoldType, HistoryPeriod } from "@/types/goldPrices";
+import { usePullToRefresh } from "@/hooks/usePullToRefresh";
+import { PullToRefreshIndicator } from "@/components/PullToRefreshIndicator";
 
 interface GoldPriceWithCalculations extends GoldPrice {
   price_per_don: number;
@@ -27,18 +29,31 @@ export default function PricesPage() {
   const [selectedPeriod, setSelectedPeriod] = useState<HistoryPeriod>("1개월");
   const [viewMode, setViewMode] = useState<"chart" | "table">("chart");
 
-  useEffect(() => {
-    const loadPrices = async () => {
-      setIsLoading(true);
-      const result = await getLatestGoldPricesAction();
-      if (result.success && result.data) {
-        setPricesData(result.data);
-      }
-      setIsLoading(false);
-    };
+  const loadPrices = async () => {
+    setIsLoading(true);
+    const result = await getLatestGoldPricesAction();
+    if (result.success && result.data) {
+      setPricesData(result.data);
+    }
+    setIsLoading(false);
+  };
 
+  useEffect(() => {
     loadPrices();
   }, []);
+
+  // Pull to Refresh 핸들러
+  const handleRefresh = async () => {
+    await loadPrices();
+    await new Promise(resolve => setTimeout(resolve, 300));
+  };
+
+  // Pull to Refresh 훅
+  const pullToRefreshState = usePullToRefresh({
+    onRefresh: handleRefresh,
+    threshold: 80,
+    disabled: isLoading,
+  });
 
   // 금 시세 데이터에 UI용 계산 필드 추가
   const prices: GoldPriceWithCalculations[] = useMemo(() => {
@@ -116,8 +131,12 @@ export default function PricesPage() {
   });
 
   return (
-    <main className="py-8">
-      <Container>
+    <>
+      {/* Pull to Refresh 인디케이터 */}
+      <PullToRefreshIndicator {...pullToRefreshState} />
+
+      <main className="py-8">
+        <Container>
       {/* 페이지 헤더 */}
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-2">
@@ -447,5 +466,6 @@ export default function PricesPage() {
       </div>
       </Container>
     </main>
+    </>
   );
 }

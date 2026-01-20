@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo, useCallback, Suspense, memo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import Image from "next/image";
 import {
   Search,
   MapPin,
@@ -23,6 +24,9 @@ import { toast } from "sonner";
 import { useAuthenticatedAction } from "@/hooks/useAuthenticatedAction";
 import { Button } from "@/components/ui/button";
 import { Virtuoso } from "react-virtuoso";
+import { StoreListSkeleton } from "@/components/skeletons/StoreListSkeleton";
+import { usePullToRefresh } from "@/hooks/usePullToRefresh";
+import { PullToRefreshIndicator } from "@/components/PullToRefreshIndicator";
 
 /**
  * 매장 이미지 컴포넌트 - 로딩 실패 시 폴백 UI 표시
@@ -74,12 +78,19 @@ const StoreImage = memo(function StoreImage({
   }
 
   // 정상 이미지 표시 (흰색 배경)
+  const isBase64 = imageUrl.startsWith("data:");
+
   return (
-    <div className={`${sizeClasses[size]} bg-white flex items-center justify-center overflow-hidden`}>
-      <img
+    <div className={`${sizeClasses[size]} bg-white flex items-center justify-center overflow-hidden relative`}>
+      <Image
         src={imageUrl}
         alt={storeName}
-        className="w-full h-full object-cover"
+        fill
+        className="object-cover"
+        sizes={size === "sm" ? "80px" : size === "md" ? "400px" : "100vw"}
+        quality={75}
+        loading="lazy"
+        unoptimized={isBase64}
         onError={() => setImageError(true)}
       />
     </div>
@@ -495,6 +506,21 @@ function StoresPageContent() {
     );
   };
 
+  // Pull to Refresh 핸들러
+  const handleRefresh = async () => {
+    // 페이지를 1로 리셋하면 useEffect가 자동으로 재실행됨
+    setCurrentPage(1);
+    // 약간의 지연을 추가하여 새로고침 애니메이션이 보이도록
+    await new Promise(resolve => setTimeout(resolve, 500));
+  };
+
+  // Pull to Refresh 훅
+  const pullToRefreshState = usePullToRefresh({
+    onRefresh: handleRefresh,
+    threshold: 80,
+    disabled: isLoading || isGettingLocation, // 로딩 중에는 비활성화
+  });
+
   // 지도에서 매장 마커 클릭 시
   const handleMapStoreClick = (store: { id: number; name: string; lat: number; lng: number }) => {
     const fullStore = stores.find((s) => s.id === store.id);
@@ -518,6 +544,9 @@ function StoresPageContent() {
 
   return (
     <>
+      {/* Pull to Refresh 인디케이터 */}
+      <PullToRefreshIndicator {...pullToRefreshState} />
+
       {/* Main Content - 고정 레이아웃 (푸터 숨김) */}
       <div className="fixed inset-0 top-[60px] flex">
         {/* 좌측 패널 - 검색 및 리스트 */}
@@ -581,12 +610,12 @@ function StoresPageContent() {
               </div>
             </form>
 
-            {/* 현재 위치 버튼 (데스크탑만) */}
+            {/* 현재 위치 버튼 */}
             <button
               type="button"
               onClick={getCurrentLocation}
               disabled={isGettingLocation}
-              className="hidden md:flex w-full items-center justify-center gap-2 py-3 bg-white border border-gray-200 rounded-xl text-caption font-medium text-gray-700 hover:bg-gray-50 transition-colors duration-200 mb-4 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-white"
+              className="flex w-full items-center justify-center gap-2 py-3 min-h-[48px] bg-white border border-gray-200 rounded-xl text-caption font-medium text-gray-700 hover:bg-gray-50 active:bg-gray-100 transition-colors duration-200 mb-4 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-white"
             >
               {isGettingLocation ? (
                 <>
@@ -668,10 +697,7 @@ function StoresPageContent() {
                 <p className="text-caption text-gray-600">현재 위치를 확인하는 중입니다...</p>
               </div>
             ) : isLoading ? (
-              <div className="flex flex-col items-center justify-center py-20">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mb-4"></div>
-                <p className="text-caption text-gray-600">매장 목록을 불러오는 중입니다...</p>
-              </div>
+              <StoreListSkeleton count={8} />
             ) : error ? (
               <div className="flex flex-col items-center justify-center py-20 px-page text-center">
                 <StoreIcon className="w-12 h-12 text-gray-300 mb-4" />

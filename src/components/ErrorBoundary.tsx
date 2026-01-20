@@ -1,7 +1,8 @@
 "use client";
 
 import React, { Component, ReactNode } from "react";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Home } from "lucide-react";
+import Link from "next/link";
 
 interface Props {
   children: ReactNode;
@@ -48,21 +49,30 @@ class ErrorBoundary extends Component<Props, State> {
 
       // 기본 폴백 UI
       return (
-        <div className="min-h-[400px] flex items-center justify-center p-8">
+        <div className="min-h-[400px] flex items-center justify-center p-safe p-8">
           <div className="text-center max-w-md">
             <AlertTriangle className="w-16 h-16 text-red-500 mx-auto mb-4" />
             <h2 className="text-2xl font-bold text-gray-900 mb-2">
               문제가 발생했습니다
             </h2>
             <p className="text-gray-600 mb-6">
-              일시적인 오류가 발생했습니다. 페이지를 새로고침해주세요.
+              일시적인 오류가 발생했습니다. 페이지를 새로고침하거나 홈으로 이동해주세요.
             </p>
-            <button
-              onClick={() => window.location.reload()}
-              className="px-6 py-3 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors"
-            >
-              새로고침
-            </button>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <button
+                onClick={() => window.location.reload()}
+                className="px-6 py-3 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors font-medium"
+              >
+                새로고침
+              </button>
+              <Link
+                href="/"
+                className="px-6 py-3 bg-white text-gray-900 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium inline-flex items-center justify-center gap-2"
+              >
+                <Home className="w-4 h-4" />
+                홈으로
+              </Link>
+            </div>
             {process.env.NODE_ENV === "development" && this.state.error && (
               <details className="mt-6 text-left">
                 <summary className="cursor-pointer text-sm text-gray-500 hover:text-gray-700">

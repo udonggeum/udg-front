@@ -33,6 +33,8 @@ import {
   X
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { PostDetailSkeleton } from "@/components/skeletons/PostDetailSkeleton";
+import Image from "next/image";
 
 export default function CommunityDetailPage() {
   const params = useParams();
@@ -289,11 +291,7 @@ export default function CommunityDetailPage() {
   };
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="inline-block w-8 h-8 border-4 border-gray-200 border-t-[#C9A227] rounded-full animate-spin"></div>
-      </div>
-    );
+    return <PostDetailSkeleton />;
   }
 
   if (error || !post) {
@@ -413,11 +411,16 @@ export default function CommunityDetailPage() {
                   : "bg-gradient-to-br from-[#C9A227] to-[#8A6A00]"
               }`}>
                 {getUserImageUrl(postData.user) ? (
-                  <img
-                    src={getUserImageUrl(postData.user)}
-                    alt={getUserDisplayName(postData.user)}
-                    className="w-full h-full object-cover"
-                  />
+                  <div className="relative w-full h-full">
+                    <Image
+                      src={getUserImageUrl(postData.user)}
+                      alt={getUserDisplayName(postData.user)}
+                      fill
+                      className="object-cover"
+                      sizes="40px"
+                      quality={80}
+                    />
+                  </div>
                 ) : (
                   <span className="text-lg font-bold text-white">
                     {getUserDisplayName(postData.user).charAt(0)}
@@ -527,11 +530,15 @@ export default function CommunityDetailPage() {
         {/* 이미지 갤러리 */}
         {postData.image_urls && postData.image_urls.length > 0 && (
           <div className="mb-6">
-            <div className="relative bg-white border border-gray-200 rounded-2xl overflow-hidden">
-              <img
+            <div className="relative bg-white border border-gray-200 rounded-2xl overflow-hidden aspect-video">
+              <Image
                 src={postData.image_urls[currentImageIndex]}
                 alt={`이미지 ${currentImageIndex + 1}`}
-                className="w-full aspect-video object-contain cursor-zoom-in"
+                fill
+                className="object-contain cursor-zoom-in"
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 900px"
+                quality={85}
+                priority={currentImageIndex === 0}
                 onClick={() => setIsImageModalOpen(true)}
               />
 
@@ -594,11 +601,16 @@ export default function CommunityDetailPage() {
                         : "border-gray-200 hover:border-gray-300"
                     }`}
                   >
-                    <img
-                      src={url}
-                      alt={`썸네일 ${index + 1}`}
-                      className="w-full h-full object-cover"
-                    />
+                    <div className="relative w-full h-full">
+                      <Image
+                        src={url}
+                        alt={`썸네일 ${index + 1}`}
+                        fill
+                        className="object-cover"
+                        sizes="80px"
+                        quality={70}
+                      />
+                    </div>
                   </button>
                 ))}
               </div>
@@ -611,15 +623,18 @@ export default function CommunityDetailPage() {
           <div className="fixed inset-0 bg-black/95 z-50 flex items-center justify-center p-4" onClick={() => setIsImageModalOpen(false)}>
             <button
               onClick={() => setIsImageModalOpen(false)}
-              className="absolute top-4 right-4 w-10 h-10 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm transition-colors"
+              className="absolute top-4 right-4 w-10 h-10 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm transition-colors z-10"
             >
               <X className="w-6 h-6 text-white" />
             </button>
-            <img
-              src={postData.image_urls[currentImageIndex]}
-              alt={`확대 이미지 ${currentImageIndex + 1}`}
-              className="max-w-full max-h-full object-contain"
-              onClick={(e) => e.stopPropagation()}
+            <div className="relative w-full h-full flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
+              <Image
+                src={postData.image_urls[currentImageIndex]}
+                alt={`확대 이미지 ${currentImageIndex + 1}`}
+                fill
+                className="object-contain"
+                sizes="100vw"
+                quality={90}
             />
           </div>
         )}
@@ -708,11 +723,16 @@ export default function CommunityDetailPage() {
                             : "bg-gradient-to-br from-[#C9A227] to-[#8A6A00]"
                         }`}>
                           {getUserImageUrl(comment.user) ? (
-                            <img
-                              src={getUserImageUrl(comment.user)}
-                              alt={getUserDisplayName(comment.user)}
-                              className="w-full h-full object-cover"
-                            />
+                            <div className="relative w-full h-full">
+                              <Image
+                                src={getUserImageUrl(comment.user)}
+                                alt={getUserDisplayName(comment.user)}
+                                fill
+                                className="object-cover"
+                                sizes="40px"
+                                quality={80}
+                              />
+                            </div>
                           ) : (
                             <span className="text-sm font-bold text-white">
                               {getUserDisplayName(comment.user).charAt(0)}

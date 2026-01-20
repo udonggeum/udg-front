@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter, useParams } from "next/navigation";
+import Image from "next/image";
 import {
   MapPin,
   Phone,
@@ -758,7 +759,15 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
         }
       );
 
-      setStore(response.data.store);
+      // API 응답의 store 객체를 사용하되, tags는 allTags에서 찾아서 완전한 객체로 업데이트
+      const updatedStore = response.data.store;
+      const fullTags = allTags.filter(tag => tagIds.includes(tag.id));
+
+      setStore({
+        ...updatedStore,
+        tags: fullTags, // 완전한 태그 객체 배열로 업데이트
+      });
+
       toast.success("태그가 저장되었습니다.");
     } catch (error) {
       console.error("Save tags error:", error);
@@ -800,7 +809,12 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
         }
       );
 
-      setStore(response.data.store);
+      // API 응답의 store 객체를 사용하되, tags는 기존 태그 유지
+      const updatedStore = response.data.store;
+      setStore({
+        ...updatedStore,
+        tags: store.tags, // 기존 태그 정보 유지
+      });
       setStoreBackground(background);
       toast.success("배경이 저장되었습니다.");
     } catch (error) {
@@ -837,8 +851,13 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
         }
       );
 
-      setStore(response.data.store);
-      return response.data.store;
+      // API 응답의 store 객체를 사용하되, tags는 기존 태그 유지
+      const updatedStore = response.data.store;
+      setStore({
+        ...updatedStore,
+        tags: store.tags, // 기존 태그 정보 유지
+      });
+      return updatedStore;
     } catch (error) {
       console.error("Update store error:", error);
       throw error;
@@ -915,16 +934,19 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
               {store.image_url &&
                 (store.image_url.startsWith("http://") || store.image_url.startsWith("https://")) &&
                 !imageError && (
-                  <img
+                  <Image
                     key={`${store.id}-${store.image_url}`}
                     src={store.image_url}
                     alt={store.name}
+                    fill
+                    className="object-cover"
+                    sizes="128px"
+                    quality={85}
                     onError={(e) => {
                       if (isMountedRef.current) {
                         setImageError(true);
                       }
                     }}
-                    className="w-full h-full object-cover"
                   />
                 )}
 
@@ -1355,11 +1377,14 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
                             </p>
 
                             {post.image_urls && post.image_urls.length > 0 && (
-                              <div className="mb-4 rounded-lg overflow-hidden">
-                                <img
+                              <div className="mb-4 rounded-lg overflow-hidden relative h-48">
+                                <Image
                                   src={post.image_urls[0]}
                                   alt={post.title}
-                                  className="w-full h-48 object-cover"
+                                  fill
+                                  className="object-cover"
+                                  sizes="(max-width: 768px) 100vw, 400px"
+                                  quality={80}
                                 />
                               </div>
                             )}
@@ -1450,11 +1475,14 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
                             </p>
 
                             {post.image_urls && post.image_urls.length > 0 && (
-                              <div className="mb-4 rounded-lg overflow-hidden">
-                                <img
+                              <div className="mb-4 rounded-lg overflow-hidden relative h-48">
+                                <Image
                                   src={post.image_urls[0]}
                                   alt={post.title}
-                                  className="w-full h-48 object-cover"
+                                  fill
+                                  className="object-cover"
+                                  sizes="(max-width: 768px) 100vw, 400px"
+                                  quality={80}
                                 />
                               </div>
                             )}
@@ -1606,11 +1634,14 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
                               </p>
 
                               {post.image_urls && post.image_urls.length > 0 && (
-                                <div className="mb-4 rounded-lg overflow-hidden">
-                                  <img
+                                <div className="mb-4 rounded-lg overflow-hidden relative h-48">
+                                  <Image
                                     src={post.image_urls[0]}
                                     alt={post.title}
-                                    className="w-full h-48 object-cover"
+                                    fill
+                                    className="object-cover"
+                                    sizes="(max-width: 768px) 100vw, 400px"
+                                    quality={80}
                                   />
                                 </div>
                               )}
@@ -1693,11 +1724,14 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
                               </p>
 
                               {post.image_urls && post.image_urls.length > 0 && (
-                                <div className="mb-4 rounded-lg overflow-hidden">
-                                  <img
+                                <div className="mb-4 rounded-lg overflow-hidden relative h-48">
+                                  <Image
                                     src={post.image_urls[0]}
                                     alt={post.title}
-                                    className="w-full h-48 object-cover"
+                                    fill
+                                    className="object-cover"
+                                    sizes="(max-width: 768px) 100vw, 400px"
+                                    quality={80}
                                   />
                                 </div>
                               )}
@@ -1746,10 +1780,13 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
                             className="group relative aspect-square rounded-lg overflow-hidden cursor-pointer"
                             onClick={() => router.push(`/community/posts/${item.post_id}/gallery`)}
                           >
-                            <img
+                            <Image
                               src={item.image_url}
                               alt={item.title}
-                              className="w-full h-full object-cover transition-transform duration-300 md:group-hover:scale-110"
+                              fill
+                              className="object-cover transition-transform duration-300 md:group-hover:scale-110"
+                              sizes="(max-width: 768px) 50vw, 33vw"
+                              quality={80}
                             />
 
                             {/* 호버 오버레이 */}

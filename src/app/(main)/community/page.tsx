@@ -15,6 +15,8 @@ import type {
 } from "@/types/community";
 import { Search, SlidersHorizontal, MapPin, X, ChevronDown, Heart, MessageCircle } from "lucide-react";
 import { getUserDisplayName, getUserImageUrl } from "@/lib/utils";
+import { usePullToRefresh } from "@/hooks/usePullToRefresh";
+import { PullToRefreshIndicator } from "@/components/PullToRefreshIndicator";
 
 type MainCategory = "market" | "community";
 
@@ -230,6 +232,20 @@ function CommunityPageContent() {
     setCurrentPage(1);
   }, []);
 
+  // Pull to Refresh 핸들러
+  const handleRefresh = async () => {
+    setCurrentPage(1);
+    setData(null); // 데이터 초기화로 새로 로드 유도
+    await new Promise(resolve => setTimeout(resolve, 500));
+  };
+
+  // Pull to Refresh 훅
+  const pullToRefreshState = usePullToRefresh({
+    onRefresh: handleRefresh,
+    threshold: 80,
+    disabled: isLoading,
+  });
+
   // 뷰 모드 결정 (타입별 최적화)
   // 카드형: sell_gold, product_news
   // 리스트형: buy_gold, store_news, question
@@ -239,7 +255,11 @@ function CommunityPageContent() {
   const activeFilterCount = selectedLocations.length;
 
   return (
-    <div className="min-h-screen bg-white">
+    <>
+      {/* Pull to Refresh 인디케이터 */}
+      <PullToRefreshIndicator {...pullToRefreshState} />
+
+      <div className="min-h-screen bg-white">
       {/* 회색 배경 - 메인 카테고리만 (Sticky) */}
       <div className="sticky top-[60px] z-40 bg-gray-50">
         <div className="max-w-[1200px] mx-auto px-page py-4">
@@ -961,6 +981,7 @@ function CommunityPageContent() {
         )}
       </div>
     </div>
+    </>
   );
 }
 
