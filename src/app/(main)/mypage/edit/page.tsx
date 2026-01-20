@@ -20,6 +20,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import { getUserImageUrl } from "@/lib/utils";
+import { isWebView } from "@/lib/webview";
 
 interface FormErrors {
   name?: string;
@@ -57,6 +58,12 @@ export default function ProfileEditPage() {
 
   const [formErrors, setFormErrors] = useState<FormErrors>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
+  const [inWebView, setInWebView] = useState(false);
+
+  // 웹뷰 감지
+  useEffect(() => {
+    setInWebView(isWebView());
+  }, []);
 
   // 로그인되지 않았으면 로그인 페이지로 이동
   useEffect(() => {
@@ -442,32 +449,32 @@ export default function ProfileEditPage() {
   }
 
   return (
-    <main className="flex-grow py-8 bg-gray-50">
+    <main className={`flex-grow bg-gray-50 ${inWebView ? "py-4" : "py-8"}`}>
       <section className="container mx-auto px-4 max-w-3xl">
         {/* Page Header */}
-        <div className="mb-6">
+        <div className={inWebView ? "mb-4" : "mb-6"}>
           <Button
             onClick={() => router.push("/mypage")}
             variant="outline"
             size="sm"
-            className="md:hidden gap-2 mb-4"
+            className={`md:hidden gap-2 ${inWebView ? "mb-3" : "mb-4"}`}
           >
             <ArrowLeft className="w-4 h-4" />
             마이페이지로 돌아가기
           </Button>
-          <h1 className="text-2xl font-bold text-gray-900">프로필 수정</h1>
+          <h1 className={`font-bold text-gray-900 ${inWebView ? "text-xl" : "text-2xl"}`}>프로필 수정</h1>
           <p className="mt-1 text-sm text-gray-600">회원 정보를 수정하세요</p>
         </div>
 
         {/* 프로필 이미지 카드 */}
-        <Card className="mb-6 border-0 shadow-sm">
-          <CardContent className="p-6">
+        <Card className={`border-0 shadow-sm ${inWebView ? "mb-4" : "mb-6"}`}>
+          <CardContent className={inWebView ? "p-4" : "p-6"}>
             <div className="flex flex-col items-center">
               {user?.role === "admin" ? (
                 // 매장 관리자: 프로필 이미지 수정 불가, 매장 이미지 사용 안내
                 <>
                   <div className="relative mb-4">
-                    <Avatar className="w-32 h-32 border-4 border-gray-100">
+                    <Avatar className={`border-4 border-gray-100 ${inWebView ? "w-24 h-24" : "w-32 h-32"}`}>
                       {myStore?.image_url ? (
                         <AvatarImage src={myStore.image_url} alt={myStore.name} />
                       ) : null}
@@ -499,7 +506,7 @@ export default function ProfileEditPage() {
                 <>
                   <div className="relative group mb-4">
                     <Avatar
-                      className="w-32 h-32 border-4 border-gray-100 cursor-pointer transition-opacity hover:opacity-80"
+                      className={`border-4 border-gray-100 cursor-pointer transition-opacity hover:opacity-80 ${inWebView ? "w-24 h-24" : "w-32 h-32"}`}
                       onClick={handleProfileImageClick}
                     >
                       {user?.profile_image ? (
@@ -540,10 +547,10 @@ export default function ProfileEditPage() {
 
         {/* Form Card */}
         <Card className="border-0 shadow-sm">
-          <CardContent className="p-6">
+          <CardContent className={inWebView ? "p-4" : "p-6"}>
 
             {/* Form */}
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className={inWebView ? "space-y-4" : "space-y-6"}>
               {/* 이메일 (읽기 전용) */}
               <div>
                 <Label htmlFor="email" className="flex items-center gap-2 mb-2">

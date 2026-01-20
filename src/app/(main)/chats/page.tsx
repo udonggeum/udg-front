@@ -22,6 +22,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { isWebView } from "@/lib/webview";
 
 type ChatFilter = "all" | "STORE" | "received" | "sent";
 
@@ -33,6 +34,11 @@ export default function ChatsPage() {
   const [deleteRoomId, setDeleteRoomId] = useState<number | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState<ChatFilter>("all");
+  const [inWebView, setInWebView] = useState(false);
+
+  useEffect(() => {
+    setInWebView(isWebView());
+  }, []);
 
   const fetchRooms = async () => {
     if (!tokens?.access_token) return;
@@ -166,22 +172,28 @@ export default function ChatsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-            <MessageCircle className="w-6 h-6" />
+      <div className={`max-w-4xl mx-auto px-4 ${inWebView ? "py-4" : "py-8"}`}>
+        <div className={inWebView ? "mb-4" : "mb-6"}>
+          <h1 className={`font-bold text-gray-900 flex items-center gap-2 ${
+            inWebView ? "text-xl" : "text-2xl"
+          }`}>
+            <MessageCircle className={inWebView ? "w-5 h-5" : "w-6 h-6"} />
             메시지
           </h1>
-          <p className="text-sm text-gray-600 mt-1">
+          <p className={`text-gray-600 mt-1 ${inWebView ? "text-xs" : "text-sm"}`}>
             {rooms.length}개의 대화
           </p>
         </div>
 
       {/* 필터 탭 - 평면 구조 */}
-      <div className="mb-6 bg-white rounded-xl border border-gray-200 p-1 inline-flex gap-1 flex-wrap">
+      <div className={`bg-white rounded-xl border border-gray-200 p-1 inline-flex gap-1 flex-wrap ${
+        inWebView ? "mb-4" : "mb-6"
+      }`}>
         <button
           onClick={() => setSelectedFilter("all")}
-          className={`px-4 py-2.5 text-sm font-semibold rounded-lg transition-all duration-200 ${
+          className={`font-semibold rounded-lg transition-all duration-200 ${
+            inWebView ? "px-3 py-2 text-xs" : "px-4 py-2.5 text-sm"
+          } ${
             selectedFilter === "all"
               ? "bg-[#C9A227] text-white shadow-md"
               : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
@@ -196,13 +208,15 @@ export default function ChatsPage() {
         </button>
         <button
           onClick={() => setSelectedFilter("STORE")}
-          className={`px-4 py-2.5 text-sm font-semibold rounded-lg transition-all duration-200 flex items-center gap-2 ${
+          className={`font-semibold rounded-lg transition-all duration-200 flex items-center ${
+            inWebView ? "gap-1.5 px-3 py-2 text-xs" : "gap-2 px-4 py-2.5 text-sm"
+          } ${
             selectedFilter === "STORE"
               ? "bg-[#C9A227] text-white shadow-md"
               : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
           }`}
         >
-          <Store className="w-4 h-4" />
+          <Store className={inWebView ? "w-3.5 h-3.5" : "w-4 h-4"} />
           매장 문의
           {roomCounts.STORE > 0 && (
             <span className={`ml-1 ${selectedFilter === "STORE" ? "text-gray-300" : "text-gray-400"}`}>
@@ -212,13 +226,15 @@ export default function ChatsPage() {
         </button>
         <button
           onClick={() => setSelectedFilter("received")}
-          className={`px-4 py-2.5 text-sm font-semibold rounded-lg transition-all duration-200 flex items-center gap-2 ${
+          className={`font-semibold rounded-lg transition-all duration-200 flex items-center ${
+            inWebView ? "gap-1.5 px-3 py-2 text-xs" : "gap-2 px-4 py-2.5 text-sm"
+          } ${
             selectedFilter === "received"
               ? "bg-[#C9A227] text-white shadow-md"
               : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
           }`}
         >
-          <MessageCircle className="w-4 h-4" />
+          <MessageCircle className={inWebView ? "w-3.5 h-3.5" : "w-4 h-4"} />
           받은 문의
           {roomCounts.received > 0 && (
             <span className={`ml-1 ${selectedFilter === "received" ? "text-gray-300" : "text-gray-400"}`}>
@@ -228,13 +244,15 @@ export default function ChatsPage() {
         </button>
         <button
           onClick={() => setSelectedFilter("sent")}
-          className={`px-4 py-2.5 text-sm font-semibold rounded-lg transition-all duration-200 flex items-center gap-2 ${
+          className={`font-semibold rounded-lg transition-all duration-200 flex items-center ${
+            inWebView ? "gap-1.5 px-3 py-2 text-xs" : "gap-2 px-4 py-2.5 text-sm"
+          } ${
             selectedFilter === "sent"
               ? "bg-[#C9A227] text-white shadow-md"
               : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
           }`}
         >
-          <MessageCircle className="w-4 h-4" />
+          <MessageCircle className={inWebView ? "w-3.5 h-3.5" : "w-4 h-4"} />
           보낸 문의
           {roomCounts.sent > 0 && (
             <span className={`ml-1 ${selectedFilter === "sent" ? "text-gray-300" : "text-gray-400"}`}>
@@ -274,11 +292,13 @@ export default function ChatsPage() {
               >
                 <button
                   onClick={() => router.push(`/chats/${room.id}`)}
-                  className="w-full text-left p-4"
+                  className={`w-full text-left ${inWebView ? "p-3" : "p-4"}`}
                 >
-                  <div className="flex items-start gap-3">
+                  <div className={`flex items-start ${inWebView ? "gap-2" : "gap-3"}`}>
                     {/* Avatar */}
-                    <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden relative ${
+                    <div className={`rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden relative ${
+                      inWebView ? "w-10 h-10" : "w-12 h-12"
+                    } ${
                       getUserImageUrl(otherUser || {})
                         ? "bg-white border border-gray-200"
                         : "bg-gradient-to-br from-[#C9A227] to-[#8A6A00]"
@@ -288,14 +308,14 @@ export default function ChatsPage() {
                           src={getUserImageUrl(otherUser || {}) || "/default-avatar.png"}
                           alt={getUserDisplayName(otherUser || {})}
                           fill
-                          sizes="48px"
+                          sizes={inWebView ? "40px" : "48px"}
                           className="object-cover"
                           loading="lazy"
                         />
                       ) : room.type === "STORE" ? (
-                        <Store className="w-6 h-6 text-white" />
+                        <Store className={`text-white ${inWebView ? "w-5 h-5" : "w-6 h-6"}`} />
                       ) : (
-                        <User className="w-6 h-6 text-white" />
+                        <User className={`text-white ${inWebView ? "w-5 h-5" : "w-6 h-6"}`} />
                       )}
                     </div>
 

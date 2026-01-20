@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/stores/useAuthStore";
+import { isWebView } from "@/lib/webview";
 import { registerStoreAction } from "@/actions/stores";
 import { getMeAction, updateProfileAction } from "@/actions/auth";
 import { Button } from "@/components/ui/button";
@@ -19,6 +20,11 @@ export default function StoreRegisterPage() {
   const router = useRouter();
   const { user, tokens, isAuthenticated, updateUser } = useAuthStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [inWebView, setInWebView] = useState(false);
+
+  useEffect(() => {
+    setInWebView(isWebView());
+  }, []);
 
   // 폼 데이터 상태
   const [formData, setFormData] = useState<StoreRegisterRequest>({
@@ -200,8 +206,8 @@ export default function StoreRegisterPage() {
   // 로그인 체크
   if (!isAuthenticated) {
     return (
-      <div className="max-w-2xl mx-auto px-4 py-16">
-        <Card className="p-12 text-center">
+      <div className={`max-w-2xl mx-auto px-4 ${inWebView ? "py-8" : "py-16"}`}>
+        <Card className={`text-center ${inWebView ? "p-6" : "p-12"}`}>
           <AlertCircle className="w-16 h-16 text-[#C9A227] mx-auto mb-4" />
           <h2 className="text-xl font-bold text-gray-900 mb-2">
             로그인이 필요합니다
@@ -220,8 +226,8 @@ export default function StoreRegisterPage() {
   // 휴대폰 인증 체크
   if (!user?.phone_verified) {
     return (
-      <div className="max-w-2xl mx-auto px-4 py-16">
-        <Card className="p-12 text-center">
+      <div className={`max-w-2xl mx-auto px-4 ${inWebView ? "py-8" : "py-16"}`}>
+        <Card className={`text-center ${inWebView ? "p-6" : "p-12"}`}>
           <Phone className="w-16 h-16 text-blue-500 mx-auto mb-4" />
           <h2 className="text-xl font-bold text-gray-900 mb-2">
             휴대폰 인증이 필요합니다
@@ -244,11 +250,11 @@ export default function StoreRegisterPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
+    <div className={`max-w-4xl mx-auto px-4 ${inWebView ? "py-4" : "py-8"}`}>
       {/* 헤더 */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2 flex items-center gap-3">
-          <Store className="w-8 h-8 text-[#C9A227]" />
+      <div className={inWebView ? "mb-4" : "mb-8"}>
+        <h1 className={`font-bold text-gray-900 mb-2 flex items-center gap-3 ${inWebView ? "text-2xl" : "text-3xl"}`}>
+          <Store className={`text-[#C9A227] ${inWebView ? "w-6 h-6" : "w-8 h-8"}`} />
           매장 등록
         </h1>
         <p className="text-gray-600">
@@ -256,16 +262,16 @@ export default function StoreRegisterPage() {
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-8">
+      <form onSubmit={handleSubmit} className={inWebView ? "space-y-4" : "space-y-8"}>
         {/* 1. 사업자 정보 */}
-        <Card className="p-6">
-          <div className="flex items-center gap-2 mb-6">
+        <Card className={inWebView ? "p-4" : "p-6"}>
+          <div className={`flex items-center gap-2 ${inWebView ? "mb-4" : "mb-6"}`}>
             <Building2 className="w-5 h-5 text-blue-600" />
-            <h2 className="text-xl font-bold text-gray-900">
+            <h2 className={`font-bold text-gray-900 ${inWebView ? "text-lg" : "text-xl"}`}>
               1. 사업자 정보 (필수)
             </h2>
           </div>
-          <p className="text-sm text-gray-600 mb-6 bg-blue-50 p-4 rounded-lg border border-blue-200">
+          <p className={`text-sm text-gray-600 bg-blue-50 rounded-lg border border-blue-200 ${inWebView ? "mb-4 p-3" : "mb-6 p-4"}`}>
             <CheckCircle2 className="w-4 h-4 inline mr-2 text-blue-600" />
             국세청 사업자등록번호 진위 확인을 통해 자동으로 인증됩니다.
           </p>
@@ -333,10 +339,10 @@ export default function StoreRegisterPage() {
         </Card>
 
         {/* 2. 매장 기본 정보 */}
-        <Card className="p-6">
-          <div className="flex items-center gap-2 mb-6">
+        <Card className={inWebView ? "p-4" : "p-6"}>
+          <div className={`flex items-center gap-2 ${inWebView ? "mb-4" : "mb-6"}`}>
             <Store className="w-5 h-5 text-[#C9A227]" />
-            <h2 className="text-xl font-bold text-gray-900">
+            <h2 className={`font-bold text-gray-900 ${inWebView ? "text-lg" : "text-xl"}`}>
               2. 매장 기본 정보 (필수)
             </h2>
           </div>
@@ -409,10 +415,10 @@ export default function StoreRegisterPage() {
         </Card>
 
         {/* 3. 매장 상세 정보 (선택) */}
-        <Card className="p-6">
-          <div className="flex items-center gap-2 mb-6">
+        <Card className={inWebView ? "p-4" : "p-6"}>
+          <div className={`flex items-center gap-2 ${inWebView ? "mb-4" : "mb-6"}`}>
             <FileText className="w-5 h-5 text-purple-600" />
-            <h2 className="text-xl font-bold text-gray-900">
+            <h2 className={`font-bold text-gray-900 ${inWebView ? "text-lg" : "text-xl"}`}>
               3. 매장 상세 정보 (선택)
             </h2>
           </div>
@@ -505,7 +511,7 @@ export default function StoreRegisterPage() {
       </form>
 
       {/* 안내 메시지 */}
-      <Card className="mt-8 p-6 bg-gray-50">
+      <Card className={`bg-gray-50 ${inWebView ? "mt-4 p-4" : "mt-8 p-6"}`}>
         <h3 className="font-semibold text-gray-900 mb-3">📌 안내사항</h3>
         <ul className="space-y-2 text-sm text-gray-700">
           <li className="flex items-start gap-2">

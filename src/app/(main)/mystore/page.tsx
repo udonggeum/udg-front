@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, type FormEvent, type ChangeEvent } from "r
 import { useRouter } from "next/navigation";
 import { Store, ArrowLeft, Save, Phone, Clock, MapPin, FileText, Camera, Image as ImageIcon, Tags, BadgeCheck, ShieldCheck, AlertCircle, Clock3, XCircle, Upload } from "lucide-react";
 import AddressSearchInput from "@/components/AddressSearchInput";
+import { isWebView } from "@/lib/webview";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { getMyStoreAction, updateMyStoreAction, getStoreLocationsAction, getVerificationStatusAction } from "@/actions/stores";
 import { StoreVerificationModal } from "@/components/store-verification-modal";
@@ -82,6 +83,11 @@ export default function MyStoreEditPage() {
 
   const [formErrors, setFormErrors] = useState<FormErrors>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
+  const [inWebView, setInWebView] = useState(false);
+
+  useEffect(() => {
+    setInWebView(isWebView());
+  }, []);
 
   // 로그인되지 않았거나 admin이 아니면 마이페이지로 이동
   useEffect(() => {
@@ -447,8 +453,8 @@ export default function MyStoreEditPage() {
 
   if (isLoading) {
     return (
-      <main className="flex-grow py-8 bg-gray-50">
-        <section className="container mx-auto px-4 max-w-3xl">
+      <main className={`flex-grow bg-gray-50 ${inWebView ? "py-4" : "py-8"}`}>
+        <section className={`container mx-auto max-w-3xl ${inWebView ? "px-3" : "px-4"}`}>
           <div className="flex items-center justify-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-4 border-gray-300 border-t-gray-900" />
           </div>
@@ -458,26 +464,26 @@ export default function MyStoreEditPage() {
   }
 
   return (
-    <main className="flex-grow py-8 bg-gray-50">
-      <section className="container mx-auto px-4 max-w-3xl">
+    <main className={`flex-grow bg-gray-50 ${inWebView ? "py-4" : "py-8"}`}>
+      <section className={`container mx-auto max-w-3xl ${inWebView ? "px-3" : "px-4"}`}>
         {/* Page Header */}
-        <div className="mb-6">
+        <div className={inWebView ? "mb-4" : "mb-6"}>
           <Button
             onClick={() => router.push("/mypage")}
             variant="outline"
             size="sm"
-            className="gap-2 mb-4"
+            className={`gap-2 ${inWebView ? "mb-3" : "mb-4"}`}
           >
             <ArrowLeft className="w-4 h-4" />
             마이페이지로 돌아가기
           </Button>
-          <h1 className="text-2xl font-bold text-gray-900">매장 정보 수정</h1>
+          <h1 className={`font-bold text-gray-900 ${inWebView ? "text-xl" : "text-2xl"}`}>매장 정보 수정</h1>
           <p className="mt-1 text-sm text-gray-600">수정할 항목의 내용을 변경하세요</p>
         </div>
 
         {/* 인증 상태 카드 */}
-        <Card className="mb-6 border-0 shadow-sm">
-          <CardContent className="p-6">
+        <Card className={`border-0 shadow-sm ${inWebView ? "mb-4" : "mb-6"}`}>
+          <CardContent className={inWebView ? "p-4" : "p-6"}>
             <div className="flex items-start justify-between">
               <div className="flex items-start gap-4">
                 {/* 인증 상태 아이콘 */}
@@ -545,13 +551,13 @@ export default function MyStoreEditPage() {
         </Card>
 
         {/* 매장 이미지 카드 */}
-        <Card className="mb-6 border-0 shadow-sm">
-          <CardContent className="p-6">
+        <Card className={`border-0 shadow-sm ${inWebView ? "mb-4" : "mb-6"}`}>
+          <CardContent className={inWebView ? "p-4" : "p-6"}>
             <div className="flex flex-col items-center">
-              <div className="relative group mb-4">
+              <div className={`relative group ${inWebView ? "mb-3" : "mb-4"}`}>
                 <div
                   onClick={handleImageClick}
-                  className="w-40 h-40 rounded-lg overflow-hidden border-4 border-gray-100 cursor-pointer transition-opacity hover:opacity-80"
+                  className={`rounded-lg overflow-hidden border-4 border-gray-100 cursor-pointer transition-opacity hover:opacity-80 ${inWebView ? "w-32 h-32" : "w-40 h-40"}`}
                 >
                   <div className={`w-full h-full ${formData.image_url ? "bg-white" : "bg-gray-100"} flex items-center justify-center`}>
                     {formData.image_url ? (
@@ -596,9 +602,9 @@ export default function MyStoreEditPage() {
 
         {/* Form Card */}
         <Card className="border-0 shadow-sm">
-          <CardContent className="p-6">
+          <CardContent className={inWebView ? "p-4" : "p-6"}>
             {/* Form */}
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className={inWebView ? "space-y-4" : "space-y-6"}>
               {/* 매장명 */}
               <div>
                 <Label htmlFor="name" className="flex items-center gap-2 mb-2">

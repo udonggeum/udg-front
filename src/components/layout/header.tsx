@@ -11,7 +11,8 @@ import { getChatRoomsAction } from "@/actions/chat";
 import { getMyStoreAction } from "@/actions/stores";
 import { useWebSocket } from "@/hooks/useWebSocket";
 import { toast } from "sonner";
-import { User, Settings, LogOut, ChevronDown, MapPin, Menu, X, Store } from "lucide-react";
+import { User, Settings, LogOut, ChevronDown, MapPin, Menu, X, Store, MessageSquare, TrendingUp, MapPinned, Sparkles } from "lucide-react";
+import { isWebView } from "@/lib/webview";
 import LocationSettingModal from "@/components/LocationSettingModal";
 import { NotificationDropdown } from "@/components/notification-dropdown";
 import {
@@ -32,6 +33,12 @@ export function Header() {
   const [unreadChatCount, setUnreadChatCount] = useState(0);
   const [myStoreId, setMyStoreId] = useState<number | null>(null);
   const [myStoreSlug, setMyStoreSlug] = useState<string | null>(null);
+  const [inWebView, setInWebView] = useState(false);
+
+  // 웹뷰 환경 감지
+  useEffect(() => {
+    setInWebView(isWebView());
+  }, []);
 
   // user.address로 초기화 (currentLocation이 없을 때만)
   useEffect(() => {
@@ -171,72 +178,77 @@ export function Header() {
           <span className="text-lg font-bold text-gray-900">우리동네금은방</span>
         </Link>
 
-        {/* 네비게이션 */}
-        <nav className="hidden md:flex items-center gap-8">
-          <Link
-            href="/prices"
-            className="nav-link text-body font-medium text-gray-600 hover:text-gray-900 smooth-transition"
-          >
-            금시세
-          </Link>
-          <Link
-            href="/stores"
-            className="nav-link text-body font-medium text-gray-600 hover:text-gray-900 smooth-transition"
-          >
-            매장찾기
-          </Link>
-          <Link
-            href="/community"
-            className="nav-link text-body font-medium text-gray-600 hover:text-gray-900 smooth-transition"
-          >
-            금광산
-          </Link>
-          {isAuthenticated && (
+        {/* 네비게이션 (웹뷰에서는 숨김) */}
+        {!inWebView && (
+          <nav className="hidden md:flex items-center gap-8">
             <Link
-              href="/chats"
-              className="nav-link text-body font-medium text-gray-600 hover:text-gray-900 smooth-transition relative"
+              href="/prices"
+              className="nav-link text-body font-medium text-gray-600 hover:text-gray-900 smooth-transition"
             >
-              메시지
-              {unreadChatCount > 0 && (
-                <span className="absolute -top-1 -right-3 bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
-                  {unreadChatCount > 99 ? "99+" : unreadChatCount}
-                </span>
-              )}
+              금시세
             </Link>
-          )}
-        </nav>
+            <Link
+              href="/stores"
+              className="nav-link text-body font-medium text-gray-600 hover:text-gray-900 smooth-transition"
+            >
+              매장찾기
+            </Link>
+            <Link
+              href="/community"
+              className="nav-link text-body font-medium text-gray-600 hover:text-gray-900 smooth-transition"
+            >
+              금광산
+            </Link>
+            {isAuthenticated && (
+              <Link
+                href="/chats"
+                className="nav-link text-body font-medium text-gray-600 hover:text-gray-900 smooth-transition relative"
+              >
+                메시지
+                {unreadChatCount > 0 && (
+                  <span className="absolute -top-1 -right-3 bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
+                    {unreadChatCount > 99 ? "99+" : unreadChatCount}
+                  </span>
+                )}
+              </Link>
+            )}
+          </nav>
+        )}
 
         {/* 우측 영역 */}
         <div className="flex items-center gap-3">
-          {/* 모바일 햄버거 메뉴 버튼 */}
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="md:hidden text-gray-700"
-          >
-            {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-          </Button>
-
           {!isAuthenticated ? (
             // 비로그인 상태
-            <div className="flex items-center gap-3">
-              <Link href="/login">
+            <>
+              {/* 웹뷰가 아닐 때만 모바일 햄버거 표시 */}
+              {!inWebView && (
                 <Button
                   variant="ghost"
-                  className="hidden md:block text-caption font-semibold text-gray-700 hover:bg-gray-100"
+                  size="icon"
+                  onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                  className="md:hidden text-gray-700"
                 >
-                  로그인
+                  {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
                 </Button>
-              </Link>
-              <Link href="/signup">
-                <Button className="px-4 py-2.5 text-caption font-semibold text-white bg-gray-900 hover:bg-gray-800">
-                  시작하기
-                </Button>
-              </Link>
-            </div>
+              )}
+              <div className="flex items-center gap-3">
+                <Link href="/login">
+                  <Button
+                    variant="ghost"
+                    className={`${inWebView ? 'hidden' : 'hidden md:block'} text-caption font-semibold text-gray-700 hover:bg-gray-100`}
+                  >
+                    로그인
+                  </Button>
+                </Link>
+                <Link href="/signup">
+                  <Button className="px-4 py-2.5 text-caption font-semibold text-white bg-gray-900 hover:bg-gray-800">
+                    시작하기
+                  </Button>
+                </Link>
+              </div>
+            </>
           ) : (
-            // 로그인 상태 - 위치 버튼 + 드롭다운 메뉴
+            // 로그인 상태 - 위치 버튼 + 알림 + 메뉴/드롭다운
             <div className="flex items-center gap-1">
               {/* 위치 설정 버튼 */}
               <TooltipProvider>
@@ -264,20 +276,29 @@ export function Header() {
                 </div>
               )}
 
-              {/* 사용자 드롭다운 메뉴 */}
+              {/* 사용자 드롭다운 메뉴 (웹) 또는 햄버거 메뉴 (앱) */}
               <div className="relative">
                 <Button
                   variant="ghost"
+                  size={inWebView ? "icon" : undefined}
                   onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                  className="flex items-center gap-2 text-caption font-semibold text-gray-700 hover:bg-gray-100"
+                  className={`flex items-center gap-2 text-caption font-semibold text-gray-700 hover:bg-gray-100 ${inWebView ? 'p-2' : ''}`}
                 >
-                  {user?.role === "admin" ? (
-                    <Store className="w-4 h-4" />
+                  {inWebView ? (
+                    // 앱뷰: 햄버거 메뉴
+                    <Menu className="w-5 h-5" />
                   ) : (
-                    <User className="w-4 h-4" />
+                    // 웹: 사용자 아이콘
+                    <>
+                      {user?.role === "admin" ? (
+                        <Store className="w-4 h-4" />
+                      ) : (
+                        <User className="w-4 h-4" />
+                      )}
+                      <span className="hidden sm:inline">{user?.nickname || user?.name || "사용자"}</span>
+                      <ChevronDown className="w-4 h-4" />
+                    </>
                   )}
-                  <span className="hidden sm:inline">{user?.nickname || user?.name || "사용자"}</span>
-                  <ChevronDown className="w-4 h-4" />
                 </Button>
 
                 {isDropdownOpen && (
@@ -320,6 +341,54 @@ export function Header() {
                       </Link>
                     )}
 
+                    {/* 앱뷰 전용: 추가 메뉴 */}
+                    {inWebView && (
+                      <>
+                        <div className="border-t border-gray-100 my-1" />
+
+                        <Link
+                          href="/prices"
+                          onClick={() => setIsDropdownOpen(false)}
+                          className="flex items-center gap-2 px-4 py-2.5 text-caption text-gray-700 hover:bg-gray-50 smooth-transition"
+                        >
+                          <TrendingUp className="w-4 h-4" />
+                          금시세
+                        </Link>
+
+                        <Link
+                          href="/stores"
+                          onClick={() => setIsDropdownOpen(false)}
+                          className="flex items-center gap-2 px-4 py-2.5 text-caption text-gray-700 hover:bg-gray-50 smooth-transition"
+                        >
+                          <MapPinned className="w-4 h-4" />
+                          매장찾기
+                        </Link>
+
+                        <Link
+                          href="/community"
+                          onClick={() => setIsDropdownOpen(false)}
+                          className="flex items-center gap-2 px-4 py-2.5 text-caption text-gray-700 hover:bg-gray-50 smooth-transition"
+                        >
+                          <Sparkles className="w-4 h-4" />
+                          금광산
+                        </Link>
+
+                        <Link
+                          href="/chats"
+                          onClick={() => setIsDropdownOpen(false)}
+                          className="flex items-center gap-2 px-4 py-2.5 text-caption text-gray-700 hover:bg-gray-50 smooth-transition relative"
+                        >
+                          <MessageSquare className="w-4 h-4" />
+                          <span>메시지</span>
+                          {unreadChatCount > 0 && (
+                            <span className="ml-auto bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
+                              {unreadChatCount > 99 ? "99+" : unreadChatCount}
+                            </span>
+                          )}
+                        </Link>
+                      </>
+                    )}
+
                     {/* 구분선 */}
                     <div className="border-t border-gray-100 my-1" />
 
@@ -341,8 +410,8 @@ export function Header() {
         </div>
       </div>
 
-      {/* 모바일 메뉴 */}
-      {isMobileMenuOpen && (
+      {/* 모바일 메뉴 (웹뷰에서는 사용 안 함) */}
+      {!inWebView && isMobileMenuOpen && (
         <>
           {/* 배경 오버레이 */}
           <div

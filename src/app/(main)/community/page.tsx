@@ -17,6 +17,7 @@ import { Search, SlidersHorizontal, MapPin, X, ChevronDown, Heart, MessageCircle
 import { getUserDisplayName, getUserImageUrl } from "@/lib/utils";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { PullToRefreshIndicator } from "@/components/PullToRefreshIndicator";
+import { isWebView } from "@/lib/webview";
 
 type MainCategory = "market" | "community";
 
@@ -84,9 +85,15 @@ function CommunityPageContent() {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(true);
+  const [inWebView, setInWebView] = useState(false);
 
   // Infinite scroll observer
   const observerTarget = useRef<HTMLDivElement>(null);
+
+  // 웹뷰 환경 감지
+  useEffect(() => {
+    setInWebView(isWebView());
+  }, []);
 
   // 지역 데이터 로드
   useEffect(() => {
@@ -262,12 +269,14 @@ function CommunityPageContent() {
       <div className="min-h-screen bg-white">
       {/* 회색 배경 - 메인 카테고리만 (Sticky) */}
       <div className="sticky top-[60px] z-40 bg-gray-50">
-        <div className="max-w-[1200px] mx-auto px-page py-4">
-          <div className="flex items-center justify-between gap-3">
+        <div className={`max-w-[1200px] mx-auto px-page ${inWebView ? "py-2" : "py-4"}`}>
+          <div className={`flex items-center justify-between ${inWebView ? "gap-2" : "gap-3"}`}>
             <div className="flex gap-1">
               <button
                 onClick={() => handleMainCategoryChange("market")}
-                className={`px-5 py-2 text-[15px] font-bold rounded-lg transition-all ${
+                className={`font-bold rounded-lg transition-all ${
+                  inWebView ? "px-3 py-1.5 text-xs" : "px-5 py-2 text-[15px]"
+                } ${
                   mainCategory === "market"
                     ? "bg-[#C9A227] text-white"
                     : "text-gray-600 hover:bg-gray-100"
@@ -277,7 +286,9 @@ function CommunityPageContent() {
               </button>
               <button
                 onClick={() => handleMainCategoryChange("community")}
-                className={`px-5 py-2 text-[15px] font-bold rounded-lg transition-all ${
+                className={`font-bold rounded-lg transition-all ${
+                  inWebView ? "px-3 py-1.5 text-xs" : "px-5 py-2 text-[15px]"
+                } ${
                   mainCategory === "community"
                     ? "bg-[#C9A227] text-white"
                     : "text-gray-600 hover:bg-gray-100"
@@ -290,11 +301,11 @@ function CommunityPageContent() {
             {/* 글작성 버튼 */}
             {user && (
               <Link href="/community/write">
-                <Button variant="brand-primary" size="sm" className="gap-1.5">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <Button variant="brand-primary" size={inWebView ? "xs" : "sm"} className={inWebView ? "gap-1" : "gap-1.5"}>
+                  <svg className={inWebView ? "w-3 h-3" : "w-4 h-4"} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                   </svg>
-                  <span>글작성</span>
+                  <span className={inWebView ? "text-xs" : ""}>글작성</span>
                 </Button>
               </Link>
             )}
@@ -303,8 +314,8 @@ function CommunityPageContent() {
       </div>
 
       {/* 흰색 배경 - 서브 카테고리 + 필터 (Sticky) */}
-      <div className="sticky top-[108px] z-30 bg-white">
-        <div className="max-w-[1200px] mx-auto px-page py-3 border-b border-gray-200">
+      <div className={`sticky z-30 bg-white ${inWebView ? "top-[92px]" : "top-[108px]"}`}>
+        <div className={`max-w-[1200px] mx-auto px-page border-b border-gray-200 ${inWebView ? "py-2" : "py-3"}`}>
           <div className="flex items-center justify-between gap-3">
             {/* 서브 카테고리 */}
             <div className="flex gap-1 overflow-x-auto scrollbar-hide">
@@ -312,7 +323,9 @@ function CommunityPageContent() {
                 <>
                   <button
                     onClick={() => setSelectedType("buy_gold")}
-                    className={`px-4 py-2 text-[14px] font-semibold rounded-lg transition-all whitespace-nowrap ${
+                    className={`font-semibold rounded-lg transition-all whitespace-nowrap ${
+                      inWebView ? "px-3 py-1.5 text-xs" : "px-4 py-2 text-[14px]"
+                    } ${
                       selectedType === "buy_gold" ? "bg-gray-100 text-gray-900" : "text-gray-600 hover:bg-gray-50"
                     }`}
                   >
@@ -320,7 +333,9 @@ function CommunityPageContent() {
                   </button>
                   <button
                     onClick={() => setSelectedType("sell_gold")}
-                    className={`px-4 py-2 text-[14px] font-semibold rounded-lg transition-all whitespace-nowrap ${
+                    className={`font-semibold rounded-lg transition-all whitespace-nowrap ${
+                      inWebView ? "px-3 py-1.5 text-xs" : "px-4 py-2 text-[14px]"
+                    } ${
                       selectedType === "sell_gold" ? "bg-gray-100 text-gray-900" : "text-gray-600 hover:bg-gray-50"
                     }`}
                   >
@@ -331,7 +346,9 @@ function CommunityPageContent() {
                 <>
                   <button
                     onClick={() => { setSelectedCategory("gold_news"); setSelectedType("product_news"); }}
-                    className={`px-4 py-2 text-[14px] font-semibold rounded-lg transition-all whitespace-nowrap ${
+                    className={`font-semibold rounded-lg transition-all whitespace-nowrap ${
+                      inWebView ? "px-3 py-1.5 text-xs" : "px-4 py-2 text-[14px]"
+                    } ${
                       selectedType === "product_news" ? "bg-gray-100 text-gray-900" : "text-gray-600 hover:bg-gray-50"
                     }`}
                   >
@@ -339,7 +356,9 @@ function CommunityPageContent() {
                   </button>
                   <button
                     onClick={() => { setSelectedCategory("gold_news"); setSelectedType("store_news"); }}
-                    className={`px-4 py-2 text-[14px] font-semibold rounded-lg transition-all whitespace-nowrap ${
+                    className={`font-semibold rounded-lg transition-all whitespace-nowrap ${
+                      inWebView ? "px-3 py-1.5 text-xs" : "px-4 py-2 text-[14px]"
+                    } ${
                       selectedType === "store_news" ? "bg-gray-100 text-gray-900" : "text-gray-600 hover:bg-gray-50"
                     }`}
                   >
@@ -347,7 +366,9 @@ function CommunityPageContent() {
                   </button>
                   <button
                     onClick={() => { setSelectedCategory("qna"); setSelectedType("question"); }}
-                    className={`px-4 py-2 text-[14px] font-semibold rounded-lg transition-all whitespace-nowrap ${
+                    className={`font-semibold rounded-lg transition-all whitespace-nowrap ${
+                      inWebView ? "px-3 py-1.5 text-xs" : "px-4 py-2 text-[14px]"
+                    } ${
                       selectedCategory === "qna" ? "bg-gray-100 text-gray-900" : "text-gray-600 hover:bg-gray-50"
                     }`}
                   >
@@ -364,10 +385,12 @@ function CommunityPageContent() {
                   {/* 검색 버튼 */}
                   <button
                     onClick={() => setIsSearchOpen(true)}
-                    className="p-2 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
+                    className={`text-gray-600 hover:bg-gray-50 rounded-lg transition-colors ${
+                      inWebView ? "p-1.5" : "p-2"
+                    }`}
                     aria-label="검색"
                   >
-                    <Search className="w-5 h-5" />
+                    <Search className={inWebView ? "w-4 h-4" : "w-5 h-5"} />
                   </button>
 
                   {/* 필터 버튼 (지역만) */}
@@ -376,10 +399,12 @@ function CommunityPageContent() {
                       setTempSelectedLocations(selectedLocations);
                       setIsFilterOpen(true);
                     }}
-                    className="flex items-center gap-1.5 px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-lg transition-colors relative"
+                    className={`flex items-center text-gray-700 hover:bg-gray-50 rounded-lg transition-colors relative ${
+                      inWebView ? "gap-1 px-2 py-1.5" : "gap-1.5 px-3 py-2"
+                    }`}
                   >
-                    <SlidersHorizontal className="w-5 h-5" />
-                    <span className="text-sm font-medium hidden sm:inline">지역</span>
+                    <SlidersHorizontal className={inWebView ? "w-4 h-4" : "w-5 h-5"} />
+                    <span className={`font-medium hidden sm:inline ${inWebView ? "text-xs" : "text-sm"}`}>지역</span>
                     {activeFilterCount > 0 && (
                       <span className="absolute -top-1 -right-1 w-4 h-4 bg-[#C9A227] text-white text-[10px] font-bold rounded-full flex items-center justify-center">
                         {activeFilterCount}
@@ -678,7 +703,7 @@ function CommunityPageContent() {
       )}
 
       {/* Posts Grid */}
-      <div className="max-w-[1200px] mx-auto px-page py-6">
+      <div className={`max-w-[1200px] mx-auto px-page ${inWebView ? "py-3" : "py-6"}`}>
         {/* 활성 필터 표시 (지역) */}
         {selectedLocations.length > 0 && (
           <div className="flex items-center gap-2 mb-4 flex-wrap">

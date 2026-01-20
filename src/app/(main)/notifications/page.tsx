@@ -17,6 +17,7 @@ import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import { ko } from "date-fns/locale";
 import { Bell, Trash2 } from "lucide-react";
+import { isWebView } from "@/lib/webview";
 
 export default function NotificationsPage() {
   const router = useRouter();
@@ -29,8 +30,14 @@ export default function NotificationsPage() {
   const [hasMore, setHasMore] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [inWebView, setInWebView] = useState(false);
 
   const observerTarget = useRef<HTMLDivElement>(null);
+
+  // 웹뷰 감지
+  useEffect(() => {
+    setInWebView(isWebView());
+  }, []);
 
   // 로그인 확인
   useEffect(() => {
@@ -175,10 +182,10 @@ export default function NotificationsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-4 py-8 max-w-[900px]">
+      <div className={`container mx-auto px-4 max-w-[900px] ${inWebView ? "py-4" : "py-8"}`}>
         {/* 헤더 */}
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">알림</h1>
+        <div className={inWebView ? "mb-4" : "mb-6"}>
+          <h1 className={`font-bold text-gray-900 mb-2 ${inWebView ? "text-xl" : "text-2xl"}`}>알림</h1>
           <p className="text-sm text-gray-600">
             총 {notifications.length}개의 알림
             {unreadCount > 0 && ` · 읽지 않음 ${unreadCount}개`}
@@ -186,7 +193,7 @@ export default function NotificationsPage() {
         </div>
 
         {/* 필터 & 액션 */}
-        <div className="bg-white rounded-xl border border-gray-200 p-4 mb-4 flex items-center justify-between flex-wrap gap-3">
+        <div className={`bg-white rounded-xl border border-gray-200 mb-4 flex items-center justify-between flex-wrap ${inWebView ? "p-3 gap-2" : "p-4 gap-3"}`}>
           {/* 타입 필터 */}
           <div className="flex items-center gap-2 flex-wrap">
             <button
@@ -194,7 +201,7 @@ export default function NotificationsPage() {
                 setFilteredType("all");
                 setCurrentPage(1);
               }}
-              className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+              className={`text-sm font-medium rounded-lg transition-colors ${inWebView ? "px-3 py-1.5" : "px-4 py-2"} ${
                 filteredType === "all"
                   ? "bg-[#C9A227] text-white"
                   : "bg-gray-100 text-gray-700 hover:bg-gray-200"
@@ -207,7 +214,7 @@ export default function NotificationsPage() {
                 setFilteredType("new_sell_post");
                 setCurrentPage(1);
               }}
-              className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+              className={`text-sm font-medium rounded-lg transition-colors ${inWebView ? "px-3 py-1.5" : "px-4 py-2"} ${
                 filteredType === "new_sell_post"
                   ? "bg-[#C9A227] text-white"
                   : "bg-gray-100 text-gray-700 hover:bg-gray-200"
@@ -220,7 +227,7 @@ export default function NotificationsPage() {
                 setFilteredType("post_comment");
                 setCurrentPage(1);
               }}
-              className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+              className={`text-sm font-medium rounded-lg transition-colors ${inWebView ? "px-3 py-1.5" : "px-4 py-2"} ${
                 filteredType === "post_comment"
                   ? "bg-[#C9A227] text-white"
                   : "bg-gray-100 text-gray-700 hover:bg-gray-200"
@@ -233,7 +240,7 @@ export default function NotificationsPage() {
                 setFilteredType("store_liked");
                 setCurrentPage(1);
               }}
-              className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+              className={`text-sm font-medium rounded-lg transition-colors ${inWebView ? "px-3 py-1.5" : "px-4 py-2"} ${
                 filteredType === "store_liked"
                   ? "bg-[#C9A227] text-white"
                   : "bg-gray-100 text-gray-700 hover:bg-gray-200"
@@ -279,21 +286,21 @@ export default function NotificationsPage() {
                 <div
                   key={notification.id}
                   onClick={() => handleNotificationClick(notification)}
-                  className={`bg-white rounded-xl border border-gray-200 p-5 hover:shadow-md transition-all cursor-pointer ${
+                  className={`bg-white rounded-xl border border-gray-200 hover:shadow-md transition-all cursor-pointer ${
                     !notification.is_read ? "bg-blue-50/30 border-blue-200" : ""
-                  }`}
+                  } ${inWebView ? "p-3" : "p-5"}`}
                 >
-                  <div className="flex items-start gap-4">
+                  <div className={`flex items-start ${inWebView ? "gap-3" : "gap-4"}`}>
                     {/* 아이콘 */}
-                    <span className="text-2xl flex-shrink-0 mt-1">
+                    <span className={`flex-shrink-0 mt-1 ${inWebView ? "text-xl" : "text-2xl"}`}>
                       {NOTIFICATION_TYPE_ICONS[notification.type]}
                     </span>
 
                     {/* 내용 */}
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-3 mb-2">
+                      <div className={`flex items-start justify-between gap-3 ${inWebView ? "mb-1.5" : "mb-2"}`}>
                         <h3
-                          className={`text-base font-semibold ${
+                          className={`font-semibold ${inWebView ? "text-sm" : "text-base"} ${
                             !notification.is_read
                               ? "text-gray-900"
                               : "text-gray-700"
@@ -305,7 +312,7 @@ export default function NotificationsPage() {
                           <span className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 mt-2"></span>
                         )}
                       </div>
-                      <p className="text-sm text-gray-600 mb-3">
+                      <p className={`text-sm text-gray-600 ${inWebView ? "mb-2" : "mb-3"}`}>
                         {notification.content}
                       </p>
                       <div className="flex items-center justify-between">

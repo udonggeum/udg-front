@@ -28,6 +28,7 @@ import type { GoldPrice } from "@/types/goldPrices";
 import type { StoreDetail } from "@/types/stores";
 import { Section, Container, SectionHeader } from "@/components/layout-primitives";
 import { formatDistance, calculateDistance } from "@/utils/distance";
+import { isWebView } from "@/lib/webview";
 
 export default function Home() {
   const router = useRouter();
@@ -49,6 +50,13 @@ export default function Home() {
 
   // 매장 검색 모달 상태
   const [isStoreSearchModalOpen, setIsStoreSearchModalOpen] = useState(false);
+
+  // 웹뷰 환경 감지
+  const [inWebView, setInWebView] = useState(false);
+
+  useEffect(() => {
+    setInWebView(isWebView());
+  }, []);
 
   // 검색 핸들러
   const handleSearch = (e: React.FormEvent) => {
@@ -196,31 +204,49 @@ export default function Home() {
           </div>
 
           {/* 검색바 */}
-          <form onSubmit={handleSearch} className="search-container max-w-[580px] bg-white border-2 border-gray-200 rounded-2xl p-1.5 flex items-center smooth-transition hover:border-gray-300">
-            <div className="flex-1 flex items-center gap-3 px-4">
-              <Search className="w-5 h-5 text-gray-500" />
+          <form
+            onSubmit={handleSearch}
+            className={`search-container bg-white border-gray-200 rounded-2xl flex items-center smooth-transition hover:border-gray-300 ${
+              inWebView
+                ? "max-w-full border p-1 mx-2"  // 앱뷰: 얇은 테두리, 작은 padding, 좌우 여백
+                : "max-w-[580px] border-2 p-1.5"  // 웹: 기존 스타일
+            }`}
+          >
+            <div className={`flex-1 flex items-center gap-3 ${inWebView ? "px-3" : "px-4"}`}>
+              <Search className={`text-gray-500 ${inWebView ? "w-4 h-4" : "w-5 h-5"}`} />
               <Input
                 type="text"
                 placeholder="지역, 매장명을 검색해보세요"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="search-input flex-1 py-3 text-body text-gray-900 placeholder-gray-500 bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+                className={`search-input flex-1 text-body text-gray-900 placeholder-gray-500 bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 ${
+                  inWebView ? "py-2 text-sm" : "py-3"
+                }`}
               />
             </div>
-            <Button type="submit" variant="brand-primary" size="lg">
+            <Button
+              type="submit"
+              variant="brand-primary"
+              size={inWebView ? "default" : "lg"}
+              className={inWebView ? "px-4 py-2 text-sm" : ""}
+            >
               검색
             </Button>
           </form>
 
           {/* 인기 검색어 */}
-          <div className="flex items-center gap-2 mt-4 flex-wrap">
+          <div className={`flex items-center gap-2 mt-4 flex-wrap ${inWebView ? "mx-2" : ""}`}>
             <span className="text-small font-bold text-gray-600">인기</span>
             {["강남", "종로", "명동", "잠실"].map((keyword) => (
               <Badge
                 key={keyword}
                 variant="secondary"
                 onClick={() => router.push(`/stores?search=${encodeURIComponent(keyword)}`)}
-                className="px-4 py-2.5 min-h-[44px] bg-gray-100 hover:bg-gray-200 active:bg-gray-300 rounded-full text-small text-gray-600 smooth-transition cursor-pointer flex items-center"
+                className={`bg-gray-100 hover:bg-gray-200 active:bg-gray-300 rounded-full text-gray-600 smooth-transition cursor-pointer flex items-center ${
+                  inWebView
+                    ? "px-3 py-1.5 min-h-[36px] text-xs"  // 앱뷰: 작은 크기
+                    : "px-4 py-2.5 min-h-[44px] text-small"  // 웹: 기존 크기
+                }`}
               >
                 {keyword}
               </Badge>

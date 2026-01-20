@@ -45,6 +45,7 @@ import { getPresignedUrlAction, uploadToS3 } from "@/actions/upload";
 import { toast } from "sonner";
 import { useAuthenticatedAction } from "@/hooks/useAuthenticatedAction";
 import { apiClient } from "@/lib/axios";
+import { isWebView } from "@/lib/webview";
 
 type TabType = "home" | "news" | "gallery";
 
@@ -208,6 +209,9 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
   const [hasRequestedRegistration, setHasRequestedRegistration] = useState(false);
   const [isRequestingRegistration, setIsRequestingRegistration] = useState(false);
 
+  // 웹뷰 감지
+  const [inWebView, setInWebView] = useState(false);
+
   // 자기 매장인지 확인 (user_id가 있고, store의 user_id와 일치하는 경우)
   const isMyStore = user?.id && store?.user_id && user.id === store.user_id;
   const isAnyEditing = Object.values(editSections).some(Boolean);
@@ -238,6 +242,11 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
     return () => {
       isMountedRef.current = false;
     };
+  }, []);
+
+  // 웹뷰 감지
+  useEffect(() => {
+    setInWebView(isWebView());
   }, []);
 
   // 매장 정보 로드
@@ -889,7 +898,7 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* 커버 이미지 */}
-      <StoreBackground background={storeBackground} className="h-[280px]">
+      <StoreBackground background={storeBackground} className={inWebView ? "h-[220px]" : "h-[280px]"}>
         {/* 내 매장일 때 배경 편집 버튼 */}
         {isMyStore && (
           <div className="absolute top-4 right-4 z-20">
@@ -905,12 +914,12 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
       </StoreBackground>
 
       {/* 매장 메인 정보 */}
-      <div className="relative z-10 -mt-20 max-w-[1080px] mx-auto px-page w-full">
-        <div className="bg-white rounded-2xl p-6 shadow-lg mb-5">
+      <div className={`relative z-10 max-w-[1080px] mx-auto px-page w-full ${inWebView ? "-mt-16" : "-mt-20"}`}>
+        <div className={`bg-white rounded-2xl shadow-lg ${inWebView ? "p-4 mb-4" : "p-6 mb-5"}`}>
           <div className="flex flex-col md:flex-row gap-4">
             {/* 매장 이미지 */}
             <div
-              className={`w-32 h-32 ${
+              className={`${inWebView ? "w-24 h-24" : "w-32 h-32"} ${
                 store.image_url &&
                 (store.image_url.startsWith("http://") || store.image_url.startsWith("https://")) &&
                 !imageError
@@ -927,7 +936,7 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
                 !(
                   store.image_url.startsWith("http://") || store.image_url.startsWith("https://")
                 )) && (
-                <StoreIcon className="w-16 h-16 text-gray-300" />
+                <StoreIcon className={inWebView ? "w-12 h-12 text-gray-300" : "w-16 h-16 text-gray-300"} />
               )}
 
               {/* 이미지 (유효한 URL인 경우에만 렌더링) */}
@@ -997,14 +1006,14 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
                         type="text"
                         value={formData.name}
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        className="text-[28px] font-bold text-gray-900 bg-transparent border-none outline-none w-full min-w-[200px]"
+                        className={`font-bold text-gray-900 bg-transparent border-none outline-none w-full min-w-[200px] ${inWebView ? "text-[22px]" : "text-[28px]"}`}
                         placeholder="매장 이름"
                       />
                     ) : (
-                      <h1 className="text-[28px] font-bold text-gray-900">
+                      <h1 className={`font-bold text-gray-900 ${inWebView ? "text-[22px]" : "text-[28px]"}`}>
                         {store.name}
                         {store.branch_name && (
-                          <span className="text-[20px] font-normal text-gray-600 ml-2">
+                          <span className={`font-normal text-gray-600 ml-2 ${inWebView ? "text-[16px]" : "text-[20px]"}`}>
                             ({store.branch_name})
                           </span>
                         )}
@@ -1198,22 +1207,22 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
               ) : null}
 
               {/* 빠른 액션 버튼 */}
-              <div className="flex gap-3">
+              <div className={`flex ${inWebView ? "gap-2" : "gap-3"}`}>
                 {isMyStore ? (
                   <>
                     {/* 내 매장: 구매글 작성, 매장소식 작성 - Secondary */}
                     <button
                       onClick={() => router.push(`/community/write?category=gold_trade&store_id=${store.id}`)}
-                      className="flex-1 flex items-center justify-center gap-2 py-3 bg-gray-100 hover:bg-gray-200 text-gray-900 text-body font-semibold rounded-xl transition-all active:scale-[0.98]"
+                      className={`flex-1 flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-900 text-body font-semibold rounded-xl transition-all active:scale-[0.98] ${inWebView ? "py-2.5" : "py-3"}`}
                     >
-                      <PenSquare className="w-5 h-5" />
+                      <PenSquare className={inWebView ? "w-4 h-4" : "w-5 h-5"} />
                       구매글 작성
                     </button>
                     <button
                       onClick={() => router.push(`/community/write?type=store_news&store_id=${store.id}`)}
-                      className="flex-1 flex items-center justify-center gap-2 py-3 bg-gray-100 hover:bg-gray-200 text-gray-900 text-body font-semibold rounded-xl transition-all active:scale-[0.98]"
+                      className={`flex-1 flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-900 text-body font-semibold rounded-xl transition-all active:scale-[0.98] ${inWebView ? "py-2.5" : "py-3"}`}
                     >
-                      <Newspaper className="w-5 h-5" />
+                      <Newspaper className={inWebView ? "w-4 h-4" : "w-5 h-5"} />
                       매장소식 작성
                     </button>
                   </>
@@ -1223,22 +1232,22 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
                     {store.is_managed ? (
                       <button
                         onClick={handleInquiry}
-                        className="flex-1 flex items-center justify-center gap-2 py-3 bg-[#C9A227] hover:bg-[#8A6A00] text-white text-body font-semibold rounded-xl shadow-md hover:shadow-lg transition-all active:scale-[0.98]"
+                        className={`flex-1 flex items-center justify-center gap-2 bg-[#C9A227] hover:bg-[#8A6A00] text-white text-body font-semibold rounded-xl shadow-md hover:shadow-lg transition-all active:scale-[0.98] ${inWebView ? "py-2.5" : "py-3"}`}
                       >
-                        <MessageCircle className="w-5 h-5" />
+                        <MessageCircle className={inWebView ? "w-4 h-4" : "w-5 h-5"} />
                         문의하기
                       </button>
                     ) : (
                       <button
                         onClick={handleRequestRegistration}
                         disabled={hasRequestedRegistration || isRequestingRegistration}
-                        className={`flex-1 flex items-center justify-center gap-2 py-3 text-body font-semibold rounded-xl shadow-md transition-all active:scale-[0.98] ${
+                        className={`flex-1 flex items-center justify-center gap-2 text-body font-semibold rounded-xl shadow-md transition-all active:scale-[0.98] ${
                           hasRequestedRegistration
                             ? "bg-gray-300 text-gray-500 cursor-not-allowed"
                             : "bg-[#C9A227] hover:bg-[#8A6A00] text-white hover:shadow-lg"
-                        }`}
+                        } ${inWebView ? "py-2.5" : "py-3"}`}
                       >
-                        <StoreIcon className="w-5 h-5" />
+                        <StoreIcon className={inWebView ? "w-4 h-4" : "w-5 h-5"} />
                         {hasRequestedRegistration ? (
                           "요청 완료"
                         ) : (
@@ -1249,9 +1258,9 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
                     {store.phone_number && (
                       <button
                         onClick={handleCopyPhoneNumber}
-                        className="flex-1 flex items-center justify-center gap-2 py-3 bg-gray-100 hover:bg-gray-200 text-gray-900 text-body font-semibold rounded-xl transition-all active:scale-[0.98]"
+                        className={`flex-1 flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-900 text-body font-semibold rounded-xl transition-all active:scale-[0.98] ${inWebView ? "py-2.5" : "py-3"}`}
                       >
-                        <Copy className="w-5 h-5" />
+                        <Copy className={inWebView ? "w-4 h-4" : "w-5 h-5"} />
                         전화번호 복사
                       </button>
                     )}
@@ -1264,14 +1273,14 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
                     href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(store.address)}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center justify-center gap-2 px-4 py-3 bg-white border-2 border-gray-200 hover:border-gray-900 text-gray-900 text-body font-semibold rounded-xl transition-colors"
+                    className={`flex items-center justify-center gap-2 bg-white border-2 border-gray-200 hover:border-gray-900 text-gray-900 text-body font-semibold rounded-xl transition-colors ${inWebView ? "px-3 py-2.5" : "px-4 py-3"}`}
                   >
-                    <MapPin className="w-5 h-5" />
+                    <MapPin className={inWebView ? "w-4 h-4" : "w-5 h-5"} />
                     <span className="sr-only">길찾기</span>
                   </a>
                 )}
-                <button className="flex items-center justify-center gap-2 px-4 py-3 bg-white border-2 border-gray-200 hover:border-gray-900 text-gray-900 text-body font-semibold rounded-xl transition-colors">
-                  <Share2 className="w-5 h-5" />
+                <button className={`flex items-center justify-center gap-2 bg-white border-2 border-gray-200 hover:border-gray-900 text-gray-900 text-body font-semibold rounded-xl transition-colors ${inWebView ? "px-3 py-2.5" : "px-4 py-3"}`}>
+                  <Share2 className={inWebView ? "w-4 h-4" : "w-5 h-5"} />
                   <span className="sr-only">공유</span>
                 </button>
               </div>
@@ -1281,13 +1290,13 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
       </div>
 
       {/* 메인 컨텐츠 */}
-      <div className="max-w-[1080px] mx-auto px-page py-8 w-full">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className={`max-w-[1080px] mx-auto px-page w-full ${inWebView ? "py-4" : "py-8"}`}>
+        <div className={`grid grid-cols-1 lg:grid-cols-3 ${inWebView ? "gap-4" : "gap-6"}`}>
           {/* 좌측: 메인 컨텐츠 */}
           <div className="lg:col-span-2">
             <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
               {/* 탭 네비게이션 */}
-              <nav className="border-b border-gray-100 px-6 flex items-center gap-8 overflow-x-auto">
+              <nav className={`border-b border-gray-100 flex items-center overflow-x-auto ${inWebView ? "px-4 gap-4" : "px-6 gap-8"}`}>
                 <button
                   onClick={() => setActiveTab("home")}
                   className={`relative py-4 text-body font-medium whitespace-nowrap transition-colors ${
@@ -1321,7 +1330,7 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
               </nav>
 
               {/* 탭 콘텐츠 */}
-              <div className="p-6">
+              <div className={inWebView ? "p-4" : "p-6"}>
                 {activeTab === "home" && (
                   <div className="space-y-4">
                     {isLoadingPosts ? (
@@ -1343,10 +1352,10 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
                           {pinnedPosts.map((post) => (
                           <div
                             key={post.id}
-                            className="group border border-gray-200 rounded-xl p-5 hover:shadow-md transition-shadow cursor-pointer bg-[#FEF9E7] border-[#C9A227]/30"
+                            className={`group border border-gray-200 rounded-xl hover:shadow-md transition-shadow cursor-pointer bg-[#FEF9E7] border-[#C9A227]/30 ${inWebView ? "p-3" : "p-5"}`}
                             onClick={() => router.push(`/community/posts/${post.id}/${post.slug}`)}
                           >
-                            <div className="flex items-start justify-between gap-3 mb-3">
+                            <div className={`flex items-start justify-between gap-3 ${inWebView ? "mb-2" : "mb-3"}`}>
                               <div className="flex items-center gap-2">
                                 <Pin className="w-4 h-4 text-[#C9A227] fill-[#C9A227]" />
                                 <span className="text-xs font-medium text-[#8A6A00]">고정됨</span>
@@ -1368,11 +1377,11 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
                               )}
                             </div>
 
-                            <h3 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-1">
+                            <h3 className={`font-semibold text-gray-900 line-clamp-1 ${inWebView ? "text-base mb-1.5" : "text-lg mb-2"}`}>
                               {post.title}
                             </h3>
 
-                            <p className="text-gray-600 text-sm mb-4 line-clamp-2">
+                            <p className={`text-gray-600 text-sm line-clamp-2 ${inWebView ? "mb-3" : "mb-4"}`}>
                               {post.content}
                             </p>
 
@@ -1466,11 +1475,11 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
                               )}
                             </div>
 
-                            <h3 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-1">
+                            <h3 className={`font-semibold text-gray-900 line-clamp-1 ${inWebView ? "text-base mb-1.5" : "text-lg mb-2"}`}>
                               {post.title}
                             </h3>
 
-                            <p className="text-gray-600 text-sm mb-4 line-clamp-2">
+                            <p className={`text-gray-600 text-sm line-clamp-2 ${inWebView ? "mb-3" : "mb-4"}`}>
                               {post.content}
                             </p>
 
@@ -1844,8 +1853,8 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
               )}
 
               {/* 매장 정보 카드 */}
-              <div className="bg-white rounded-2xl p-5 shadow-sm">
-                <h3 className="text-[16px] font-bold text-gray-900 mb-3">매장 정보</h3>
+              <div className={`bg-white rounded-2xl shadow-sm ${inWebView ? "p-3" : "p-5"}`}>
+                <h3 className={`font-bold text-gray-900 ${inWebView ? "text-sm mb-2" : "text-[16px] mb-3"}`}>매장 정보</h3>
                 <div className="space-y-3 text-caption">
                   {/* 주소 */}
                   {(store.address || isMyStore) && (
@@ -1859,7 +1868,7 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
                       }`}
                     >
                       <div className="flex gap-3">
-                        <MapPin className="w-5 h-5 text-gray-400 flex-shrink-0 mt-0.5" />
+                        <MapPin className={`text-gray-400 flex-shrink-0 mt-0.5 ${inWebView ? "w-4 h-4" : "w-5 h-5"}`} />
                         <div className="flex-1">
                           {isMyStore && editSections.address ? (
                             <input
@@ -1936,7 +1945,7 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
                       }`}
                     >
                       <div className="flex gap-3">
-                        <Phone className="w-5 h-5 text-gray-400 flex-shrink-0 mt-0.5" />
+                        <Phone className={`text-gray-400 flex-shrink-0 mt-0.5 ${inWebView ? "w-4 h-4" : "w-5 h-5"}`} />
                         <div className="flex-1">
                           {isMyStore && editSections.phone ? (
                             <input
@@ -1994,7 +2003,7 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
                       }`}
                     >
                       <div className="flex gap-3">
-                        <Clock className="w-5 h-5 text-gray-400 flex-shrink-0 mt-0.5" />
+                        <Clock className={`text-gray-400 flex-shrink-0 mt-0.5 ${inWebView ? "w-4 h-4" : "w-5 h-5"}`} />
                         <div className="flex-1 min-w-0">
                           {isMyStore && editSections.hours ? (
                             <div className="flex flex-col gap-2">

@@ -9,6 +9,7 @@ import { useAuthStore } from "@/stores/useAuthStore";
 import { toast } from "sonner";
 import { Sparkles } from "lucide-react";
 import { ImageUploader } from "@/components/image-uploader";
+import { isWebView } from "@/lib/webview";
 import {
   POST_CATEGORY_LABELS,
   POST_TYPE_LABELS,
@@ -45,6 +46,11 @@ export default function CommunityEditPage() {
   const [additionalNotes, setAdditionalNotes] = useState("");
   const [showAdditionalNotes, setShowAdditionalNotes] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [inWebView, setInWebView] = useState(false);
+
+  useEffect(() => {
+    setInWebView(isWebView());
+  }, []);
 
   // 기존 게시글 데이터 로드
   useEffect(() => {
@@ -277,12 +283,12 @@ export default function CommunityEditPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-4 py-8 max-w-[900px]">
+      <div className={`container mx-auto px-4 max-w-[900px] ${inWebView ? "py-4" : "py-8"}`}>
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100">
-          <div className="p-6">
-            <h2 className="text-2xl font-bold mb-8">게시글 수정</h2>
+          <div className={inWebView ? "p-4" : "p-6"}>
+            <h2 className={`font-bold ${inWebView ? "text-xl mb-4" : "text-2xl mb-8"}`}>게시글 수정</h2>
 
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className={inWebView ? "space-y-4" : "space-y-6"}>
               {/* Category Selection */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-3">
@@ -297,7 +303,7 @@ export default function CommunityEditPage() {
                           key={category}
                           type="button"
                           disabled={!isAvailable}
-                          className={`px-4 py-3 rounded-xl text-sm font-semibold border transition-all relative group ${
+                          className={`rounded-xl text-sm font-semibold border transition-all relative group ${inWebView ? "px-3 py-2" : "px-4 py-3"} ${
                             !isAvailable
                               ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
                               : selectedCategory === category
@@ -325,7 +331,7 @@ export default function CommunityEditPage() {
                   게시글 타입 <span className="text-red-500">*</span>
                 </label>
                 <select
-                  className={`w-full p-3 rounded-lg border ${
+                  className={`w-full rounded-lg border ${inWebView ? "p-2.5" : "p-3"} ${
                     errors.type ? "border-red-500" : "border-gray-200"
                   } focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent`}
                   value={selectedType}
@@ -346,7 +352,7 @@ export default function CommunityEditPage() {
                 </label>
                 <input
                   type="text"
-                  className={`w-full p-3 rounded-lg border ${
+                  className={`w-full rounded-lg border ${inWebView ? "p-2.5" : "p-3"} ${
                     errors.title ? "border-red-500" : "border-gray-200"
                   } focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent`}
                   placeholder="제목을 입력하세요"
@@ -372,7 +378,7 @@ export default function CommunityEditPage() {
                         금 종류 <span className="text-red-500">*</span>
                       </label>
                       <select
-                        className={`w-full p-3 rounded-lg border ${errors.goldType ? "border-red-500" : "border-gray-200"} focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent disabled:bg-gray-100`}
+                        className={`w-full rounded-lg border ${inWebView ? "p-2.5" : "p-3"} ${errors.goldType ? "border-red-500" : "border-gray-200"} focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent disabled:bg-gray-100`}
                         value={goldType}
                         onChange={(e) => setGoldType(e.target.value)}
                         disabled={goldTypeUnknown}
@@ -409,7 +415,7 @@ export default function CommunityEditPage() {
                       <input
                         type="number"
                         step="0.01"
-                        className={`w-full p-3 rounded-lg border ${errors.weight ? "border-red-500" : "border-gray-200"} focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent disabled:bg-gray-100`}
+                        className={`w-full rounded-lg border ${inWebView ? "p-2.5" : "p-3"} ${errors.weight ? "border-red-500" : "border-gray-200"} focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent disabled:bg-gray-100`}
                         placeholder="예: 18.75"
                         value={weight}
                         onChange={(e) => setWeight(e.target.value)}
@@ -439,7 +445,7 @@ export default function CommunityEditPage() {
                       </label>
                       <input
                         type="number"
-                        className={`w-full p-3 rounded-lg border ${errors.price ? "border-red-500" : "border-gray-200"} focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent disabled:bg-gray-100`}
+                        className={`w-full rounded-lg border ${inWebView ? "p-2.5" : "p-3"} ${errors.price ? "border-red-500" : "border-gray-200"} focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent disabled:bg-gray-100`}
                         placeholder="예: 3500000"
                         value={price}
                         onChange={(e) => setPrice(e.target.value)}
@@ -469,7 +475,7 @@ export default function CommunityEditPage() {
                       </label>
                       <input
                         type="text"
-                        className={`w-full p-3 rounded-lg border ${errors.location ? "border-red-500" : "border-gray-200"} focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent`}
+                        className={`w-full rounded-lg border ${inWebView ? "p-2.5" : "p-3"} ${errors.location ? "border-red-500" : "border-gray-200"} focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent`}
                         placeholder="예: 서울 강남구"
                         value={location}
                         onChange={(e) => setLocation(e.target.value)}
@@ -557,7 +563,7 @@ export default function CommunityEditPage() {
                 )}
 
                 <textarea
-                  className={`w-full p-3 rounded-lg border ${
+                  className={`w-full rounded-lg border ${inWebView ? "p-2.5" : "p-3"} ${
                     errors.content ? "border-red-500" : "border-gray-200"
                   } focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent resize-none`}
                   rows={10}

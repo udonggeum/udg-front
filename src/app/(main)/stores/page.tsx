@@ -27,6 +27,7 @@ import { Virtuoso } from "react-virtuoso";
 import { StoreListSkeleton } from "@/components/skeletons/StoreListSkeleton";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { PullToRefreshIndicator } from "@/components/PullToRefreshIndicator";
+import { isWebView } from "@/lib/webview";
 
 /**
  * 매장 이미지 컴포넌트 - 로딩 실패 시 폴백 UI 표시
@@ -178,6 +179,12 @@ function StoresPageContent() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const [isGettingLocation, setIsGettingLocation] = useState(false);
+  const [inWebView, setInWebView] = useState(false);
+
+  // 웹뷰 환경 감지
+  useEffect(() => {
+    setInWebView(isWebView());
+  }, []);
 
   // 매장 클릭 핸들러 (useCallback으로 메모이제이션)
   const handleStoreClick = useCallback((store: StoreWithExtras) => {
@@ -552,12 +559,14 @@ function StoresPageContent() {
         {/* 좌측 패널 - 검색 및 리스트 */}
         <div className="w-full md:w-[420px] lg:w-[480px] flex-shrink-0 border-r border-gray-100 flex flex-col bg-white">
           {/* 검색 영역 */}
-          <div className="p-3 md:p-5 border-b border-gray-100">
+          <div className={`border-b border-gray-100 ${inWebView ? "p-2" : "p-3 md:p-5"}`}>
             {/* 모바일 리스트/지도 탭 */}
-            <div className="md:hidden flex gap-2 mb-3">
+            <div className={`md:hidden flex gap-2 ${inWebView ? "mb-2" : "mb-3"}`}>
               <button
                 onClick={() => setIsMobileMapOpen(false)}
-                className={`flex-1 py-2.5 text-sm font-semibold rounded-lg transition-colors ${
+                className={`flex-1 font-semibold rounded-lg transition-colors ${
+                  inWebView ? "py-2 text-xs" : "py-2.5 text-sm"
+                } ${
                   !isMobileMapOpen
                     ? "bg-[#C9A227] text-white"
                     : "bg-gray-100 text-gray-600"
@@ -567,7 +576,9 @@ function StoresPageContent() {
               </button>
               <button
                 onClick={() => setIsMobileMapOpen(true)}
-                className={`flex-1 py-2.5 text-sm font-semibold rounded-lg transition-colors ${
+                className={`flex-1 font-semibold rounded-lg transition-colors ${
+                  inWebView ? "py-2 text-xs" : "py-2.5 text-sm"
+                } ${
                   isMobileMapOpen
                     ? "bg-[#C9A227] text-white"
                     : "bg-gray-100 text-gray-600"
@@ -579,15 +590,19 @@ function StoresPageContent() {
 
             {/* 검색바 */}
             <form onSubmit={handleSearch}>
-              <div className="bg-gray-100 rounded-xl p-1 flex items-center transition-all duration-200 mb-3">
-                <div className="flex-1 flex items-center gap-2 md:gap-3 px-2 md:px-3">
-                  <Search className="w-4 h-4 md:w-5 md:h-5 text-gray-400" />
+              <div className={`bg-gray-100 rounded-xl flex items-center transition-all duration-200 ${
+                inWebView ? "p-0.5 mb-2" : "p-1 mb-3"
+              }`}>
+                <div className={`flex-1 flex items-center ${inWebView ? "gap-1.5 px-2" : "gap-2 md:gap-3 px-2 md:px-3"}`}>
+                  <Search className={`text-gray-400 ${inWebView ? "w-3.5 h-3.5" : "w-4 h-4 md:w-5 md:h-5"}`} />
                   <input
                     type="text"
-                    placeholder="매장명, 지역, 주소로 검색"
+                    placeholder={inWebView ? "매장명 검색" : "매장명, 지역, 주소로 검색"}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="flex-1 py-2 md:py-2.5 text-small md:text-body text-gray-900 placeholder-gray-400 bg-transparent outline-none"
+                    className={`flex-1 text-gray-900 placeholder-gray-400 bg-transparent outline-none ${
+                      inWebView ? "py-1.5 text-xs" : "py-2 md:py-2.5 text-small md:text-body"
+                    }`}
                   />
                   {searchQuery && (
                     <button
@@ -595,15 +610,15 @@ function StoresPageContent() {
                       onClick={() => setSearchQuery("")}
                       className="p-1 hover:bg-gray-200 rounded-full transition-colors"
                     >
-                      <X className="w-4 h-4 text-gray-400" />
+                      <X className={`text-gray-400 ${inWebView ? "w-3 h-3" : "w-4 h-4"}`} />
                     </button>
                   )}
                 </div>
                 <Button
                   type="submit"
                   variant="brand-primary"
-                  size="sm"
-                  className="rounded-lg"
+                  size={inWebView ? "xs" : "sm"}
+                  className={`rounded-lg ${inWebView ? "px-2 text-xs" : ""}`}
                 >
                   검색
                 </Button>
@@ -615,23 +630,29 @@ function StoresPageContent() {
               type="button"
               onClick={getCurrentLocation}
               disabled={isGettingLocation}
-              className="flex w-full items-center justify-center gap-2 py-3 min-h-[48px] bg-white border border-gray-200 rounded-xl text-caption font-medium text-gray-700 hover:bg-gray-50 active:bg-gray-100 transition-colors duration-200 mb-4 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-white"
+              className={`flex w-full items-center justify-center gap-2 bg-white border border-gray-200 rounded-xl font-medium text-gray-700 hover:bg-gray-50 active:bg-gray-100 transition-colors duration-200 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-white ${
+                inWebView ? "py-2 min-h-[40px] text-[11px] mb-2" : "py-3 min-h-[48px] text-caption mb-4"
+              }`}
             >
               {isGettingLocation ? (
                 <>
-                  <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                  <div className={`border-2 border-blue-500 border-t-transparent rounded-full animate-spin ${
+                    inWebView ? "w-4 h-4" : "w-5 h-5"
+                  }`} />
                   위치 확인 중...
                 </>
               ) : (
                 <>
-                  <MapPin className="w-5 h-5 text-blue-500" />
+                  <MapPin className={`text-blue-500 ${inWebView ? "w-4 h-4" : "w-5 h-5"}`} />
                   현재 위치로 검색
                 </>
               )}
             </button>
 
             {/* 필터 태그 */}
-            <div className="flex items-center gap-1.5 md:gap-2 overflow-x-auto pb-1 scrollbar-hide">
+            <div className={`flex items-center overflow-x-auto pb-1 scrollbar-hide ${
+              inWebView ? "gap-1" : "gap-1.5 md:gap-2"
+            }`}>
               {filterTags.map((tag) => (
                 <button
                   key={tag.id}
@@ -646,7 +667,9 @@ function StoresPageContent() {
                     setSelectedFilter(tag.id);
                     setCurrentPage(1); // 필터 변경 시 1페이지로 리셋
                   }}
-                  className={`px-3 md:px-4 py-2 md:py-2.5 min-h-[40px] md:min-h-[44px] text-small font-medium rounded-full border whitespace-nowrap transition-all duration-200 ${
+                  className={`font-medium rounded-full border whitespace-nowrap transition-all duration-200 ${
+                    inWebView ? "px-2.5 py-1.5 min-h-[32px] text-[11px]" : "px-3 md:px-4 py-2 md:py-2.5 min-h-[40px] md:min-h-[44px] text-small"
+                  } ${
                     selectedFilter === tag.id
                       ? "bg-[#C9A227] text-white border-[#C9A227] active:bg-[#8A6A00]"
                       : "bg-white text-gray-600 border-gray-200 hover:border-gray-400 active:bg-gray-50"
@@ -659,23 +682,29 @@ function StoresPageContent() {
           </div>
 
           {/* 결과 헤더 - 모바일에서 리스트 탭일 때만 표시 */}
-          <div className={`px-3 md:px-page py-3 md:py-4 flex items-center justify-between border-b border-gray-50 ${
+          <div className={`flex items-center justify-between border-b border-gray-50 ${
+            inWebView ? "px-2 py-2" : "px-3 md:px-page py-3 md:py-4"
+          } ${
             isMobileMapOpen ? "hidden md:flex" : "flex"
           }`}>
             <div className="flex items-center gap-2">
-              <span className="text-caption text-gray-500">검색결과</span>
-              <span className="text-caption font-bold text-gray-900">{filteredStores.length}</span>
+              <span className={`text-gray-500 ${inWebView ? "text-[11px]" : "text-caption"}`}>검색결과</span>
+              <span className={`font-bold text-gray-900 ${inWebView ? "text-[11px]" : "text-caption"}`}>{filteredStores.length}</span>
             </div>
             <div className="relative">
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-                className="appearance-none text-small font-medium text-gray-600 pr-5 cursor-pointer bg-transparent focus:outline-none"
+                className={`appearance-none font-medium text-gray-600 pr-5 cursor-pointer bg-transparent focus:outline-none ${
+                  inWebView ? "text-[11px]" : "text-small"
+                }`}
               >
                 <option value="distance">거리순</option>
               </select>
               <svg
-                className="w-4 h-4 absolute right-0 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+                className={`absolute right-0 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none ${
+                  inWebView ? "w-3 h-3" : "w-4 h-4"
+                }`}
                 fill="none"
                 stroke="currentColor"
                 strokeWidth="2"
@@ -725,14 +754,18 @@ function StoresPageContent() {
                 itemContent={(_index, store) => (
                   <div
                     onClick={() => handleStoreClick(store)}
-                    className={`p-3 md:p-5 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors duration-200 border-l-4 ${
+                    className={`border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors duration-200 border-l-4 ${
+                      inWebView ? "p-2" : "p-3 md:p-5"
+                    } ${
                       selectedStore?.id === store.id
                         ? "bg-gray-50 border-l-gray-900"
                         : "border-l-transparent"
                     }`}
                   >
-                    <div className="flex gap-3 md:gap-4">
-                      <div className="w-16 h-16 md:w-20 md:h-20 rounded-xl overflow-hidden flex-shrink-0">
+                    <div className={`flex ${inWebView ? "gap-2" : "gap-3 md:gap-4"}`}>
+                      <div className={`rounded-xl overflow-hidden flex-shrink-0 ${
+                        inWebView ? "w-14 h-14" : "w-16 h-16 md:w-20 md:h-20"
+                      }`}>
                         <StoreImage
                           imageUrl={store.image_url}
                           storeName={store.name}
@@ -742,25 +775,33 @@ function StoresPageContent() {
                         />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h3 className="text-[16px] font-semibold text-gray-900 truncate flex-1">
+                        <div className={`flex items-center gap-2 ${inWebView ? "mb-0.5" : "mb-1"}`}>
+                          <h3 className={`font-semibold text-gray-900 truncate flex-1 ${
+                            inWebView ? "text-sm" : "text-[16px]"
+                          }`}>
                             {store.name}
                           </h3>
                           {/* 인증 매장 뱃지 */}
                           {store.is_verified && (
-                            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-blue-50 text-blue-700 text-[11px] font-semibold rounded flex-shrink-0">
-                              <BadgeCheck className="w-3 h-3" />
+                            <span className={`inline-flex items-center bg-blue-50 text-blue-700 font-semibold rounded flex-shrink-0 ${
+                              inWebView ? "gap-0.5 px-1 py-0.5 text-[9px]" : "gap-0.5 px-1.5 py-0.5 text-[11px]"
+                            }`}>
+                              <BadgeCheck className={inWebView ? "w-2.5 h-2.5" : "w-3 h-3"} />
                               인증
                             </span>
                           )}
                           {/* 관리 매장 뱃지 (인증되지 않은 경우) */}
                           {store.is_managed && !store.is_verified && (
-                            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-gray-100 text-gray-600 text-[11px] font-medium rounded flex-shrink-0">
-                              <Building2 className="w-3 h-3" />
+                            <span className={`inline-flex items-center bg-gray-100 text-gray-600 font-medium rounded flex-shrink-0 ${
+                              inWebView ? "gap-0.5 px-1 py-0.5 text-[9px]" : "gap-0.5 px-1.5 py-0.5 text-[11px]"
+                            }`}>
+                              <Building2 className={inWebView ? "w-2.5 h-2.5" : "w-3 h-3"} />
                               관리
                             </span>
                           )}
-                          <span className={`px-1.5 py-0.5 text-[11px] font-medium rounded flex-shrink-0 ${
+                          <span className={`font-medium rounded flex-shrink-0 ${
+                            inWebView ? "px-1 py-0.5 text-[9px]" : "px-1.5 py-0.5 text-[11px]"
+                          } ${
                             store.isOpen
                               ? "bg-[#FEF9E7] text-[#8A6A00]"
                               : "bg-gray-100 text-gray-600"
@@ -770,23 +811,29 @@ function StoresPageContent() {
                           <button
                             type="button"
                             onClick={(e) => handleStoreLike(store.id, e)}
-                            className="flex-shrink-0 p-1 hover:bg-gray-100 rounded-lg transition-colors"
+                            className={`flex-shrink-0 hover:bg-gray-100 rounded-lg transition-colors ${
+                              inWebView ? "p-0.5" : "p-1"
+                            }`}
                           >
                             <Heart
-                              className={`w-4 h-4 transition-colors ${
+                              className={`transition-colors ${
+                                inWebView ? "w-3.5 h-3.5" : "w-4 h-4"
+                              } ${
                                 store.isLiked ? "fill-red-500 text-red-500" : "text-gray-400"
                               }`}
                             />
                           </button>
                         </div>
                         {store.distance && (
-                          <div className="flex items-center gap-1.5 text-small mb-2">
+                          <div className={`flex items-center ${inWebView ? "gap-1 text-[11px] mb-1" : "gap-1.5 text-small mb-2"}`}>
                             <span className="text-blue-600 font-semibold">
                               {store.distance}
                             </span>
                           </div>
                         )}
-                        <p className="text-small text-gray-500 mb-2 truncate">
+                        <p className={`text-gray-500 truncate ${
+                          inWebView ? "text-[11px] mb-1" : "text-small mb-2"
+                        }`}>
                           {/* 매장 리스트: 간단하게 구·동만 표시 */}
                           {store.district || store.dong || store.building_name ? (
                             <>
@@ -801,11 +848,13 @@ function StoresPageContent() {
                           )}
                         </p>
                         {store.tags && store.tags.length > 0 && (
-                          <div className="flex items-center gap-2">
+                          <div className={`flex items-center ${inWebView ? "gap-1" : "gap-2"}`}>
                             {store.tags.slice(0, 3).map((tag) => (
                               <span
                                 key={tag.id}
-                                className="px-2 py-1 bg-gray-100 text-gray-600 text-[11px] font-medium rounded"
+                                className={`bg-gray-100 text-gray-600 font-medium rounded ${
+                                  inWebView ? "px-1.5 py-0.5 text-[9px]" : "px-2 py-1 text-[11px]"
+                                }`}
                               >
                                 {tag.name}
                               </span>
@@ -822,21 +871,27 @@ function StoresPageContent() {
 
             {/* 페이지네이션 */}
             {!isLoading && !error && stores.length > 0 && (
-              <div className="p-3 md:p-5 border-t border-gray-100 flex items-center justify-between bg-white">
+              <div className={`border-t border-gray-100 flex items-center justify-between bg-white ${
+                inWebView ? "p-2" : "p-3 md:p-5"
+              }`}>
                 <button
                   onClick={() => handlePageChange(currentPage - 1)}
                   disabled={currentPage === 1}
-                  className="px-4 py-2 text-sm font-medium rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className={`font-medium rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors ${
+                    inWebView ? "px-3 py-1.5 text-xs" : "px-4 py-2 text-sm"
+                  }`}
                 >
                   이전
                 </button>
-                <span className="text-sm text-gray-600">
+                <span className={`text-gray-600 ${inWebView ? "text-xs" : "text-sm"}`}>
                   {currentPage} / {totalPages > 0 ? totalPages : 1} 페이지 (총 {totalCount}개)
                 </span>
                 <button
                   onClick={() => handlePageChange(currentPage + 1)}
                   disabled={currentPage >= totalPages}
-                  className="px-4 py-2 text-sm font-medium rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className={`font-medium rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors ${
+                    inWebView ? "px-3 py-1.5 text-xs" : "px-4 py-2 text-sm"
+                  }`}
                 >
                   다음
                 </button>

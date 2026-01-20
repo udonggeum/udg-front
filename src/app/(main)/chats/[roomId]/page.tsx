@@ -28,6 +28,7 @@ import { useWebSocket } from "@/hooks/useWebSocket";
 import { getUserDisplayName, getUserImageUrl } from "@/lib/utils";
 import { Virtuoso, VirtuosoHandle } from "react-virtuoso";
 import Image from "next/image";
+import { isWebView } from "@/lib/webview";
 
 export default function ChatRoomPage() {
   const router = useRouter();
@@ -49,6 +50,7 @@ export default function ChatRoomPage() {
   const [isUploading, setIsUploading] = useState(false);
   const [editingMessageId, setEditingMessageId] = useState<number | null>(null);
   const [editingContent, setEditingContent] = useState("");
+  const [inWebView, setInWebView] = useState(false);
   const virtuosoRef = useRef<VirtuosoHandle>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -61,6 +63,11 @@ export default function ChatRoomPage() {
       index: "LAST",
       behavior: "smooth",
     });
+  }, []);
+
+  // 웹뷰 감지
+  useEffect(() => {
+    setInWebView(isWebView());
   }, []);
 
   // 검색어 디바운싱 (300ms)
@@ -756,9 +763,9 @@ export default function ChatRoomPage() {
 
   return (
     <div className="fixed inset-0 top-[80px] bg-gray-50 overflow-hidden">
-      <div className="max-w-4xl mx-auto h-full px-4 py-4 flex flex-col">
+      <div className={`max-w-4xl mx-auto h-full flex flex-col ${inWebView ? "px-3 py-3" : "px-4 py-4"}`}>
         {/* Header */}
-        <div className="pb-4 border-b border-gray-200 flex-shrink-0">
+        <div className={`border-b border-gray-200 flex-shrink-0 ${inWebView ? "pb-3" : "pb-4"}`}>
         <div className="flex items-center gap-3">
           <Button
             variant="ghost"
@@ -770,8 +777,8 @@ export default function ChatRoomPage() {
           </Button>
 
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-3">
-              <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden relative ${
+            <div className={`flex items-center ${inWebView ? "gap-2" : "gap-3"}`}>
+              <div className={`rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden relative ${inWebView ? "w-8 h-8" : "w-10 h-10"} ${
                 getUserImageUrl(otherUser || {})
                   ? "bg-white border border-gray-200"
                   : "bg-gradient-to-br from-[#C9A227] to-[#8A6A00]"
@@ -785,11 +792,11 @@ export default function ChatRoomPage() {
                     className="object-cover"
                   />
                 ) : (
-                  <User className="w-5 h-5 text-white" />
+                  <User className={inWebView ? "w-4 h-4 text-white" : "w-5 h-5 text-white"} />
                 )}
               </div>
               <div className="flex-1 min-w-0">
-                <h2 className="font-semibold text-gray-900 truncate">
+                <h2 className={`font-semibold text-gray-900 truncate ${inWebView ? "text-sm" : ""}`}>
                   {getUserDisplayName(otherUser || {})}
                 </h2>
                 <p className="text-xs text-gray-600">
@@ -800,7 +807,7 @@ export default function ChatRoomPage() {
 
             {/* 금 거래 게시글 요약 */}
             {room && room.type === "SALE" && room.product && (
-              <div className="mt-2 p-2 bg-amber-50 border border-amber-200 rounded-lg">
+              <div className={`bg-amber-50 border border-amber-200 rounded-lg ${inWebView ? "mt-1.5 p-1.5" : "mt-2 p-2"}`}>
                 <div className="flex items-center gap-2">
                   <MessageCircle className="w-3.5 h-3.5 text-amber-600 flex-shrink-0" />
                   <div className="flex-1 min-w-0">
@@ -1177,7 +1184,7 @@ export default function ChatRoomPage() {
             value={newMessage}
             onChange={handleInputChange}
             placeholder={selectedFile ? "메시지 추가 (선택사항)..." : "메시지를 입력하세요..."}
-            className="flex-1 px-4 py-3 border border-gray-300 rounded-full focus:outline-none focus:border-[#C9A227]"
+            className={`flex-1 border border-gray-300 rounded-full focus:outline-none focus:border-[#C9A227] ${inWebView ? "px-3 py-2 text-sm" : "px-4 py-3"}`}
             disabled={isSending || isUploading}
           />
 
@@ -1186,7 +1193,7 @@ export default function ChatRoomPage() {
             variant="brand-primary"
             size="icon"
             disabled={(!newMessage.trim() && !selectedFile) || isSending || isUploading}
-            className="w-12 h-12 rounded-full flex-shrink-0"
+            className={`rounded-full flex-shrink-0 ${inWebView ? "w-10 h-10" : "w-12 h-12"}`}
           >
             {isUploading ? (
               <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />

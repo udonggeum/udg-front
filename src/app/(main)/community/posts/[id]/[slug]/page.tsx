@@ -35,6 +35,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { PostDetailSkeleton } from "@/components/skeletons/PostDetailSkeleton";
 import Image from "next/image";
+import { isWebView } from "@/lib/webview";
 
 export default function CommunityDetailPage() {
   const params = useParams();
@@ -53,8 +54,13 @@ export default function CommunityDetailPage() {
   const [showMenu, setShowMenu] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+  const [inWebView, setInWebView] = useState(false);
 
   const postId = Number(params?.id);
+
+  useEffect(() => {
+    setInWebView(isWebView());
+  }, []);
 
   // 페이지 진입 시 스크롤 맨 위로
   useEffect(() => {
@@ -309,10 +315,12 @@ export default function CommunityDetailPage() {
   const canEdit = isAuthor;
 
   return (
-    <div className="min-h-screen bg-white pb-24">
+    <div className={`min-h-screen bg-white ${inWebView ? "pb-16" : "pb-24"}`}>
       {/* Header - 모바일에서만 표시 */}
       <div className="sm:hidden bg-white border-b border-gray-200 sticky top-[60px] z-40">
-        <div className="max-w-[900px] mx-auto px-page py-4 flex items-center justify-between">
+        <div className={`max-w-[900px] mx-auto px-page flex items-center justify-between ${
+          inWebView ? "py-3" : "py-4"
+        }`}>
           <button
             onClick={() => router.back()}
             className="flex items-center gap-2 text-gray-700 hover:text-gray-900 font-medium transition-colors"
@@ -359,16 +367,20 @@ export default function CommunityDetailPage() {
         </div>
       </div>
 
-      <div className="max-w-[900px] mx-auto px-page py-6">
+      <div className={`max-w-[900px] mx-auto px-page ${inWebView ? "py-4" : "py-6"}`}>
         {/* 상태 뱃지 */}
         {postData.type === 'sell_gold' && postData.reservation_status && (
-          <div className="mb-4">
+          <div className={inWebView ? "mb-3" : "mb-4"}>
             {postData.reservation_status === 'reserved' ? (
-              <span className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-[#FEF9E7] to-[#FDF8E8] border border-[#C9A227]/30 text-[#8A6A00] text-sm font-bold rounded-full">
+              <span className={`inline-flex items-center bg-gradient-to-r from-[#FEF9E7] to-[#FDF8E8] border border-[#C9A227]/30 text-[#8A6A00] font-bold rounded-full ${
+                inWebView ? "px-3 py-1.5 text-xs" : "px-4 py-2 text-sm"
+              }`}>
                 🔒 예약중 - {postData.reserved_by_user?.name || '구매자'}님과 거래 예정
               </span>
             ) : postData.reservation_status === 'completed' ? (
-              <span className="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-600 text-sm font-bold rounded-full">
+              <span className={`inline-flex items-center bg-gray-100 text-gray-600 font-bold rounded-full ${
+                inWebView ? "px-3 py-1.5 text-xs" : "px-4 py-2 text-sm"
+              }`}>
                 ✅ 거래완료
               </span>
             ) : null}
@@ -376,7 +388,7 @@ export default function CommunityDetailPage() {
         )}
 
         {/* Category Breadcrumb */}
-        <div className="flex items-center gap-2 mb-3 text-sm">
+        <div className={`flex items-center gap-2 ${inWebView ? "mb-2 text-xs" : "mb-3 text-sm"}`}>
           <Link
             href="/community"
             className="text-gray-500 hover:text-gray-900 transition-colors"
@@ -397,15 +409,19 @@ export default function CommunityDetailPage() {
         </div>
 
         {/* Title */}
-        <h1 className="text-[28px] sm:text-[32px] font-bold text-gray-900 mb-4 leading-tight">
+        <h1 className={`font-bold text-gray-900 leading-tight ${
+          inWebView ? "text-[22px] sm:text-[26px] mb-3" : "text-[28px] sm:text-[32px] mb-4"
+        }`}>
           {postData.title}
         </h1>
 
         {/* Author Info */}
-        <div className="mb-6 pb-6 border-b border-gray-200">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <div className={`w-12 h-12 rounded-full flex items-center justify-center overflow-hidden ${
+        <div className={`border-b border-gray-200 ${inWebView ? "mb-4 pb-4" : "mb-6 pb-6"}`}>
+          <div className={`flex items-center justify-between ${inWebView ? "mb-3" : "mb-4"}`}>
+            <div className={`flex items-center ${inWebView ? "gap-2" : "gap-3"}`}>
+              <div className={`rounded-full flex items-center justify-center overflow-hidden ${
+                inWebView ? "w-10 h-10" : "w-12 h-12"
+              } ${
                 getUserImageUrl(postData.user)
                   ? "bg-white border border-gray-200"
                   : "bg-gradient-to-br from-[#C9A227] to-[#8A6A00]"
@@ -417,21 +433,21 @@ export default function CommunityDetailPage() {
                       alt={getUserDisplayName(postData.user)}
                       fill
                       className="object-cover"
-                      sizes="40px"
+                      sizes={inWebView ? "40px" : "48px"}
                       quality={80}
                     />
                   </div>
                 ) : (
-                  <span className="text-lg font-bold text-white">
+                  <span className={`font-bold text-white ${inWebView ? "text-base" : "text-lg"}`}>
                     {getUserDisplayName(postData.user).charAt(0)}
                   </span>
                 )}
               </div>
               <div>
-                <div className="font-semibold text-gray-900">
+                <div className={`font-semibold text-gray-900 ${inWebView ? "text-sm" : ""}`}>
                   {getUserDisplayName(postData.user)}
                 </div>
-                <div className="text-sm text-gray-500 flex items-center gap-2">
+                <div className={`text-gray-500 flex items-center gap-2 ${inWebView ? "text-xs" : "text-sm"}`}>
                   <span>{new Date(postData.created_at).toLocaleString()}</span>
                   <span>·</span>
                   <span>조회 {postData.view_count}</span>
@@ -439,18 +455,20 @@ export default function CommunityDetailPage() {
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className={`flex items-center ${inWebView ? "gap-1.5" : "gap-2"}`}>
               {/* Like Button */}
               <button
                 onClick={handleLike}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold transition-all ${
+                className={`flex items-center rounded-xl font-semibold transition-all ${
+                  inWebView ? "gap-1.5 px-3 py-2 text-xs" : "gap-2 px-4 py-2.5"
+                } ${
                   post.is_liked
                     ? "bg-red-50 text-red-600 border border-red-200 hover:bg-red-100"
                     : "bg-gray-50 text-gray-700 border border-gray-200 hover:bg-gray-100"
                 }`}
                 disabled={!user}
               >
-                <Heart className={`w-5 h-5 ${post.is_liked ? 'fill-current' : ''}`} />
+                <Heart className={`${post.is_liked ? 'fill-current' : ''} ${inWebView ? "w-4 h-4" : "w-5 h-5"}`} />
                 <span>{postData.like_count}</span>
               </button>
 
