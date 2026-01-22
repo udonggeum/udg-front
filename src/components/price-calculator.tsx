@@ -157,14 +157,14 @@ export default function PriceCalculator({ prices }: PriceCalculatorProps) {
                   step="0.01"
                   aria-label="무게 입력"
                   aria-describedby="weight-help-text"
-                  className="flex-1 px-4 py-3 border border-gray-200 rounded-xl text-caption focus:outline-none focus:ring-2 focus:ring-[#C9A227] focus:border-transparent transition-all tabular-nums"
+                  className="flex-1 min-w-0 px-4 py-3 border border-gray-200 rounded-xl text-caption focus:outline-none focus:ring-2 focus:ring-[#C9A227] focus:border-transparent transition-all tabular-nums"
                 />
                 <select
                   id="unit-select"
                   value={unit}
                   onChange={(e) => setUnit(e.target.value as WeightUnit)}
                   aria-label="무게 단위 선택"
-                  className="px-4 py-3 border border-gray-200 rounded-xl text-caption focus:outline-none focus:ring-2 focus:ring-[#C9A227] focus:border-transparent transition-all"
+                  className="flex-shrink-0 px-4 py-3 border border-gray-200 rounded-xl text-caption focus:outline-none focus:ring-2 focus:ring-[#C9A227] focus:border-transparent transition-all"
                 >
                   <option value="g">g</option>
                   <option value="돈">돈</option>

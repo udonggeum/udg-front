@@ -15,9 +15,25 @@ export function getUserImageUrl(user: {
   profile_image?: string;
   store?: { image_url?: string } | null;
 }): string | undefined {
-  if (user.role === "admin" && user.store?.image_url) {
-    return user.store.image_url;
+  // Admin 유저는 매장 이미지 우선
+  if (user.role === "admin") {
+    // 매장 이미지가 있고 유효한 URL인 경우
+    if (user.store?.image_url &&
+        (user.store.image_url.startsWith('http://') ||
+         user.store.image_url.startsWith('https://'))) {
+      return user.store.image_url;
+    }
+    // 매장 이미지가 없으면 프로필 이미지 시도
+    if (user.profile_image &&
+        (user.profile_image.startsWith('http://') ||
+         user.profile_image.startsWith('https://'))) {
+      return user.profile_image;
+    }
+    // 둘 다 없으면 undefined (StoreIcon 표시됨)
+    return undefined;
   }
+
+  // 일반 유저는 프로필 이미지만
   return user.profile_image;
 }
 

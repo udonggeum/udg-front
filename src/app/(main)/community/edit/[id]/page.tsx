@@ -291,10 +291,10 @@ export default function CommunityEditPage() {
             <form onSubmit={handleSubmit} className={inWebView ? "space-y-4" : "space-y-6"}>
               {/* Category Selection */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-3">
+                <label className={`block font-medium text-gray-700 mb-3 ${inWebView ? "text-xs" : "text-sm"}`}>
                   카테고리 <span className="text-red-500">*</span>
                 </label>
-                <div className="flex gap-2 mb-3">
+                <div className="flex gap-2 mb-3 flex-wrap">
                   {(Object.keys(POST_CATEGORY_LABELS) as PostCategory[]).map(
                     (category) => {
                       const isAvailable = isCategoryAvailable(category);
@@ -303,11 +303,11 @@ export default function CommunityEditPage() {
                           key={category}
                           type="button"
                           disabled={!isAvailable}
-                          className={`rounded-xl text-sm font-semibold border transition-all relative group ${inWebView ? "px-3 py-2" : "px-4 py-3"} ${
+                          className={`rounded-xl font-semibold border transition-all relative group ${inWebView ? "px-3 py-2 text-xs" : "px-4 py-3 text-sm"} ${
                             !isAvailable
                               ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
                               : selectedCategory === category
-                              ? "bg-[#C9A227] text-white border-[#C9A227]"
+                              ? "bg-[#C9A227] text-white border-[#C9A227] shadow-sm"
                               : "bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100"
                           }`}
                           onClick={() => isAvailable && handleCategoryChange(category)}
@@ -327,13 +327,13 @@ export default function CommunityEditPage() {
 
               {/* Type Selection */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-3">
+                <label className={`block font-medium text-gray-700 mb-2 ${inWebView ? "text-xs" : "text-sm"}`}>
                   게시글 타입 <span className="text-red-500">*</span>
                 </label>
                 <select
-                  className={`w-full rounded-lg border ${inWebView ? "p-2.5" : "p-3"} ${
+                  className={`w-full rounded-lg border ${inWebView ? "p-2.5 text-sm" : "p-3"} ${
                     errors.type ? "border-red-500" : "border-gray-200"
-                  } focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent`}
+                  } focus:outline-none focus:ring-2 focus:ring-[#C9A227] focus:border-transparent`}
                   value={selectedType}
                   onChange={(e) => setSelectedType(e.target.value as PostType)}
                 >
@@ -347,14 +347,14 @@ export default function CommunityEditPage() {
 
               {/* Title */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-3">
+                <label className={`block font-medium text-gray-700 mb-2 ${inWebView ? "text-xs" : "text-sm"}`}>
                   제목 <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
-                  className={`w-full rounded-lg border ${inWebView ? "p-2.5" : "p-3"} ${
+                  className={`w-full rounded-lg border ${inWebView ? "p-2.5 text-sm" : "p-3"} ${
                     errors.title ? "border-red-500" : "border-gray-200"
-                  } focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent`}
+                  } focus:outline-none focus:ring-2 focus:ring-[#C9A227] focus:border-transparent`}
                   placeholder="제목을 입력하세요"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
@@ -366,19 +366,19 @@ export default function CommunityEditPage() {
 
               {/* Gold Trade Additional Fields - sell_gold */}
               {selectedCategory === "gold_trade" && selectedType === "sell_gold" && (
-                <div className="border-t pt-6">
-                  <h3 className="text-lg font-semibold mb-4">
+                <div className={`border-t ${inWebView ? "pt-4" : "pt-6"}`}>
+                  <h3 className={`font-semibold mb-4 ${inWebView ? "text-base" : "text-lg"}`}>
                     금 거래 정보 <span className="text-red-500">*</span>
                   </h3>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className={`grid grid-cols-1 gap-4 ${inWebView ? "" : "md:grid-cols-2"}`}>
                     {/* 금 종류 */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className={`block font-medium text-gray-700 mb-2 ${inWebView ? "text-xs" : "text-sm"}`}>
                         금 종류 <span className="text-red-500">*</span>
                       </label>
                       <select
-                        className={`w-full rounded-lg border ${inWebView ? "p-2.5" : "p-3"} ${errors.goldType ? "border-red-500" : "border-gray-200"} focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent disabled:bg-gray-100`}
+                        className={`w-full rounded-lg border ${inWebView ? "p-2.5 text-sm" : "p-3"} ${errors.goldType ? "border-red-500" : "border-gray-200"} focus:outline-none focus:ring-2 focus:ring-[#C9A227] focus:border-transparent disabled:bg-gray-100`}
                         value={goldType}
                         onChange={(e) => setGoldType(e.target.value)}
                         disabled={goldTypeUnknown}
@@ -393,14 +393,14 @@ export default function CommunityEditPage() {
                       <label className="flex items-center mt-2 cursor-pointer">
                         <input
                           type="checkbox"
-                          className="w-4 h-4 rounded border-gray-300 text-gray-900 focus:ring-gray-900"
+                          className="w-4 h-4 rounded border-gray-300 text-[#C9A227] focus:ring-[#C9A227]"
                           checked={goldTypeUnknown}
                           onChange={(e) => {
                             setGoldTypeUnknown(e.target.checked);
                             if (e.target.checked) setGoldType("");
                           }}
                         />
-                        <span className="ml-2 text-sm text-gray-600">모름</span>
+                        <span className={`ml-2 text-gray-600 ${inWebView ? "text-xs" : "text-sm"}`}>모름</span>
                       </label>
                       {errors.goldType && (
                         <p className="mt-1 text-sm text-red-500">{errors.goldType}</p>
@@ -409,13 +409,13 @@ export default function CommunityEditPage() {
 
                     {/* 중량 */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className={`block font-medium text-gray-700 mb-2 ${inWebView ? "text-xs" : "text-sm"}`}>
                         중량 (g) <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="number"
                         step="0.01"
-                        className={`w-full rounded-lg border ${inWebView ? "p-2.5" : "p-3"} ${errors.weight ? "border-red-500" : "border-gray-200"} focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent disabled:bg-gray-100`}
+                        className={`w-full rounded-lg border ${inWebView ? "p-2.5 text-sm" : "p-3"} ${errors.weight ? "border-red-500" : "border-gray-200"} focus:outline-none focus:ring-2 focus:ring-[#C9A227] focus:border-transparent disabled:bg-gray-100`}
                         placeholder="예: 18.75"
                         value={weight}
                         onChange={(e) => setWeight(e.target.value)}
@@ -424,14 +424,14 @@ export default function CommunityEditPage() {
                       <label className="flex items-center mt-2 cursor-pointer">
                         <input
                           type="checkbox"
-                          className="w-4 h-4 rounded border-gray-300 text-gray-900 focus:ring-gray-900"
+                          className="w-4 h-4 rounded border-gray-300 text-[#C9A227] focus:ring-[#C9A227]"
                           checked={weightUnknown}
                           onChange={(e) => {
                             setWeightUnknown(e.target.checked);
                             if (e.target.checked) setWeight("");
                           }}
                         />
-                        <span className="ml-2 text-sm text-gray-600">모름</span>
+                        <span className={`ml-2 text-gray-600 ${inWebView ? "text-xs" : "text-sm"}`}>모름</span>
                       </label>
                       {errors.weight && (
                         <p className="mt-1 text-sm text-red-500">{errors.weight}</p>
@@ -440,13 +440,13 @@ export default function CommunityEditPage() {
 
                     {/* 가격 */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className={`block font-medium text-gray-700 mb-2 ${inWebView ? "text-xs" : "text-sm"}`}>
                         가격 (원) <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="number"
-                        className={`w-full rounded-lg border ${inWebView ? "p-2.5" : "p-3"} ${errors.price ? "border-red-500" : "border-gray-200"} focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent disabled:bg-gray-100`}
-                        placeholder="예: 3500000"
+                        className={`w-full rounded-lg border ${inWebView ? "p-2.5 text-sm" : "p-3"} ${errors.price ? "border-red-500" : "border-gray-200"} focus:outline-none focus:ring-2 focus:ring-[#C9A227] focus:border-transparent disabled:bg-gray-100`}
+                        placeholder={inWebView ? "3500000" : "예: 3500000"}
                         value={price}
                         onChange={(e) => setPrice(e.target.value)}
                         disabled={priceNegotiable}
@@ -454,14 +454,14 @@ export default function CommunityEditPage() {
                       <label className="flex items-center mt-2 cursor-pointer">
                         <input
                           type="checkbox"
-                          className="w-4 h-4 rounded border-gray-300 text-gray-900 focus:ring-gray-900"
+                          className="w-4 h-4 rounded border-gray-300 text-[#C9A227] focus:ring-[#C9A227]"
                           checked={priceNegotiable}
                           onChange={(e) => {
                             setPriceNegotiable(e.target.checked);
                             if (e.target.checked) setPrice("");
                           }}
                         />
-                        <span className="ml-2 text-sm text-gray-600">가격 문의</span>
+                        <span className={`ml-2 text-gray-600 ${inWebView ? "text-xs" : "text-sm"}`}>가격 문의</span>
                       </label>
                       {errors.price && (
                         <p className="mt-1 text-sm text-red-500">{errors.price}</p>
@@ -470,12 +470,12 @@ export default function CommunityEditPage() {
 
                     {/* 거래 지역 */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className={`block font-medium text-gray-700 mb-2 ${inWebView ? "text-xs" : "text-sm"}`}>
                         거래 지역 <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="text"
-                        className={`w-full rounded-lg border ${inWebView ? "p-2.5" : "p-3"} ${errors.location ? "border-red-500" : "border-gray-200"} focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent`}
+                        className={`w-full rounded-lg border ${inWebView ? "p-2.5 text-sm" : "p-3"} ${errors.location ? "border-red-500" : "border-gray-200"} focus:outline-none focus:ring-2 focus:ring-[#C9A227] focus:border-transparent`}
                         placeholder="예: 서울 강남구"
                         value={location}
                         onChange={(e) => setLocation(e.target.value)}
@@ -490,13 +490,13 @@ export default function CommunityEditPage() {
 
               {/* Gold Trade Additional Fields - buy_gold (admin only) */}
               {selectedCategory === "gold_trade" && selectedType === "buy_gold" && user.role === "admin" && (
-                <div className="border-t pt-6">
-                  <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg flex items-start gap-3">
+                <div className={`border-t ${inWebView ? "pt-4" : "pt-6"}`}>
+                  <div className={`bg-blue-50 border border-blue-200 rounded-lg flex items-start gap-3 ${inWebView ? "p-3 mt-2" : "p-4 mt-4"}`}>
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       fill="none"
                       viewBox="0 0 24 24"
-                      className="stroke-blue-600 shrink-0 w-5 h-5 mt-0.5"
+                      className={`stroke-blue-600 shrink-0 mt-0.5 ${inWebView ? "w-4 h-4" : "w-5 h-5"}`}
                     >
                       <path
                         strokeLinecap="round"
@@ -505,7 +505,7 @@ export default function CommunityEditPage() {
                         d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                       ></path>
                     </svg>
-                    <p className="text-sm text-blue-700">
+                    <p className={`text-blue-700 ${inWebView ? "text-xs" : "text-sm"}`}>
                       이 글은 귀하의 매장({user.name})으로 자동 등록됩니다.
                     </p>
                   </div>
@@ -513,19 +513,19 @@ export default function CommunityEditPage() {
               )}
 
               {/* Content - 옵션 입력 후 마지막에 배치 */}
-              <div className="border-t pt-6">
-                <div className="flex items-center justify-between mb-3">
-                  <label className="block text-sm font-medium text-gray-700">
+              <div className={`border-t ${inWebView ? "pt-4" : "pt-6"}`}>
+                <div className="flex items-center justify-between mb-3 gap-2">
+                  <label className={`block font-medium text-gray-700 ${inWebView ? "text-xs" : "text-sm"}`}>
                     내용 <span className="text-red-500">*</span>
                   </label>
                   <button
                     type="button"
                     onClick={handleGenerateContent}
                     disabled={isGenerating || !title.trim()}
-                    className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white text-sm font-semibold rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg"
+                    className={`flex items-center gap-1.5 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg flex-shrink-0 ${inWebView ? "px-3 py-1.5 text-xs" : "px-4 py-2 text-sm"}`}
                   >
-                    <Sparkles className="w-4 h-4" />
-                    {isGenerating ? "생성 중..." : "글 자동생성"}
+                    <Sparkles className={inWebView ? "w-3 h-3" : "w-4 h-4"} />
+                    {isGenerating ? "생성중" : "AI 생성"}
                   </button>
                 </div>
 
@@ -540,17 +540,17 @@ export default function CommunityEditPage() {
                     <button
                       type="button"
                       onClick={() => setShowAdditionalNotes(!showAdditionalNotes)}
-                      className="text-sm text-purple-600 hover:text-purple-700 flex items-center gap-1"
+                      className={`text-purple-600 hover:text-purple-700 flex items-center gap-1 ${inWebView ? "text-xs" : "text-sm"}`}
                     >
                       <span>{showAdditionalNotes ? "▼" : "▶"}</span>
-                      <span>추가로 강조하고 싶은 내용이 있나요? (선택)</span>
+                      <span>추가 강조 내용 (선택)</span>
                     </button>
                     {showAdditionalNotes && (
-                      <div className="mt-2 p-3 bg-purple-50 border border-purple-200 rounded-lg">
+                      <div className={`mt-2 bg-purple-50 border border-purple-200 rounded-lg ${inWebView ? "p-2" : "p-3"}`}>
                         <textarea
-                          className="w-full p-2 text-sm rounded border border-purple-200 focus:outline-none focus:ring-2 focus:ring-purple-400 resize-none"
+                          className={`w-full rounded border border-purple-200 focus:outline-none focus:ring-2 focus:ring-purple-400 resize-none ${inWebView ? "p-2 text-xs" : "p-2 text-sm"}`}
                           rows={2}
-                          placeholder="예: 급하게 팔아야 해서 가격 협상 가능합니다 / 깨끗한 상태이고 박스 포함되어 있습니다"
+                          placeholder="예: 급하게 팔아야 해서 가격 협상 가능합니다"
                           value={additionalNotes}
                           onChange={(e) => setAdditionalNotes(e.target.value)}
                         />
@@ -563,10 +563,10 @@ export default function CommunityEditPage() {
                 )}
 
                 <textarea
-                  className={`w-full rounded-lg border ${inWebView ? "p-2.5" : "p-3"} ${
+                  className={`w-full rounded-lg border ${inWebView ? "p-2.5 text-sm" : "p-3"} ${
                     errors.content ? "border-red-500" : "border-gray-200"
-                  } focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent resize-none`}
-                  rows={10}
+                  } focus:outline-none focus:ring-2 focus:ring-[#C9A227] focus:border-transparent resize-none`}
+                  rows={inWebView ? 8 : 10}
                   placeholder="내용을 입력하세요 (최소 10자)"
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
@@ -577,8 +577,8 @@ export default function CommunityEditPage() {
               </div>
 
               {/* 이미지 업로드 - 모든 카테고리에서 사용 가능 */}
-              <div className="border-t pt-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+              <div className={`border-t ${inWebView ? "pt-4" : "pt-6"}`}>
+                <label className={`block font-medium text-gray-700 mb-2 ${inWebView ? "text-xs" : "text-sm"}`}>
                   이미지 {selectedCategory === "gold_trade" && selectedType === "sell_gold" && <span className="text-red-500">*</span>}
                 </label>
                 <ImageUploader
@@ -594,25 +594,25 @@ export default function CommunityEditPage() {
               </div>
 
               {/* Submit Buttons */}
-              <div className="flex items-center justify-between pt-6 border-t">
+              <div className={`flex items-center justify-between border-t gap-3 ${inWebView ? "pt-4" : "pt-6"}`}>
                 <Link
                   href="/community"
-                  className="px-4 py-3 text-sm border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                  className={`border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors ${inWebView ? "px-3 py-2 text-xs" : "px-4 py-3 text-sm"}`}
                 >
                   취소
                 </Link>
                 <button
                   type="submit"
-                  className="px-6 py-3 bg-gray-900 hover:bg-gray-800 text-white text-sm font-semibold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className={`bg-[#C9A227] hover:bg-[#8A6A00] text-white font-semibold rounded-xl shadow-sm transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed ${inWebView ? "px-5 py-2 text-xs" : "px-6 py-3 text-sm"}`}
                   disabled={isSubmitting}
                 >
                   {isSubmitting ? (
                     <span className="flex items-center gap-2">
-                      <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-                      작성 중...
+                      <span className={`inline-block border-2 border-white border-t-transparent rounded-full animate-spin ${inWebView ? "w-3 h-3" : "w-4 h-4"}`}></span>
+                      수정중...
                     </span>
                   ) : (
-                    "게시하기"
+                    "수정하기"
                   )}
                 </button>
               </div>

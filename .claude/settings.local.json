@@ -45,7 +45,8 @@
       "Bash(python3:*)",
       "Bash(pip3 install:*)",
       "Bash(node generate-icons.js:*)",
-      "Bash(node generate-favicon.js:*)"
+      "Bash(node generate-favicon.js:*)",
+      "WebSearch"
     ],
     "deny": [],
     "ask": []

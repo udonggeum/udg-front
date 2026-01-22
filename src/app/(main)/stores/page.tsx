@@ -20,6 +20,7 @@ import StoreMap from "@/components/StoreMap";
 import useKakaoLoader from "@/hooks/useKakaoLoader";
 import { getDistanceText } from "@/utils/distance";
 import { useAuthStore } from "@/stores/useAuthStore";
+import { useLocationStore } from "@/stores/useLocationStore";
 import { toast } from "sonner";
 import { useAuthenticatedAction } from "@/hooks/useAuthenticatedAction";
 import { Button } from "@/components/ui/button";
@@ -159,6 +160,7 @@ function StoresPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, tokens } = useAuthStore();
+  const { currentLocation } = useLocationStore();
   const accessToken = tokens?.access_token;
   const { checkAndHandleUnauthorized } = useAuthenticatedAction();
   const [searchQuery, setSearchQuery] = useState(searchParams.get("search") || ""); // input 필드 값
@@ -244,11 +246,26 @@ function StoresPageContent() {
     }
   }, [user?.latitude, user?.longitude]);
 
-  // 페이지 스크롤 방지 (매장찾기는 고정 레이아웃)
+  // 페이지 스크롤 방지 (데스크톱에서만 고정 레이아웃)
   useEffect(() => {
-    document.body.style.overflow = "hidden";
+    const mediaQuery = window.matchMedia('(min-width: 768px)');
+
+    const updateOverflow = () => {
+      if (mediaQuery.matches) {
+        // 데스크톱: 스크롤 방지
+        document.body.style.overflow = "hidden";
+      } else {
+        // 모바일: 스크롤 허용
+        document.body.style.overflow = "unset";
+      }
+    };
+
+    updateOverflow();
+    mediaQuery.addEventListener('change', updateOverflow);
+
     return () => {
       document.body.style.overflow = "unset";
+      mediaQuery.removeEventListener('change', updateOverflow);
     };
   }, []);
 
@@ -472,10 +489,18 @@ function StoresPageContent() {
     console.log("🔍 Search initiated:", searchQuery);
   }, [searchQuery]);
 
-  // 현재 위치 가져오기 (Geolocation API)
+  // 현재 위치 가져오기 (Geolocation API 사용, 실패 시 설정된 위치 폴백)
   const getCurrentLocation = () => {
     if (!navigator.geolocation) {
-      alert("이 브라우저에서는 위치 정보를 지원하지 않습니다.");
+      // Geolocation을 지원하지 않는 경우, 앱뷰라면 설정된 위치 사용
+      if (inWebView && currentLocation) {
+        setSearchQuery(currentLocation);
+        setAppliedSearchQuery(currentLocation);
+        setCurrentPage(1);
+        toast.success(`${currentLocation} 지역 매장을 검색합니다`);
+      } else {
+        alert("이 브라우저에서는 위치 정보를 지원하지 않습니다.");
+      }
       return;
     }
 
@@ -495,9 +520,22 @@ function StoresPageContent() {
       (error) => {
         console.error("위치 정보를 가져올 수 없습니다:", error);
         setIsGettingLocation(false);
+
+        // 앱뷰이고 위치 권한 실패 시, 설정된 위치를 폴백으로 사용
+        if (inWebView && currentLocation) {
+          setSearchQuery(currentLocation);
+          setAppliedSearchQuery(currentLocation);
+          setCurrentPage(1);
+          toast.success(`${currentLocation} 지역 매장을 검색합니다`);
+          return;
+        }
+
+        // 폴백 위치가 없는 경우 에러 메시지 표시
         let errorMessage = "위치 정보를 가져올 수 없습니다.";
         if (error.code === error.PERMISSION_DENIED) {
-          errorMessage = "위치 권한을 허용해주세요.";
+          errorMessage = inWebView
+            ? "위치 권한이 거부되었습니다. 상단의 위치 아이콘을 눌러 위치를 설정해주세요."
+            : "위치 권한을 허용해주세요.";
         } else if (error.code === error.POSITION_UNAVAILABLE) {
           errorMessage = "위치 정보를 사용할 수 없습니다.";
         } else if (error.code === error.TIMEOUT) {
@@ -554,53 +592,60 @@ function StoresPageContent() {
       {/* Pull to Refresh 인디케이터 */}
       <PullToRefreshIndicator {...pullToRefreshState} />
 
-      {/* Main Content - 고정 레이아웃 (푸터 숨김) */}
-      <div className="fixed inset-0 top-[60px] flex">
+      {/* 모바일 리스트/지도 탭 - 좌측 패널 밖으로 이동 */}
+      <div className={`md:hidden bg-white border-b border-gray-100 ${inWebView ? "p-2" : "p-3"}`}>
+        <div className={`flex gap-2`}>
+          <button
+            onClick={() => setIsMobileMapOpen(false)}
+            className={`flex-1 font-semibold rounded-lg transition-colors ${
+              inWebView ? "py-2 text-xs" : "py-2.5 text-sm"
+            } ${
+              !isMobileMapOpen
+                ? "bg-[#C9A227] text-white"
+                : "bg-gray-100 text-gray-600"
+            }`}
+          >
+            리스트
+          </button>
+          <button
+            onClick={() => setIsMobileMapOpen(true)}
+            className={`flex-1 font-semibold rounded-lg transition-colors ${
+              inWebView ? "py-2 text-xs" : "py-2.5 text-sm"
+            } ${
+              isMobileMapOpen
+                ? "bg-[#C9A227] text-white"
+                : "bg-gray-100 text-gray-600"
+            }`}
+          >
+            지도
+          </button>
+        </div>
+      </div>
+
+      {/* Main Content - 모바일에서는 일반 스크롤, 데스크톱에서는 고정 레이아웃 */}
+      <div className={`md:fixed md:inset-0 md:top-[60px] flex flex-col md:flex-row ${
+        isMobileMapOpen ? "h-[calc(100vh-120px)]" : ""
+      }`}>
         {/* 좌측 패널 - 검색 및 리스트 */}
-        <div className="w-full md:w-[420px] lg:w-[480px] flex-shrink-0 border-r border-gray-100 flex flex-col bg-white">
+        <div className={`w-full md:w-[420px] lg:w-[480px] flex-shrink-0 md:border-r border-gray-100 bg-white ${
+          isMobileMapOpen ? "hidden md:flex md:flex-col" : "flex flex-col"
+        }`}>
           {/* 검색 영역 */}
           <div className={`border-b border-gray-100 ${inWebView ? "p-2" : "p-3 md:p-5"}`}>
-            {/* 모바일 리스트/지도 탭 */}
-            <div className={`md:hidden flex gap-2 ${inWebView ? "mb-2" : "mb-3"}`}>
-              <button
-                onClick={() => setIsMobileMapOpen(false)}
-                className={`flex-1 font-semibold rounded-lg transition-colors ${
-                  inWebView ? "py-2 text-xs" : "py-2.5 text-sm"
-                } ${
-                  !isMobileMapOpen
-                    ? "bg-[#C9A227] text-white"
-                    : "bg-gray-100 text-gray-600"
-                }`}
-              >
-                리스트
-              </button>
-              <button
-                onClick={() => setIsMobileMapOpen(true)}
-                className={`flex-1 font-semibold rounded-lg transition-colors ${
-                  inWebView ? "py-2 text-xs" : "py-2.5 text-sm"
-                } ${
-                  isMobileMapOpen
-                    ? "bg-[#C9A227] text-white"
-                    : "bg-gray-100 text-gray-600"
-                }`}
-              >
-                지도
-              </button>
-            </div>
 
             {/* 검색바 */}
             <form onSubmit={handleSearch}>
               <div className={`bg-gray-100 rounded-xl flex items-center transition-all duration-200 ${
                 inWebView ? "p-0.5 mb-2" : "p-1 mb-3"
               }`}>
-                <div className={`flex-1 flex items-center ${inWebView ? "gap-1.5 px-2" : "gap-2 md:gap-3 px-2 md:px-3"}`}>
-                  <Search className={`text-gray-400 ${inWebView ? "w-3.5 h-3.5" : "w-4 h-4 md:w-5 md:h-5"}`} />
+                <div className={`flex-1 min-w-0 flex items-center ${inWebView ? "gap-1.5 px-2" : "gap-2 md:gap-3 px-2 md:px-3"}`}>
+                  <Search className={`flex-shrink-0 text-gray-400 ${inWebView ? "w-3.5 h-3.5" : "w-4 h-4 md:w-5 md:h-5"}`} />
                   <input
                     type="text"
                     placeholder={inWebView ? "매장명 검색" : "매장명, 지역, 주소로 검색"}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className={`flex-1 text-gray-900 placeholder-gray-400 bg-transparent outline-none ${
+                    className={`flex-1 min-w-0 text-gray-900 placeholder-gray-400 bg-transparent outline-none ${
                       inWebView ? "py-1.5 text-xs" : "py-2 md:py-2.5 text-small md:text-body"
                     }`}
                   />
@@ -608,7 +653,7 @@ function StoresPageContent() {
                     <button
                       type="button"
                       onClick={() => setSearchQuery("")}
-                      className="p-1 hover:bg-gray-200 rounded-full transition-colors"
+                      className="flex-shrink-0 p-1 hover:bg-gray-200 rounded-full transition-colors"
                     >
                       <X className={`text-gray-400 ${inWebView ? "w-3 h-3" : "w-4 h-4"}`} />
                     </button>
@@ -618,7 +663,7 @@ function StoresPageContent() {
                   type="submit"
                   variant="brand-primary"
                   size={inWebView ? "xs" : "sm"}
-                  className={`rounded-lg ${inWebView ? "px-2 text-xs" : ""}`}
+                  className={`flex-shrink-0 rounded-lg ${inWebView ? "px-2 text-xs" : ""}`}
                 >
                   검색
                 </Button>
@@ -716,10 +761,10 @@ function StoresPageContent() {
           </div>
 
           {/* 매장 리스트 - 모바일에서 리스트 탭일 때만 표시 */}
-          <div className={`flex-1 flex flex-col ${
-            isMobileMapOpen ? "hidden md:flex" : "flex"
+          <div className={`${
+            isMobileMapOpen ? "hidden md:flex md:flex-1 md:flex-col" : "flex md:flex-1 flex-col"
           }`}>
-            <div className="flex-1 overflow-y-auto stores-list">
+            <div className="flex-1 md:overflow-y-auto stores-list">
             {isGettingLocation ? (
               <div className="flex flex-col items-center justify-center py-20">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mb-4"></div>
@@ -749,123 +794,221 @@ function StoresPageContent() {
                 </p>
               </div>
             ) : (
-              <Virtuoso
-                data={filteredStores}
-                itemContent={(_index, store) => (
-                  <div
-                    onClick={() => handleStoreClick(store)}
-                    className={`border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors duration-200 border-l-4 ${
-                      inWebView ? "p-2" : "p-3 md:p-5"
-                    } ${
-                      selectedStore?.id === store.id
-                        ? "bg-gray-50 border-l-gray-900"
-                        : "border-l-transparent"
-                    }`}
-                  >
-                    <div className={`flex ${inWebView ? "gap-2" : "gap-3 md:gap-4"}`}>
-                      <div className={`rounded-xl overflow-hidden flex-shrink-0 ${
-                        inWebView ? "w-14 h-14" : "w-16 h-16 md:w-20 md:h-20"
-                      }`}>
-                        <StoreImage
-                          imageUrl={store.image_url}
-                          storeName={store.name}
-                          iconBg={store.iconBg}
-                          iconColor={store.iconColor}
-                          size="sm"
-                        />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className={`flex items-center gap-2 ${inWebView ? "mb-0.5" : "mb-1"}`}>
-                          <h3 className={`font-semibold text-gray-900 truncate flex-1 ${
-                            inWebView ? "text-sm" : "text-[16px]"
-                          }`}>
-                            {store.name}
-                          </h3>
-                          {/* 인증 매장 뱃지 */}
-                          {store.is_verified && (
-                            <span className={`inline-flex items-center bg-blue-50 text-blue-700 font-semibold rounded flex-shrink-0 ${
-                              inWebView ? "gap-0.5 px-1 py-0.5 text-[9px]" : "gap-0.5 px-1.5 py-0.5 text-[11px]"
-                            }`}>
-                              <BadgeCheck className={inWebView ? "w-2.5 h-2.5" : "w-3 h-3"} />
-                              인증
-                            </span>
-                          )}
-                          {/* 관리 매장 뱃지 (인증되지 않은 경우) */}
-                          {store.is_managed && !store.is_verified && (
-                            <span className={`inline-flex items-center bg-gray-100 text-gray-600 font-medium rounded flex-shrink-0 ${
-                              inWebView ? "gap-0.5 px-1 py-0.5 text-[9px]" : "gap-0.5 px-1.5 py-0.5 text-[11px]"
-                            }`}>
-                              <Building2 className={inWebView ? "w-2.5 h-2.5" : "w-3 h-3"} />
-                              관리
-                            </span>
-                          )}
-                          <span className={`font-medium rounded flex-shrink-0 ${
-                            inWebView ? "px-1 py-0.5 text-[9px]" : "px-1.5 py-0.5 text-[11px]"
-                          } ${
-                            store.isOpen
-                              ? "bg-[#FEF9E7] text-[#8A6A00]"
-                              : "bg-gray-100 text-gray-600"
-                          }`}>
-                            {store.isOpen ? "영업중" : "준비중"}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={(e) => handleStoreLike(store.id, e)}
-                            className={`flex-shrink-0 hover:bg-gray-100 rounded-lg transition-colors ${
-                              inWebView ? "p-0.5" : "p-1"
-                            }`}
-                          >
-                            <Heart
-                              className={`transition-colors ${
-                                inWebView ? "w-3.5 h-3.5" : "w-4 h-4"
-                              } ${
-                                store.isLiked ? "fill-red-500 text-red-500" : "text-gray-400"
-                              }`}
-                            />
-                          </button>
-                        </div>
-                        {store.distance && (
-                          <div className={`flex items-center ${inWebView ? "gap-1 text-[11px] mb-1" : "gap-1.5 text-small mb-2"}`}>
-                            <span className="text-blue-600 font-semibold">
-                              {store.distance}
-                            </span>
-                          </div>
-                        )}
-                        <p className={`text-gray-500 truncate ${
-                          inWebView ? "text-[11px] mb-1" : "text-small mb-2"
+              <>
+                {/* 모바일: 일반 렌더링 */}
+                <div className="md:hidden">
+                  {filteredStores.map((store) => (
+                    <div
+                      key={store.id}
+                      onClick={() => handleStoreClick(store)}
+                      className={`border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors duration-200 border-l-4 ${
+                        inWebView ? "p-2" : "p-3"
+                      } ${
+                        selectedStore?.id === store.id
+                          ? "bg-gray-50 border-l-gray-900"
+                          : "border-l-transparent"
+                      }`}
+                    >
+                      <div className={`flex ${inWebView ? "gap-2" : "gap-3"}`}>
+                        <div className={`rounded-xl overflow-hidden flex-shrink-0 ${
+                          inWebView ? "w-14 h-14" : "w-16 h-16"
                         }`}>
-                          {/* 매장 리스트: 간단하게 구·동만 표시 */}
-                          {store.district || store.dong || store.building_name ? (
-                            <>
-                              {store.district && <span>{store.district} </span>}
-                              {store.dong && <span className="font-medium">{store.dong}</span>}
-                              {store.building_name && <span> ({store.building_name})</span>}
-                            </>
-                          ) : store.address ? (
-                            store.address
-                          ) : (
-                            "주소 정보 없음"
-                          )}
-                        </p>
-                        {store.tags && store.tags.length > 0 && (
-                          <div className={`flex items-center ${inWebView ? "gap-1" : "gap-2"}`}>
-                            {store.tags.slice(0, 3).map((tag) => (
-                              <span
-                                key={tag.id}
-                                className={`bg-gray-100 text-gray-600 font-medium rounded ${
-                                  inWebView ? "px-1.5 py-0.5 text-[9px]" : "px-2 py-1 text-[11px]"
-                                }`}
-                              >
-                                {tag.name}
+                          <StoreImage
+                            imageUrl={store.image_url}
+                            storeName={store.name}
+                            iconBg={store.iconBg}
+                            iconColor={store.iconColor}
+                            size="sm"
+                          />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className={`flex items-center gap-2 ${inWebView ? "mb-0.5" : "mb-1"}`}>
+                            <h3 className={`font-semibold text-gray-900 truncate flex-1 ${
+                              inWebView ? "text-sm" : "text-[16px]"
+                            }`}>
+                              {store.name}
+                            </h3>
+                            {store.is_verified && (
+                              <span className={`inline-flex items-center bg-blue-50 text-blue-700 font-semibold rounded flex-shrink-0 ${
+                                inWebView ? "gap-0.5 px-1 py-0.5 text-[9px]" : "gap-0.5 px-1.5 py-0.5 text-[11px]"
+                              }`}>
+                                <BadgeCheck className={inWebView ? "w-2.5 h-2.5" : "w-3 h-3"} />
+                                인증
                               </span>
-                            ))}
+                            )}
+                            {store.is_managed && !store.is_verified && (
+                              <span className={`inline-flex items-center bg-gray-100 text-gray-600 font-medium rounded flex-shrink-0 ${
+                                inWebView ? "gap-0.5 px-1 py-0.5 text-[9px]" : "gap-0.5 px-1.5 py-0.5 text-[11px]"
+                              }`}>
+                                <Building2 className={inWebView ? "w-2.5 h-2.5" : "w-3 h-3"} />
+                                관리
+                              </span>
+                            )}
+                            <span className={`font-medium rounded flex-shrink-0 ${
+                              inWebView ? "px-1 py-0.5 text-[9px]" : "px-1.5 py-0.5 text-[11px]"
+                            } ${
+                              store.isOpen
+                                ? "bg-[#FEF9E7] text-[#8A6A00]"
+                                : "bg-gray-100 text-gray-600"
+                            }`}>
+                              {store.isOpen ? "영업중" : "준비중"}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={(e) => handleStoreLike(store.id, e)}
+                              className={`flex-shrink-0 hover:bg-gray-100 rounded-lg transition-colors ${
+                                inWebView ? "p-0.5" : "p-1"
+                              }`}
+                            >
+                              <Heart
+                                className={`transition-colors ${
+                                  inWebView ? "w-3.5 h-3.5" : "w-4 h-4"
+                                } ${
+                                  store.isLiked ? "fill-red-500 text-red-500" : "text-gray-400"
+                                }`}
+                              />
+                            </button>
                           </div>
-                        )}
+                          {store.distance && (
+                            <div className={`flex items-center ${inWebView ? "gap-1 text-[11px] mb-1" : "gap-1.5 text-small mb-2"}`}>
+                              <span className="text-blue-600 font-semibold">
+                                {store.distance}
+                              </span>
+                            </div>
+                          )}
+                          <p className={`text-gray-500 truncate ${
+                            inWebView ? "text-[11px] mb-1" : "text-small mb-2"
+                          }`}>
+                            {store.district || store.dong || store.building_name ? (
+                              <>
+                                {store.district && <span>{store.district} </span>}
+                                {store.dong && <span className="font-medium">{store.dong}</span>}
+                                {store.building_name && <span> ({store.building_name})</span>}
+                              </>
+                            ) : store.address ? (
+                              store.address
+                            ) : (
+                              "주소 정보 없음"
+                            )}
+                          </p>
+                          {store.tags && store.tags.length > 0 && (
+                            <div className={`flex items-center ${inWebView ? "gap-1" : "gap-2"}`}>
+                              {store.tags.slice(0, 3).map((tag) => (
+                                <span
+                                  key={tag.id}
+                                  className={`bg-gray-100 text-gray-600 font-medium rounded ${
+                                    inWebView ? "px-1.5 py-0.5 text-[9px]" : "px-2 py-1 text-[11px]"
+                                  }`}
+                                >
+                                  {tag.name}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                )}
-              />
+                  ))}
+                </div>
+
+                {/* 데스크톱: Virtuoso로 최적화 */}
+                <div className="hidden md:block md:h-full">
+                  <Virtuoso
+                    data={filteredStores}
+                    itemContent={(_index, store) => (
+                      <div
+                        onClick={() => handleStoreClick(store)}
+                        className={`border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors duration-200 border-l-4 p-5 ${
+                          selectedStore?.id === store.id
+                            ? "bg-gray-50 border-l-gray-900"
+                            : "border-l-transparent"
+                        }`}
+                      >
+                        <div className="flex gap-4">
+                          <div className="rounded-xl overflow-hidden flex-shrink-0 w-20 h-20">
+                            <StoreImage
+                              imageUrl={store.image_url}
+                              storeName={store.name}
+                              iconBg={store.iconBg}
+                              iconColor={store.iconColor}
+                              size="sm"
+                            />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <h3 className="font-semibold text-gray-900 truncate flex-1 text-[16px]">
+                                {store.name}
+                              </h3>
+                              {store.is_verified && (
+                                <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-blue-50 text-blue-700 font-semibold rounded flex-shrink-0 text-[11px]">
+                                  <BadgeCheck className="w-3 h-3" />
+                                  인증
+                                </span>
+                              )}
+                              {store.is_managed && !store.is_verified && (
+                                <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-gray-100 text-gray-600 font-medium rounded flex-shrink-0 text-[11px]">
+                                  <Building2 className="w-3 h-3" />
+                                  관리
+                                </span>
+                              )}
+                              <span className={`px-1.5 py-0.5 font-medium rounded flex-shrink-0 text-[11px] ${
+                                store.isOpen
+                                  ? "bg-[#FEF9E7] text-[#8A6A00]"
+                                  : "bg-gray-100 text-gray-600"
+                              }`}>
+                                {store.isOpen ? "영업중" : "준비중"}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={(e) => handleStoreLike(store.id, e)}
+                                className="flex-shrink-0 p-1 hover:bg-gray-100 rounded-lg transition-colors"
+                              >
+                                <Heart
+                                  className={`w-4 h-4 transition-colors ${
+                                    store.isLiked ? "fill-red-500 text-red-500" : "text-gray-400"
+                                  }`}
+                                />
+                              </button>
+                            </div>
+                            {store.distance && (
+                              <div className="flex items-center gap-1.5 text-small mb-2">
+                                <span className="text-blue-600 font-semibold">
+                                  {store.distance}
+                                </span>
+                              </div>
+                            )}
+                            <p className="text-gray-500 truncate text-small mb-2">
+                              {store.district || store.dong || store.building_name ? (
+                                <>
+                                  {store.district && <span>{store.district} </span>}
+                                  {store.dong && <span className="font-medium">{store.dong}</span>}
+                                  {store.building_name && <span> ({store.building_name})</span>}
+                                </>
+                              ) : store.address ? (
+                                store.address
+                              ) : (
+                                "주소 정보 없음"
+                              )}
+                            </p>
+                            {store.tags && store.tags.length > 0 && (
+                              <div className="flex items-center gap-2">
+                                {store.tags.slice(0, 3).map((tag) => (
+                                  <span
+                                    key={tag.id}
+                                    className="px-2 py-1 bg-gray-100 text-gray-600 font-medium rounded text-[11px]"
+                                  >
+                                    {tag.name}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  />
+                </div>
+              </>
             )}
             </div>
 
@@ -901,8 +1044,8 @@ function StoresPageContent() {
         </div>
 
         {/* 지도 영역 (중앙) - Kakao Map - 모바일에서 지도 탭일 때 표시 */}
-        <div className={`flex-1 relative ${
-          isMobileMapOpen ? "flex" : "hidden md:flex"
+        <div className={`${
+          isMobileMapOpen ? "block w-full h-full" : "hidden md:flex md:flex-1"
         }`}>
           <StoreMap
             stores={filteredStores.map((store) => ({

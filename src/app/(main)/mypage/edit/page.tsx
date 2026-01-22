@@ -553,20 +553,20 @@ export default function ProfileEditPage() {
             <form onSubmit={handleSubmit} className={inWebView ? "space-y-4" : "space-y-6"}>
               {/* 이메일 (읽기 전용) */}
               <div>
-                <Label htmlFor="email" className="flex items-center gap-2 mb-2">
+                <Label htmlFor="email" className={`flex items-center gap-2 mb-2 ${inWebView ? "text-xs" : ""}`}>
                   <Mail className="w-4 h-4" />
                   이메일
                 </Label>
-                <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                  <span className="text-sm text-gray-900 flex-1">{user?.email || "-"}</span>
-                  <span className="text-xs text-gray-500 px-2 py-1 bg-gray-100 rounded">변경 불가</span>
+                <div className={`flex items-center gap-2 bg-gray-50 rounded-lg border border-gray-200 ${inWebView ? "p-2.5" : "p-3"}`}>
+                  <span className={`text-gray-900 flex-1 ${inWebView ? "text-xs" : "text-sm"}`}>{user?.email || "-"}</span>
+                  <span className={`text-gray-500 px-2 py-1 bg-gray-100 rounded ${inWebView ? "text-[10px]" : "text-xs"}`}>변경 불가</span>
                 </div>
               </div>
 
               <div className="space-y-4">
                   {/* Name */}
                   <div>
-                    <Label htmlFor="name" className="flex items-center gap-2 mb-2">
+                    <Label htmlFor="name" className={`flex items-center gap-2 mb-2 ${inWebView ? "text-xs" : ""}`}>
                       <UserIcon className="w-4 h-4" />
                       이름 <span className="text-red-500">*</span>
                     </Label>
@@ -577,7 +577,7 @@ export default function ProfileEditPage() {
                       value={formData.name}
                       onChange={handleChange}
                       onBlur={handleBlur}
-                      className={`h-12 ${
+                      className={`${inWebView ? "h-10 text-sm" : "h-12"} ${
                         touched.name && formErrors.name ? "border-red-500" : ""
                       }`}
                       placeholder="홍길동"
@@ -591,7 +591,7 @@ export default function ProfileEditPage() {
 
                   {/* Nickname */}
                   <div>
-                    <Label htmlFor="nickname" className="flex items-center gap-2 mb-2">
+                    <Label htmlFor="nickname" className={`flex items-center gap-2 mb-2 ${inWebView ? "text-xs" : ""}`}>
                       <UserIcon className="w-4 h-4" />
                       닉네임
                     </Label>
@@ -601,11 +601,11 @@ export default function ProfileEditPage() {
                       name="nickname"
                       value={formData.nickname || ""}
                       onChange={handleChange}
-                      className="h-12"
+                      className={inWebView ? "h-10 text-sm" : "h-12"}
                       placeholder="닉네임을 입력하세요"
                       disabled={isPending || user?.role === "admin"}
                     />
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className={`text-gray-500 mt-1 ${inWebView ? "text-[10px]" : "text-xs"}`}>
                       {user?.role === "admin"
                         ? "매장 주인은 닉네임을 수정할 수 없습니다 (매장명과 동일)"
                         : "입력하지 않으면 자동으로 생성됩니다"}
@@ -614,11 +614,11 @@ export default function ProfileEditPage() {
 
                   {/* Phone */}
                   <div>
-                    <Label htmlFor="phone" className="flex items-center gap-2 mb-2">
+                    <Label htmlFor="phone" className={`flex items-center gap-2 mb-2 ${inWebView ? "text-xs" : ""}`}>
                       <Phone className="w-4 h-4" />
                       전화번호
                       {user?.phone_verified && (
-                        <span className="flex items-center gap-1 text-xs text-green-600 font-normal">
+                        <span className={`flex items-center gap-1 text-green-600 font-normal ${inWebView ? "text-[10px]" : "text-xs"}`}>
                           <CheckCircle2 className="w-3.5 h-3.5" />
                           인증완료
                         </span>
@@ -634,7 +634,7 @@ export default function ProfileEditPage() {
                         value={formData.phone || ""}
                         onChange={handleChange}
                         onBlur={handleBlur}
-                        className={`h-12 ${
+                        className={`${inWebView ? "h-10 text-sm" : "h-12"} ${
                           touched.phone && formErrors.phone ? "border-red-500" : ""
                         } ${user?.phone_verified ? "bg-green-50 border-green-200" : ""}`}
                         placeholder="010-1234-5678"
@@ -646,7 +646,7 @@ export default function ProfileEditPage() {
                           variant="secondary"
                           disabled={isPending || isVerifyingPhone || !formData.phone || isPhoneVerificationSent}
                           onClick={handleSendPhoneVerification}
-                          className="px-4 h-12 whitespace-nowrap"
+                          className={`whitespace-nowrap ${inWebView ? "px-3 h-10 text-xs" : "px-4 h-12"}`}
                         >
                           {isPhoneVerificationSent ? "전송완료" : "인증요청"}
                         </Button>
@@ -663,16 +663,16 @@ export default function ProfileEditPage() {
                           onChange={(e) => setPhoneVerificationCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
                           disabled={isVerifyingPhone}
                           maxLength={6}
-                          className="h-12"
+                          className={inWebView ? "h-10 text-sm" : "h-12"}
                         />
                         <Button
                           type="button"
                           variant="secondary"
                           disabled={isVerifyingPhone || phoneVerificationCode.length !== 6}
                           onClick={handleVerifyPhone}
-                          className="px-4 h-12 whitespace-nowrap"
+                          className={`whitespace-nowrap ${inWebView ? "px-3 h-10 text-xs" : "px-4 h-12"}`}
                         >
-                          {isVerifyingPhone ? "확인 중..." : "인증확인"}
+                          {isVerifyingPhone ? "확인중" : "인증확인"}
                         </Button>
                       </div>
                     )}
@@ -681,18 +681,18 @@ export default function ProfileEditPage() {
                       <p className="text-sm text-red-500 mt-1">{formErrors.phone}</p>
                     )}
                     {!user?.phone_verified && !isPhoneVerificationSent && (
-                      <p className="text-xs text-gray-500 mt-1">
+                      <p className={`text-gray-500 mt-1 ${inWebView ? "text-[10px]" : "text-xs"}`}>
                         형식: 010-1234-5678 또는 01012345678<br />
                         매장 등록 시 휴대폰 인증이 필요합니다
                       </p>
                     )}
                     {isPhoneVerificationSent && !user?.phone_verified && (
-                      <p className="text-xs text-gray-500 mt-1">
+                      <p className={`text-gray-500 mt-1 ${inWebView ? "text-[10px]" : "text-xs"}`}>
                         휴대폰으로 전송된 6자리 인증 코드를 입력해주세요
                       </p>
                     )}
                     {user?.phone_verified && (
-                      <p className="text-xs text-green-600 mt-1 flex items-center">
+                      <p className={`text-green-600 mt-1 flex items-center ${inWebView ? "text-[10px]" : "text-xs"}`}>
                         <CheckCircle2 className="w-3.5 h-3.5 mr-1" />
                         휴대폰 인증이 완료되었습니다
                       </p>
@@ -701,7 +701,7 @@ export default function ProfileEditPage() {
 
                   {/* Address */}
                   <div>
-                    <Label className="flex items-center gap-2 mb-4">
+                    <Label className={`flex items-center gap-2 ${inWebView ? "mb-2 text-xs" : "mb-4"}`}>
                       <MapPin className="w-4 h-4" />
                       주소지
                     </Label>
@@ -729,7 +729,7 @@ export default function ProfileEditPage() {
                           : undefined
                       }}
                     />
-                    <p className="text-xs text-gray-500 mt-2">
+                    <p className={`text-gray-500 mt-2 ${inWebView ? "text-[10px]" : "text-xs"}`}>
                       거주지 또는 사업장 주소를 입력하세요<br />
                       {baseAddress && !detailAddress && (
                         <span className="text-red-500 font-medium">
@@ -741,29 +741,30 @@ export default function ProfileEditPage() {
                 </div>
 
               {/* Submit Button */}
-              <div className="flex justify-end gap-3 pt-6 border-t">
+              <div className={`flex justify-end gap-3 border-t ${inWebView ? "pt-4" : "pt-6"}`}>
                 <Button
                   type="button"
                   onClick={() => router.push("/mypage")}
                   variant="outline"
                   disabled={isPending}
+                  className={inWebView ? "text-xs h-9" : ""}
                 >
                   취소
                 </Button>
                 <Button
                   type="submit"
                   variant="brand-primary"
-                  className="gap-2"
+                  className={`gap-2 ${inWebView ? "text-xs h-9" : ""}`}
                   disabled={isPending || (!!baseAddress && !detailAddress)}
                 >
                   {isPending ? (
                     <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
-                      <span>저장 중...</span>
+                      <div className={`animate-spin rounded-full border-2 border-white border-t-transparent ${inWebView ? "h-3 w-3" : "h-4 w-4"}`} />
+                      <span>저장중</span>
                     </>
                   ) : (
                     <>
-                      <Save className="w-4 h-4" />
+                      <Save className={inWebView ? "w-3 h-3" : "w-4 h-4"} />
                       <span>저장</span>
                     </>
                   )}

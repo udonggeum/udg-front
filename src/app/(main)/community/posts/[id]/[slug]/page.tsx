@@ -26,7 +26,7 @@ import {
   MoreVertical,
   Heart,
   MapPin,
-  Store,
+  Store as StoreIcon,
   Phone,
   ChevronLeft,
   ChevronRight,
@@ -410,7 +410,7 @@ export default function CommunityDetailPage() {
 
         {/* Title */}
         <h1 className={`font-bold text-gray-900 leading-tight ${
-          inWebView ? "text-[22px] sm:text-[26px] mb-3" : "text-[28px] sm:text-[32px] mb-4"
+          inWebView ? "text-lg sm:text-xl mb-3" : "text-[28px] sm:text-[32px] mb-4"
         }`}>
           {postData.title}
         </h1>
@@ -423,6 +423,8 @@ export default function CommunityDetailPage() {
                 inWebView ? "w-10 h-10" : "w-12 h-12"
               } ${
                 getUserImageUrl(postData.user)
+                  ? "bg-white border border-gray-200"
+                  : postData.user.role === "admin"
                   ? "bg-white border border-gray-200"
                   : "bg-gradient-to-br from-[#C9A227] to-[#8A6A00]"
               }`}>
@@ -437,6 +439,8 @@ export default function CommunityDetailPage() {
                       quality={80}
                     />
                   </div>
+                ) : postData.user.role === "admin" ? (
+                  <StoreIcon className={inWebView ? "w-5 h-5 text-[#C9A227]" : "w-6 h-6 text-[#C9A227]"} />
                 ) : (
                   <span className={`font-bold text-white ${inWebView ? "text-base" : "text-lg"}`}>
                     {getUserDisplayName(postData.user).charAt(0)}
@@ -514,21 +518,21 @@ export default function CommunityDetailPage() {
 
           {/* 금 거래 정보 - 프로필 아래 인라인 표시 */}
           {postData.category === "gold_trade" && (
-            <div className="flex flex-wrap gap-3 text-sm">
+            <div className={`${inWebView ? "flex flex-col gap-2" : "flex flex-wrap gap-3"} ${inWebView ? "text-xs" : "text-sm"}`}>
               {postData.gold_type && (
-                <div className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-50 rounded-lg">
+                <div className={`flex items-center gap-1.5 bg-gray-50 rounded-lg ${inWebView ? "px-2.5 py-1.5" : "px-3 py-1.5"}`}>
                   <span className="text-gray-600">금 종류</span>
                   <span className="font-semibold text-gray-900">{postData.gold_type}</span>
                 </div>
               )}
               {postData.weight && (
-                <div className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-50 rounded-lg">
+                <div className={`flex items-center gap-1.5 bg-gray-50 rounded-lg ${inWebView ? "px-2.5 py-1.5" : "px-3 py-1.5"}`}>
                   <span className="text-gray-600">중량</span>
                   <span className="font-semibold text-gray-900">{postData.weight}g</span>
                 </div>
               )}
               {postData.price !== undefined && postData.price !== null && (
-                <div className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-50 rounded-lg">
+                <div className={`flex items-center gap-1.5 bg-gray-50 rounded-lg ${inWebView ? "px-2.5 py-1.5" : "px-3 py-1.5"}`}>
                   <span className="text-gray-600">가격</span>
                   <span className="font-semibold text-[#C9A227]">
                     {postData.price > 0 ? `${postData.price.toLocaleString()}원` : '문의'}
@@ -536,8 +540,8 @@ export default function CommunityDetailPage() {
                 </div>
               )}
               {postData.location && (
-                <div className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-50 rounded-lg">
-                  <MapPin className="w-3.5 h-3.5 text-gray-600" />
+                <div className={`flex items-center gap-1.5 bg-gray-50 rounded-lg ${inWebView ? "px-2.5 py-1.5" : "px-3 py-1.5"}`}>
+                  <MapPin className={`text-gray-600 ${inWebView ? "w-3 h-3" : "w-3.5 h-3.5"}`} />
                   <span className="font-semibold text-gray-900">{postData.location}</span>
                 </div>
               )}
@@ -659,55 +663,55 @@ export default function CommunityDetailPage() {
         )}
 
         {/* 내용 */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200 mb-6">
-          <p className="whitespace-pre-wrap text-gray-700 leading-relaxed text-[16px]">
+        <div className={`bg-white rounded-2xl shadow-sm border border-gray-200 ${inWebView ? "p-4 mb-4" : "p-6 mb-6"}`}>
+          <p className={`whitespace-pre-wrap text-gray-700 leading-relaxed ${inWebView ? "text-sm" : "text-[16px]"}`}>
             {postData.content}
           </p>
         </div>
 
         {/* 매장 정보 카드 */}
         {postData.store && (
-          <div className="bg-gradient-to-r from-[#FEF9E7] to-[#FDF8E8] rounded-2xl p-5 border border-[#C9A227]/30 mb-6">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 bg-[#C9A227] rounded-full flex items-center justify-center flex-shrink-0">
-                <Store className="w-6 h-6 text-white" />
+          <div className={`bg-gradient-to-r from-[#FEF9E7] to-[#FDF8E8] rounded-2xl border border-[#C9A227]/30 ${inWebView ? "p-4 mb-4" : "p-5 mb-6"}`}>
+            <div className={`flex items-center ${inWebView ? "gap-2 mb-3" : "gap-3 mb-4"}`}>
+              <div className={`bg-[#C9A227] rounded-full flex items-center justify-center flex-shrink-0 ${inWebView ? "w-10 h-10" : "w-12 h-12"}`}>
+                <StoreIcon className={inWebView ? "w-5 h-5 text-white" : "w-6 h-6 text-white"} />
               </div>
               <div className="flex-1 min-w-0">
-                <div className="text-xs text-gray-600 mb-0.5">매장 정보</div>
-                <div className="text-lg font-bold text-gray-900 truncate">{postData.store.name}</div>
+                <div className={`text-gray-600 mb-0.5 ${inWebView ? "text-[10px]" : "text-xs"}`}>매장 정보</div>
+                <div className={`font-bold text-gray-900 truncate ${inWebView ? "text-base" : "text-lg"}`}>{postData.store.name}</div>
               </div>
             </div>
 
             {/* 액션 버튼 */}
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2">
               {/* 전화하기 - 모바일에서만 표시 */}
               {postData.store.phone_number && (
                 <a
                   href={`tel:${postData.store.phone_number}`}
-                  className="sm:hidden flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-white border border-[#C9A227]/30 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition-colors"
+                  className={`sm:hidden flex-1 flex items-center justify-center gap-2 bg-white border border-[#C9A227]/30 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition-colors ${inWebView ? "px-3 py-2.5 text-xs" : "px-4 py-3 text-sm"}`}
                 >
-                  <Phone className="w-4 h-4" />
-                  <span className="text-sm">전화하기</span>
+                  <Phone className={inWebView ? "w-3.5 h-3.5" : "w-4 h-4"} />
+                  <span>전화하기</span>
                 </a>
               )}
 
-              {/* 매장으로 가기 - 웹에서만 표시 */}
+              {/* 매장으로 가기 - 데스크톱에서만 표시 */}
               <Link
                 href={`/stores/${postData.store.id}/${postData.store.slug || 'store'}`}
-                className="hidden sm:flex flex-1 items-center justify-center gap-2 px-4 py-3 bg-white border border-[#C9A227]/30 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition-colors"
+                className={`hidden sm:flex flex-1 items-center justify-center gap-2 bg-white border border-[#C9A227]/30 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition-colors ${inWebView ? "px-3 py-2.5 text-xs" : "px-4 py-3 text-sm"}`}
               >
-                <Store className="w-4 h-4" />
-                <span className="text-sm">매장으로 가기</span>
+                <StoreIcon className={inWebView ? "w-3.5 h-3.5" : "w-4 h-4"} />
+                <span>매장으로 가기</span>
               </Link>
 
               {/* 문의하기 - 작성자가 아닐 때만 표시 */}
               {!isAuthor && user && (
                 <button
                   onClick={handleContactSeller}
-                  className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-[#C9A227] text-white rounded-xl font-semibold hover:bg-[#B89120] transition-colors"
+                  className={`flex-1 flex items-center justify-center gap-2 bg-[#C9A227] text-white rounded-xl font-semibold hover:bg-[#B89120] transition-colors ${inWebView ? "px-3 py-2.5 text-xs" : "px-4 py-3 text-sm"}`}
                 >
-                  <MessageCircle className="w-4 h-4" />
-                  <span className="text-sm">문의하기</span>
+                  <MessageCircle className={inWebView ? "w-3.5 h-3.5" : "w-4 h-4"} />
+                  <span>문의하기</span>
                 </button>
               )}
             </div>
@@ -721,11 +725,11 @@ export default function CommunityDetailPage() {
         ) : (
           /* 금소식, QnA - 댓글 */
           <div>
-            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
-              <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
+            <div className={`bg-white rounded-2xl shadow-sm border border-gray-200 ${inWebView ? "p-4" : "p-6"}`}>
+              <h2 className={`font-bold flex items-center gap-2 ${inWebView ? "text-base mb-3" : "text-lg mb-4"}`}>
                 💬 댓글 {postData.comment_count}
                 {postData.category === "qna" && !postData.is_answered && (
-                  <span className="text-sm font-normal text-gray-500">(답변 채택 대기 중)</span>
+                  <span className={`font-normal text-gray-500 ${inWebView ? "text-xs" : "text-sm"}`}>(답변 채택 대기 중)</span>
                 )}
               </h2>
 
@@ -733,11 +737,15 @@ export default function CommunityDetailPage() {
               <div className="divide-y divide-gray-100">
                 {postData.comments && postData.comments.length > 0 ? (
                   postData.comments.map((comment) => (
-                    <div key={comment.id} className="py-5 first:pt-0">
-                      <div className="flex gap-3">
+                    <div key={comment.id} className={inWebView ? "py-4 first:pt-0" : "py-5 first:pt-0"}>
+                      <div className={inWebView ? "flex gap-2" : "flex gap-3"}>
                         {/* Profile Image */}
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0 ${
+                        <div className={`rounded-full flex items-center justify-center overflow-hidden flex-shrink-0 ${
+                          inWebView ? "w-8 h-8" : "w-10 h-10"
+                        } ${
                           getUserImageUrl(comment.user)
+                            ? "bg-white border border-gray-200"
+                            : comment.user.role === "admin"
                             ? "bg-white border border-gray-200"
                             : "bg-gradient-to-br from-[#C9A227] to-[#8A6A00]"
                         }`}>
@@ -748,12 +756,14 @@ export default function CommunityDetailPage() {
                                 alt={getUserDisplayName(comment.user)}
                                 fill
                                 className="object-cover"
-                                sizes="40px"
+                                sizes={inWebView ? "32px" : "40px"}
                                 quality={80}
                               />
                             </div>
+                          ) : comment.user.role === "admin" ? (
+                            <StoreIcon className={inWebView ? "w-4 h-4 text-[#C9A227]" : "w-5 h-5 text-[#C9A227]"} />
                           ) : (
-                            <span className="text-sm font-bold text-white">
+                            <span className={`font-bold text-white ${inWebView ? "text-xs" : "text-sm"}`}>
                               {getUserDisplayName(comment.user).charAt(0)}
                             </span>
                           )}
@@ -761,18 +771,18 @@ export default function CommunityDetailPage() {
 
                         <div className="flex-1 min-w-0">
                           {/* Header */}
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="font-semibold text-gray-900">{getUserDisplayName(comment.user)}</span>
+                          <div className={`flex items-center flex-wrap gap-1.5 ${inWebView ? "mb-1.5" : "mb-1"}`}>
+                            <span className={`font-semibold text-gray-900 ${inWebView ? "text-sm" : ""}`}>{getUserDisplayName(comment.user)}</span>
                             {comment.user_id === postData.user_id && (
-                              <span className="px-2 py-0.5 bg-[#C9A227] text-white text-xs font-semibold rounded-full">
+                              <span className={`bg-[#C9A227] text-white font-semibold rounded-full ${inWebView ? "px-1.5 py-0.5 text-[10px]" : "px-2 py-0.5 text-xs"}`}>
                                 작성자
                               </span>
                             )}
-                            <span className="text-xs text-gray-400">
+                            <span className={`text-gray-400 ${inWebView ? "text-[10px]" : "text-xs"}`}>
                               {new Date(comment.created_at).toLocaleDateString()}
                             </span>
                             {comment.is_accepted && (
-                              <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs font-semibold rounded-full">
+                              <span className={`bg-green-100 text-green-700 font-semibold rounded-full ${inWebView ? "px-1.5 py-0.5 text-[10px]" : "px-2 py-0.5 text-xs"}`}>
                                 ✓ 채택됨
                               </span>
                             )}
@@ -780,9 +790,9 @@ export default function CommunityDetailPage() {
 
                           {/* Content or Edit Form */}
                           {editingCommentId === comment.id ? (
-                            <div className="mb-3">
+                            <div className={inWebView ? "mb-2" : "mb-3"}>
                               <textarea
-                                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#C9A227] focus:border-transparent focus:bg-white resize-none transition-all"
+                                className={`w-full bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#C9A227] focus:border-transparent focus:bg-white resize-none transition-all ${inWebView ? "px-3 py-2 text-sm" : "px-4 py-3"}`}
                                 rows={3}
                                 value={editingContent}
                                 onChange={(e) => setEditingContent(e.target.value)}
@@ -795,7 +805,7 @@ export default function CommunityDetailPage() {
                                     setEditingCommentId(null);
                                     setEditingContent("");
                                   }}
-                                  className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 font-medium"
+                                  className={`text-gray-600 hover:text-gray-900 font-medium ${inWebView ? "px-3 py-1.5 text-xs" : "px-4 py-2 text-sm"}`}
                                 >
                                   취소
                                 </button>
@@ -810,21 +820,21 @@ export default function CommunityDetailPage() {
                               </div>
                             </div>
                           ) : (
-                            <p className="whitespace-pre-wrap text-gray-700 leading-relaxed mb-3">
+                            <p className={`whitespace-pre-wrap text-gray-700 leading-relaxed ${inWebView ? "mb-2 text-sm" : "mb-3"}`}>
                               {comment.content}
                             </p>
                           )}
 
                           {/* Actions */}
                           {editingCommentId !== comment.id && (
-                            <div className="flex items-center gap-3">
+                            <div className={`flex items-center flex-wrap sm:flex-nowrap ${inWebView ? "gap-2" : "gap-2 sm:gap-3"}`}>
                             {/* Like */}
                             <button
                               onClick={() => handleCommentLike(comment.id)}
-                              className="flex items-center gap-1 text-sm text-gray-600 hover:text-red-600 transition-colors"
+                              className={`flex items-center gap-1 text-gray-600 hover:text-red-600 transition-colors ${inWebView ? "text-xs" : "text-sm"}`}
                               disabled={!user}
                             >
-                              <Heart className="w-4 h-4" />
+                              <Heart className={inWebView ? "w-3.5 h-3.5" : "w-4 h-4"} />
                               <span className="font-medium">{comment.like_count}</span>
                             </button>
 
@@ -840,9 +850,9 @@ export default function CommunityDetailPage() {
                                     setExpandedComments((prev) => new Set(prev).add(comment.id));
                                   }
                                 }}
-                                className="flex items-center gap-1 text-sm text-gray-600 hover:text-[#C9A227] transition-colors font-medium"
+                                className={`flex items-center gap-1 text-gray-600 hover:text-[#C9A227] transition-colors font-medium ${inWebView ? "text-xs" : "text-sm"}`}
                               >
-                                <MessageCircle className="w-4 h-4" />
+                                <MessageCircle className={inWebView ? "w-3.5 h-3.5" : "w-4 h-4"} />
                                 {replyTo === comment.id ? '취소' : '답글'}
                               </button>
                             )}
@@ -855,7 +865,7 @@ export default function CommunityDetailPage() {
                               !comment.parent_id && (
                                 <button
                                   onClick={() => handleAcceptAnswer(comment.id)}
-                                  className="px-3 py-1 bg-green-600 text-white text-sm font-semibold rounded-lg hover:bg-green-700 transition-colors"
+                                  className={`bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors ${inWebView ? "px-2.5 py-1 text-xs" : "px-3 py-1 text-sm"}`}
                                 >
                                   채택하기
                                 </button>
@@ -865,7 +875,7 @@ export default function CommunityDetailPage() {
                             {user?.id === comment.user_id && (
                               <button
                                 onClick={() => handleCommentEdit(comment.id, comment.content)}
-                                className="text-sm text-gray-500 hover:text-[#C9A227] transition-colors font-medium"
+                                className={`text-gray-500 hover:text-[#C9A227] transition-colors font-medium ${inWebView ? "text-xs" : "text-sm"}`}
                               >
                                 수정
                               </button>
@@ -875,7 +885,7 @@ export default function CommunityDetailPage() {
                             {(user?.id === comment.user_id || isAuthor) && (
                               <button
                                 onClick={() => handleCommentDelete(comment.id)}
-                                className="text-sm text-gray-500 hover:text-red-600 transition-colors font-medium"
+                                className={`text-gray-500 hover:text-red-600 transition-colors font-medium ${inWebView ? "text-xs" : "text-sm"}`}
                               >
                                 삭제
                               </button>
@@ -887,9 +897,9 @@ export default function CommunityDetailPage() {
                           {comment.replies && comment.replies.length > 0 && (
                             <button
                               onClick={() => toggleCommentExpand(comment.id)}
-                              className="flex items-center gap-1.5 text-sm text-[#C9A227] hover:text-[#B89120] font-semibold mt-2 transition-colors"
+                              className={`flex items-center gap-1.5 text-[#C9A227] hover:text-[#B89120] font-semibold transition-colors ${inWebView ? "mt-1.5 text-xs" : "mt-2 text-sm"}`}
                             >
-                              <MessageCircle className="w-4 h-4" />
+                              <MessageCircle className={inWebView ? "w-3.5 h-3.5" : "w-4 h-4"} />
                               {expandedComments.has(comment.id)
                                 ? `답글 숨기기`
                                 : `답글 ${comment.replies.length}개 보기`}
@@ -898,9 +908,9 @@ export default function CommunityDetailPage() {
 
                           {/* Inline Reply Form */}
                           {replyTo === comment.id && (
-                            <form onSubmit={handleCommentSubmit} className="mt-4">
+                            <form onSubmit={handleCommentSubmit} className={inWebView ? "mt-3" : "mt-4"}>
                               <textarea
-                                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#C9A227] focus:border-transparent focus:bg-white resize-none transition-all"
+                                className={`w-full bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#C9A227] focus:border-transparent focus:bg-white resize-none transition-all ${inWebView ? "px-3 py-2 text-sm" : "px-4 py-3"}`}
                                 placeholder="답글을 입력하세요..."
                                 rows={2}
                                 value={commentContent}
@@ -914,7 +924,7 @@ export default function CommunityDetailPage() {
                                     setReplyTo(null);
                                     setCommentContent("");
                                   }}
-                                  className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 font-medium"
+                                  className={`text-gray-600 hover:text-gray-900 font-medium ${inWebView ? "px-3 py-1.5 text-xs" : "px-4 py-2 text-sm"}`}
                                 >
                                   취소
                                 </button>
@@ -1045,32 +1055,32 @@ export default function CommunityDetailPage() {
 
               {/* Comment Form - 댓글 리스트 아래 */}
               {user && !replyTo ? (
-                <form onSubmit={handleCommentSubmit} className="mt-6 pt-6 border-t border-gray-200">
+                <form onSubmit={handleCommentSubmit} className={`border-t border-gray-200 ${inWebView ? "mt-4 pt-4" : "mt-6 pt-6"}`}>
                   <div className="relative">
                     <textarea
-                      className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#C9A227] focus:border-transparent focus:bg-white resize-none transition-all"
+                      className={`w-full bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#C9A227] focus:border-transparent focus:bg-white resize-none transition-all ${inWebView ? "px-3 py-2 text-sm" : "px-4 py-3"}`}
                       placeholder={postData.category === "qna" ? "답변을 작성하세요..." : "댓글을 입력하세요..."}
                       rows={3}
                       value={commentContent}
                       onChange={(e) => setCommentContent(e.target.value)}
                     />
                   </div>
-                  <div className="flex justify-end mt-3">
+                  <div className={`flex justify-end ${inWebView ? "mt-2" : "mt-3"}`}>
                     <Button
                       type="submit"
                       variant="brand-primary"
                       disabled={!commentContent.trim()}
                       className="gap-2"
                     >
-                      <MessageCircle className="w-4 h-4" />
+                      <MessageCircle className={inWebView ? "w-3.5 h-3.5" : "w-4 h-4"} />
                       {postData.category === "qna" ? "답변 작성" : "댓글 작성"}
                     </Button>
                   </div>
                 </form>
               ) : !user ? (
-                <div className="mt-6 pt-6 border-t border-gray-200">
-                  <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl px-6 py-4">
-                    <p className="text-blue-900 font-medium">
+                <div className={`border-t border-gray-200 ${inWebView ? "mt-4 pt-4" : "mt-6 pt-6"}`}>
+                  <div className={`bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl ${inWebView ? "px-4 py-3" : "px-6 py-4"}`}>
+                    <p className={`text-blue-900 font-medium ${inWebView ? "text-sm" : ""}`}>
                       💬 댓글을 작성하려면{" "}
                       <Link href="/login" className="text-blue-600 underline font-semibold hover:text-blue-700">
                         로그인
@@ -1087,7 +1097,7 @@ export default function CommunityDetailPage() {
 
       {/* 하단 고정 문의 버튼 (금거래만) */}
       {postData.category === "gold_trade" && (
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 z-40">
+        <div className={`fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-40 ${inWebView ? "p-3" : "p-4"}`}>
           <div className="max-w-[900px] mx-auto">
             {user ? (
               !isAuthor ? (
@@ -1097,26 +1107,26 @@ export default function CommunityDetailPage() {
                     onClick={handleContactSeller}
                     variant="brand-primary"
                     size="lg"
-                    className="w-full gap-2 text-lg py-4"
+                    className={`w-full gap-2 ${inWebView ? "text-base py-3" : "text-lg py-4"}`}
                   >
-                    <MessageCircle className="w-5 h-5" />
+                    <MessageCircle className={inWebView ? "w-4 h-4" : "w-5 h-5"} />
                     {postData.type === 'sell_gold' ? '판매자에게 문의하기' : '매장에 문의하기'}
                   </Button>
                 ) : (
-                  <div className="text-center px-6 py-3 bg-gray-100 text-gray-600 rounded-xl text-sm">
+                  <div className={`text-center bg-gray-100 text-gray-600 rounded-xl ${inWebView ? "px-4 py-2.5 text-xs" : "px-6 py-3 text-sm"}`}>
                     {postData.type === 'sell_gold'
                       ? '금 판매 문의는 매장(관리자)만 가능합니다'
                       : '금 구매 문의는 일반 사용자만 가능합니다'}
                   </div>
                 )
               ) : (
-                <div className="text-center px-6 py-3 bg-gray-100 text-gray-600 rounded-xl text-sm">
+                <div className={`text-center bg-gray-100 text-gray-600 rounded-xl ${inWebView ? "px-4 py-2.5 text-xs" : "px-6 py-3 text-sm"}`}>
                   본인이 작성한 게시글입니다
                 </div>
               )
             ) : (
               <Link href="/login">
-                <Button variant="brand-primary" size="lg" className="w-full gap-2 text-lg py-4">
+                <Button variant="brand-primary" size="lg" className={`w-full gap-2 ${inWebView ? "text-base py-3" : "text-lg py-4"}`}>
                   로그인하고 문의하기
                 </Button>
               </Link>

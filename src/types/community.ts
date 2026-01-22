@@ -276,3 +276,7 @@ export const CATEGORY_TYPES: Record<PostCategory, PostType[]> = {
 // - product_news, store_news, other: 금소식 카테고리 전체
 // - faq: 관리자 공식 FAQ
 export const ADMIN_ONLY_TYPES: PostType[] = ['buy_gold', 'product_news', 'store_news', 'other', 'faq'];
+
+// 일반 사용자만 작성 가능한 타입
+// - sell_gold: 금 판매(일반 사용자의 금 판매글)
+export const USER_ONLY_TYPES: PostType[] = ['sell_gold'];

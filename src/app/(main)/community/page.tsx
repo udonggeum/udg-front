@@ -13,7 +13,7 @@ import type {
   PostType,
   PostListResponse,
 } from "@/types/community";
-import { Search, SlidersHorizontal, MapPin, X, ChevronDown, Heart, MessageCircle } from "lucide-react";
+import { Search, SlidersHorizontal, MapPin, X, ChevronDown, Heart, MessageCircle, Store as StoreIcon } from "lucide-react";
 import { getUserDisplayName, getUserImageUrl } from "@/lib/utils";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { PullToRefreshIndicator } from "@/components/PullToRefreshIndicator";
@@ -428,7 +428,7 @@ function CommunityPageContent() {
               ) : (
                 /* 검색 입력창 확장 */
                 <div className="flex items-center gap-2 animate-in fade-in slide-in-from-right-5 duration-200">
-                  <div className="relative w-64 sm:w-80">
+                  <div className={`relative ${inWebView ? "flex-1 max-w-sm" : "w-64 sm:w-80"}`}>
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                     <input
                       type="text"
@@ -770,7 +770,9 @@ function CommunityPageContent() {
             {viewMode === "grid" ? (
               /* Grid View - 당근마켓 스타일 */
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {data.data.map((post) => (
+                {data.data.map((post) => {
+                  const userWithStore = { ...post.user, store: post.user.store || post.store };
+                  return (
                   <Link
                     key={post.id}
                     href={`/community/posts/${post.id}/${post.slug}`}
@@ -828,27 +830,31 @@ function CommunityPageContent() {
                       <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-2">
                           <div className={`w-6 h-6 rounded-full flex items-center justify-center overflow-hidden relative ${
-                            getUserImageUrl(post.user)
+                            getUserImageUrl(userWithStore)
+                              ? "bg-white border border-gray-200"
+                              : post.user.role === "admin"
                               ? "bg-white border border-gray-200"
                               : "bg-gradient-to-br from-[#C9A227] to-[#8A6A00]"
                           }`}>
-                            {getUserImageUrl(post.user) ? (
+                            {getUserImageUrl(userWithStore) ? (
                               <Image
-                                src={getUserImageUrl(post.user) || "/default-avatar.png"}
-                                alt={getUserDisplayName(post.user)}
+                                src={getUserImageUrl(userWithStore) || "/default-avatar.png"}
+                                alt={getUserDisplayName(userWithStore)}
                                 fill
                                 sizes="24px"
                                 className="object-cover"
                                 loading="lazy"
                               />
+                            ) : post.user.role === "admin" ? (
+                              <StoreIcon className="w-3.5 h-3.5 text-[#C9A227]" />
                             ) : (
                               <span className="text-[10px] font-bold text-white">
-                                {getUserDisplayName(post.user).charAt(0)}
+                                {getUserDisplayName(userWithStore).charAt(0)}
                               </span>
                             )}
                           </div>
                           <span className="text-xs font-medium text-gray-600">
-                            {getUserDisplayName(post.user)}
+                            {getUserDisplayName(userWithStore)}
                           </span>
                         </div>
 
@@ -886,38 +892,45 @@ function CommunityPageContent() {
                       </p>
                     </div>
                   </Link>
-                ))}
+                );
+                })}
               </div>
             ) : (
               /* List View - 매장 프로필 + 콘텐츠 중심 */
               <div className="space-y-4">
-                {data.data.map((post) => (
+                {data.data.map((post) => {
+                  const userWithStore = { ...post.user, store: post.user.store || post.store };
+                  return (
                   <Link
                     key={post.id}
                     href={`/community/posts/${post.id}/${post.slug}`}
                     className="block bg-white rounded-xl border border-gray-100 hover:border-gray-200 hover:shadow-lg transition-all duration-200 p-5"
                   >
-                    <div className="flex gap-5">
+                    <div className="flex gap-3 sm:gap-5">
                       {/* Left: Store Profile + Thumbnails */}
                       <div className="flex flex-col gap-3 flex-shrink-0">
                         {/* Store/User Profile */}
                         <div className={`w-36 h-36 rounded-2xl flex items-center justify-center overflow-hidden relative ${
-                          getUserImageUrl(post.user)
+                          getUserImageUrl(userWithStore)
+                            ? "bg-white border-2 border-gray-200"
+                            : post.user.role === "admin"
                             ? "bg-white border-2 border-gray-200"
                             : "bg-gradient-to-br from-[#C9A227] to-[#8A6A00]"
                         }`}>
-                          {getUserImageUrl(post.user) ? (
+                          {getUserImageUrl(userWithStore) ? (
                             <Image
-                              src={getUserImageUrl(post.user) || "/default-avatar.png"}
-                              alt={getUserDisplayName(post.user)}
+                              src={getUserImageUrl(userWithStore) || "/default-avatar.png"}
+                              alt={getUserDisplayName(userWithStore)}
                               fill
                               sizes="144px"
                               className="object-cover"
                               loading="lazy"
                             />
+                          ) : post.user.role === "admin" ? (
+                            <StoreIcon className="w-16 h-16 text-[#C9A227]" />
                           ) : (
                             <span className="text-4xl font-bold text-white">
-                              {getUserDisplayName(post.user).charAt(0)}
+                              {getUserDisplayName(userWithStore).charAt(0)}
                             </span>
                           )}
                         </div>
@@ -947,7 +960,7 @@ function CommunityPageContent() {
                         <div className="flex items-center justify-between mb-3">
                           <div className="flex items-center gap-2">
                             <span className="text-sm font-semibold text-gray-900">
-                              {getUserDisplayName(post.user)}
+                              {getUserDisplayName(userWithStore)}
                             </span>
                             <span className="text-sm text-gray-400">·</span>
                             <span className="text-sm text-gray-400">
@@ -990,7 +1003,8 @@ function CommunityPageContent() {
                       </div>
                     </div>
                   </Link>
-                ))}
+                );
+                })}
               </div>
             )}
 

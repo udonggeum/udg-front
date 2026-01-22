@@ -37,7 +37,10 @@ export function Header() {
 
   // 웹뷰 환경 감지
   useEffect(() => {
-    setInWebView(isWebView());
+    const webViewDetected = isWebView();
+    console.log('WebView 감지:', webViewDetected);
+    console.log('User Agent:', navigator.userAgent);
+    setInWebView(webViewDetected);
   }, []);
 
   // user.address로 초기화 (currentLocation이 없을 때만)
@@ -178,7 +181,7 @@ export function Header() {
           <span className="text-lg font-bold text-gray-900">우리동네금은방</span>
         </Link>
 
-        {/* 네비게이션 (웹뷰에서는 숨김) */}
+        {/* 네비게이션 (웹에서만 표시) */}
         {!inWebView && (
           <nav className="hidden md:flex items-center gap-8">
             <Link
@@ -220,29 +223,19 @@ export function Header() {
           {!isAuthenticated ? (
             // 비로그인 상태
             <>
-              {/* 웹뷰가 아닐 때만 모바일 햄버거 표시 */}
-              {!inWebView && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                  className="md:hidden text-gray-700"
-                >
-                  {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-                </Button>
-              )}
+              {/* 모바일 햄버거 메뉴 */}
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className="md:hidden text-gray-700"
+              >
+                {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              </Button>
               <div className="flex items-center gap-3">
                 <Link href="/login">
-                  <Button
-                    variant="ghost"
-                    className={`${inWebView ? 'hidden' : 'hidden md:block'} text-caption font-semibold text-gray-700 hover:bg-gray-100`}
-                  >
-                    로그인
-                  </Button>
-                </Link>
-                <Link href="/signup">
                   <Button className="px-4 py-2.5 text-caption font-semibold text-white bg-gray-900 hover:bg-gray-800">
-                    시작하기
+                    로그인
                   </Button>
                 </Link>
               </div>
@@ -276,29 +269,25 @@ export function Header() {
                 </div>
               )}
 
-              {/* 사용자 드롭다운 메뉴 (웹) 또는 햄버거 메뉴 (앱) */}
+              {/* 사용자 드롭다운 메뉴 / 햄버거 메뉴 */}
               <div className="relative">
                 <Button
                   variant="ghost"
-                  size={inWebView ? "icon" : undefined}
                   onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                  className={`flex items-center gap-2 text-caption font-semibold text-gray-700 hover:bg-gray-100 ${inWebView ? 'p-2' : ''}`}
+                  className="flex items-center gap-2 text-caption font-semibold text-gray-700 hover:bg-gray-100 p-2"
                 >
-                  {inWebView ? (
-                    // 앱뷰: 햄버거 메뉴
-                    <Menu className="w-5 h-5" />
-                  ) : (
-                    // 웹: 사용자 아이콘
-                    <>
-                      {user?.role === "admin" ? (
-                        <Store className="w-4 h-4" />
-                      ) : (
-                        <User className="w-4 h-4" />
-                      )}
-                      <span className="hidden sm:inline">{user?.nickname || user?.name || "사용자"}</span>
-                      <ChevronDown className="w-4 h-4" />
-                    </>
-                  )}
+                  {/* 모바일: 햄버거 아이콘 */}
+                  <Menu className="w-5 h-5 md:hidden" />
+                  {/* 데스크톱: 사용자 아이콘 + 이름 */}
+                  <div className="hidden md:flex items-center gap-2">
+                    {user?.role === "admin" ? (
+                      <Store className="w-4 h-4" />
+                    ) : (
+                      <User className="w-4 h-4" />
+                    )}
+                    <span className="hidden sm:inline">{user?.nickname || user?.name || "사용자"}</span>
+                    <ChevronDown className="w-4 h-4" />
+                  </div>
                 </Button>
 
                 {isDropdownOpen && (
@@ -341,53 +330,51 @@ export function Header() {
                       </Link>
                     )}
 
-                    {/* 앱뷰 전용: 추가 메뉴 */}
-                    {inWebView && (
-                      <>
-                        <div className="border-t border-gray-100 my-1" />
+                    {/* 앱/모바일 전용: 추가 메뉴 (상단 네비게이션이 숨겨질 때) */}
+                    <>
+                      <div className="border-t border-gray-100 my-1" />
 
-                        <Link
-                          href="/prices"
-                          onClick={() => setIsDropdownOpen(false)}
-                          className="flex items-center gap-2 px-4 py-2.5 text-caption text-gray-700 hover:bg-gray-50 smooth-transition"
-                        >
-                          <TrendingUp className="w-4 h-4" />
-                          금시세
-                        </Link>
+                      <Link
+                        href="/prices"
+                        onClick={() => setIsDropdownOpen(false)}
+                        className="flex items-center gap-2 px-4 py-2.5 text-caption text-gray-700 hover:bg-gray-50 smooth-transition md:hidden"
+                      >
+                        <TrendingUp className="w-4 h-4" />
+                        금시세
+                      </Link>
 
-                        <Link
-                          href="/stores"
-                          onClick={() => setIsDropdownOpen(false)}
-                          className="flex items-center gap-2 px-4 py-2.5 text-caption text-gray-700 hover:bg-gray-50 smooth-transition"
-                        >
-                          <MapPinned className="w-4 h-4" />
-                          매장찾기
-                        </Link>
+                      <Link
+                        href="/stores"
+                        onClick={() => setIsDropdownOpen(false)}
+                        className="flex items-center gap-2 px-4 py-2.5 text-caption text-gray-700 hover:bg-gray-50 smooth-transition md:hidden"
+                      >
+                        <MapPinned className="w-4 h-4" />
+                        매장찾기
+                      </Link>
 
-                        <Link
-                          href="/community"
-                          onClick={() => setIsDropdownOpen(false)}
-                          className="flex items-center gap-2 px-4 py-2.5 text-caption text-gray-700 hover:bg-gray-50 smooth-transition"
-                        >
-                          <Sparkles className="w-4 h-4" />
-                          금광산
-                        </Link>
+                      <Link
+                        href="/community"
+                        onClick={() => setIsDropdownOpen(false)}
+                        className="flex items-center gap-2 px-4 py-2.5 text-caption text-gray-700 hover:bg-gray-50 smooth-transition md:hidden"
+                      >
+                        <Sparkles className="w-4 h-4" />
+                        금광산
+                      </Link>
 
-                        <Link
-                          href="/chats"
-                          onClick={() => setIsDropdownOpen(false)}
-                          className="flex items-center gap-2 px-4 py-2.5 text-caption text-gray-700 hover:bg-gray-50 smooth-transition relative"
-                        >
-                          <MessageSquare className="w-4 h-4" />
-                          <span>메시지</span>
-                          {unreadChatCount > 0 && (
-                            <span className="ml-auto bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
-                              {unreadChatCount > 99 ? "99+" : unreadChatCount}
-                            </span>
-                          )}
-                        </Link>
-                      </>
-                    )}
+                      <Link
+                        href="/chats"
+                        onClick={() => setIsDropdownOpen(false)}
+                        className="flex items-center gap-2 px-4 py-2.5 text-caption text-gray-700 hover:bg-gray-50 smooth-transition relative md:hidden"
+                      >
+                        <MessageSquare className="w-4 h-4" />
+                        <span>메시지</span>
+                        {unreadChatCount > 0 && (
+                          <span className="ml-auto bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
+                            {unreadChatCount > 99 ? "99+" : unreadChatCount}
+                          </span>
+                        )}
+                      </Link>
+                    </>
 
                     {/* 구분선 */}
                     <div className="border-t border-gray-100 my-1" />
@@ -410,8 +397,8 @@ export function Header() {
         </div>
       </div>
 
-      {/* 모바일 메뉴 (웹뷰에서는 사용 안 함) */}
-      {!inWebView && isMobileMenuOpen && (
+      {/* 모바일 메뉴 */}
+      {isMobileMenuOpen && (
         <>
           {/* 배경 오버레이 */}
           <div

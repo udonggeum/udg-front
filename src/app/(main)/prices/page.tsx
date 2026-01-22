@@ -342,7 +342,7 @@ export default function PricesPage() {
             {/* 컨트롤 영역 */}
             <div className={`flex items-center ${inWebView ? "gap-2" : "gap-3"}`}>
               {/* 차트/테이블 토글 */}
-              <div className={`inline-flex rounded-lg border border-gray-200 bg-gray-50 ${
+              <div className={`inline-flex rounded-lg border border-gray-200 bg-gray-50 flex-shrink-0 ${
                 inWebView ? "p-0.5" : "p-1"
               }`}>
                 <button
@@ -374,13 +374,13 @@ export default function PricesPage() {
               </div>
 
               {/* 기간 선택 */}
-              <div className={`flex items-center ${inWebView ? "gap-1" : "gap-1.5"}`}>
+              <div className={`flex items-center overflow-x-auto scrollbar-hide ${inWebView ? "gap-1" : "gap-1.5"}`}>
                 {(["1주", "1개월", "3개월", "1년", "전체"] as const).map((period) => (
                   <button
                     key={period}
                     type="button"
                     onClick={() => setSelectedPeriod(period)}
-                    className={`font-medium rounded-lg transition-all duration-200 ${
+                    className={`font-medium rounded-lg transition-all duration-200 flex-shrink-0 ${
                       inWebView ? "px-2 py-1 text-[11px]" : "px-3 py-1.5 text-small"
                     } ${
                       selectedPeriod === period

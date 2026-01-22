@@ -45,7 +45,7 @@ import { getPresignedUrlAction, uploadToS3 } from "@/actions/upload";
 import { toast } from "sonner";
 import { useAuthenticatedAction } from "@/hooks/useAuthenticatedAction";
 import { apiClient } from "@/lib/axios";
-import { isWebView } from "@/lib/webview";
+import { isWebView, postMessageToNative } from "@/lib/webview";
 
 type TabType = "home" | "news" | "gallery";
 
@@ -915,11 +915,11 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
 
       {/* 매장 메인 정보 */}
       <div className={`relative z-10 max-w-[1080px] mx-auto px-page w-full ${inWebView ? "-mt-16" : "-mt-20"}`}>
-        <div className={`bg-white rounded-2xl shadow-lg ${inWebView ? "p-4 mb-4" : "p-6 mb-5"}`}>
-          <div className="flex flex-col md:flex-row gap-4">
+        <div className={`bg-white rounded-2xl shadow-lg ${inWebView ? "p-4 mb-4" : "p-4 sm:p-5 md:p-6 mb-4 sm:mb-5"}`}>
+          <div className={`flex ${inWebView ? "flex-col gap-3" : "flex-col md:flex-row gap-3 sm:gap-4"}`}>
             {/* 매장 이미지 */}
             <div
-              className={`${inWebView ? "w-24 h-24" : "w-32 h-32"} ${
+              className={`${inWebView ? "w-24 h-24" : "w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32"} ${
                 store.image_url &&
                 (store.image_url.startsWith("http://") || store.image_url.startsWith("https://")) &&
                 !imageError
@@ -936,7 +936,7 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
                 !(
                   store.image_url.startsWith("http://") || store.image_url.startsWith("https://")
                 )) && (
-                <StoreIcon className={inWebView ? "w-12 h-12 text-gray-300" : "w-16 h-16 text-gray-300"} />
+                <StoreIcon className={inWebView ? "w-12 h-12 text-gray-300" : "w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 text-gray-300"} />
               )}
 
               {/* 이미지 (유효한 URL인 경우에만 렌더링) */}
@@ -949,7 +949,7 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
                     alt={store.name}
                     fill
                     className="object-cover"
-                    sizes="128px"
+                    sizes="(max-width: 640px) 96px, (max-width: 768px) 112px, 128px"
                     quality={85}
                     onError={(e) => {
                       if (isMountedRef.current) {
@@ -988,66 +988,76 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
             </div>
 
             {/* 매장 정보 */}
-            <div className="flex-1">
-              <div className="flex items-start justify-between mb-2">
-                <div className="flex-1">
-                  {/* 매장명 */}
-                  <div
-                    className={`inline-flex items-center gap-2 mb-2 ${
-                      isMyStore && editSections.name
-                        ? "bg-[#FEF9E7] border-2 border-[#C9A227]/30 px-3 py-2 rounded-lg"
-                        : isMyStore
-                        ? "group px-3 py-2 rounded-lg hover:bg-gray-50"
-                        : "px-3 py-2"
-                    }`}
-                  >
-                    {isMyStore && editSections.name ? (
-                      <input
-                        type="text"
-                        value={formData.name}
-                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        className={`font-bold text-gray-900 bg-transparent border-none outline-none w-full min-w-[200px] ${inWebView ? "text-[22px]" : "text-[28px]"}`}
-                        placeholder="매장 이름"
-                      />
-                    ) : (
-                      <h1 className={`font-bold text-gray-900 ${inWebView ? "text-[22px]" : "text-[28px]"}`}>
-                        {store.name}
-                        {store.branch_name && (
-                          <span className={`font-normal text-gray-600 ml-2 ${inWebView ? "text-[16px]" : "text-[20px]"}`}>
-                            ({store.branch_name})
-                          </span>
-                        )}
-                      </h1>
-                    )}
-                    {/* 매장명 수정 중이 아닐 때만 영업 상태 및 인증 뱃지 표시 */}
+            <div className="flex-1 min-w-0">
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-2">
+                <div className="flex-1 min-w-0">
+                  {/* 매장명과 뱃지를 세로로 배치 */}
+                  <div className="flex flex-col gap-2">
+                    {/* 매장명 */}
+                    <div
+                      className={`flex items-center gap-2 ${
+                        isMyStore && editSections.name
+                          ? "bg-[#FEF9E7] border-2 border-[#C9A227]/30 px-3 py-2 rounded-lg"
+                          : isMyStore
+                          ? "group px-3 py-2 rounded-lg hover:bg-gray-50"
+                          : "px-3 py-2"
+                      }`}
+                    >
+                      {isMyStore && editSections.name ? (
+                        <input
+                          type="text"
+                          value={formData.name}
+                          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                          className={`font-bold text-gray-900 bg-transparent border-none outline-none w-full ${inWebView ? "text-[18px]" : "text-xl sm:text-2xl md:text-[28px]"}`}
+                          placeholder="매장 이름"
+                        />
+                      ) : (
+                        <h1 className={`font-bold text-gray-900 ${inWebView ? "text-[18px]" : "text-xl sm:text-2xl md:text-[28px]"}`}>
+                          {store.name}
+                          {store.branch_name && (
+                            <span className={`font-normal text-gray-600 ml-2 ${inWebView ? "text-[14px]" : "text-base sm:text-lg md:text-[20px]"}`}>
+                              ({store.branch_name})
+                            </span>
+                          )}
+                        </h1>
+                      )}
+                      {isMyStore && !editSections.name && (
+                        <button
+                          onClick={() => handleStartSectionEdit("name")}
+                          className="transition-opacity p-1.5 hover:bg-gray-100 rounded-lg opacity-0 group-hover:opacity-100"
+                        >
+                          <Pencil className="w-4 h-4 text-gray-600" />
+                        </button>
+                      )}
+                    </div>
+
+                    {/* 뱃지들 (매장명 수정 중이 아닐 때만 표시) */}
                     {!editSections.name && (
-                      <>
-                        <span className={`px-3 py-1 text-small font-semibold rounded-full ${status.className}`}>
+                      <div className="flex flex-wrap items-center gap-2 px-3">
+                        <span className={`font-semibold rounded-full ${status.className} ${
+                          inWebView ? "px-2 py-0.5 text-xs" : "px-3 py-1 text-xs sm:text-sm"
+                        }`}>
                           {status.label}
                         </span>
                         {/* 인증 매장 뱃지 */}
                         {store.is_verified && (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-50 text-blue-700 text-small font-semibold rounded-full">
-                            <BadgeCheck className="w-4 h-4" />
+                          <span className={`inline-flex items-center gap-1 bg-blue-50 text-blue-700 font-semibold rounded-full ${
+                            inWebView ? "px-2 py-0.5 text-xs" : "px-2.5 py-1 text-xs sm:text-sm"
+                          }`}>
+                            <BadgeCheck className={inWebView ? "w-3 h-3" : "w-3 h-3 sm:w-4 sm:h-4"} />
                             인증 매장
                           </span>
                         )}
                         {/* 관리 매장 뱃지 (인증되지 않은 경우) */}
                         {store.is_managed && !store.is_verified && (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-gray-100 text-gray-600 text-small font-medium rounded-full">
-                            <Building2 className="w-4 h-4" />
+                          <span className={`inline-flex items-center gap-1 bg-gray-100 text-gray-600 font-medium rounded-full ${
+                            inWebView ? "px-2 py-0.5 text-xs" : "px-2.5 py-1 text-xs sm:text-sm"
+                          }`}>
+                            <Building2 className={inWebView ? "w-3 h-3" : "w-3 h-3 sm:w-4 sm:h-4"} />
                             관리 매장
                           </span>
                         )}
-                      </>
-                    )}
-                    {isMyStore && !editSections.name && (
-                      <button
-                        onClick={() => handleStartSectionEdit("name")}
-                        className="transition-opacity p-1.5 hover:bg-gray-100 rounded-lg opacity-0 group-hover:opacity-100"
-                      >
-                        <Pencil className="w-4 h-4 text-gray-600" />
-                      </button>
+                      </div>
                     )}
                   </div>
                   {/* 저장/취소 버튼 (매장명) */}
@@ -1085,13 +1095,17 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
                             <textarea
                               value={formData.description}
                               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                              className="w-full text-body leading-relaxed text-gray-600 bg-transparent border-none outline-none resize-none"
+                              className={`w-full leading-relaxed text-gray-600 bg-transparent border-none outline-none resize-none ${
+                                inWebView ? "text-sm" : "text-sm sm:text-base"
+                              }`}
                               placeholder="한줄로 매장을 소개해주세요"
                               rows={2}
                             />
                           ) : (
                             <p
-                              className={`text-body leading-relaxed ${
+                              className={`leading-relaxed ${
+                                inWebView ? "text-sm" : "text-sm sm:text-base"
+                              } ${
                                 store.description ? "text-gray-600" : "text-gray-400 italic"
                               }`}
                             >
@@ -1129,7 +1143,7 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
                 </div>
 
                 {/* 우측 상단 버튼 */}
-                <div className="flex items-center gap-2 ml-4">
+                <div className="flex items-center gap-2 sm:ml-4 flex-shrink-0">
                   {isMyStore ? (
                     <button
                       onClick={handleToggleEditMode}
@@ -1143,25 +1157,15 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
                       {isAnyEditing || isEditMode ? "편집 종료" : "편집"}
                     </button>
                   ) : (
-                    <>
-                      {/* 관리되지 않는 매장 + 로그인 사용자 -> 내 매장으로 등록 버튼 */}
-                      {user && !store.is_managed && (
-                        <button
-                          onClick={() => setIsClaimModalOpen(true)}
-                          className="flex items-center gap-2 px-4 py-2.5 bg-[#C9A227] hover:bg-[#8A6A00] text-white rounded-lg transition-colors shadow-md"
-                        >
-                          <Building2 className="w-5 h-5" />
-                          <span className="text-caption font-semibold">내 매장으로 등록</span>
-                        </button>
-                      )}
-                      <button
-                        onClick={handleWishlistToggle}
-                        className="flex items-center gap-2 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-                      >
-                        <Heart className={`w-5 h-5 ${isWishlisted ? "fill-red-500 text-red-500" : "text-gray-600"}`} />
-                        <span className="text-caption font-semibold text-gray-900">찜하기</span>
-                      </button>
-                    </>
+                    <button
+                      onClick={handleWishlistToggle}
+                      className={`flex items-center gap-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors ${
+                        inWebView ? "px-3 py-2" : "px-4 py-2.5"
+                      }`}
+                    >
+                      <Heart className={`${inWebView ? "w-4 h-4" : "w-5 h-5"} ${isWishlisted ? "fill-red-500 text-red-500" : "text-gray-600"}`} />
+                      <span className={`font-semibold text-gray-900 ${inWebView ? "text-xs" : "text-caption"}`}>찜하기</span>
+                    </button>
                   )}
                 </div>
               </div>
@@ -1207,20 +1211,20 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
               ) : null}
 
               {/* 빠른 액션 버튼 */}
-              <div className={`flex ${inWebView ? "gap-2" : "gap-3"}`}>
+              <div className={`flex flex-row flex-wrap ${inWebView ? "gap-2" : "gap-3"}`}>
                 {isMyStore ? (
                   <>
                     {/* 내 매장: 구매글 작성, 매장소식 작성 - Secondary */}
                     <button
                       onClick={() => router.push(`/community/write?category=gold_trade&store_id=${store.id}`)}
-                      className={`flex-1 flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-900 text-body font-semibold rounded-xl transition-all active:scale-[0.98] ${inWebView ? "py-2.5" : "py-3"}`}
+                      className={`flex-1 min-w-[140px] flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-900 text-body font-semibold rounded-xl transition-all active:scale-[0.98] ${inWebView ? "py-2.5" : "py-3"}`}
                     >
                       <PenSquare className={inWebView ? "w-4 h-4" : "w-5 h-5"} />
                       구매글 작성
                     </button>
                     <button
                       onClick={() => router.push(`/community/write?type=store_news&store_id=${store.id}`)}
-                      className={`flex-1 flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-900 text-body font-semibold rounded-xl transition-all active:scale-[0.98] ${inWebView ? "py-2.5" : "py-3"}`}
+                      className={`flex-1 min-w-[140px] flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-900 text-body font-semibold rounded-xl transition-all active:scale-[0.98] ${inWebView ? "py-2.5" : "py-3"}`}
                     >
                       <Newspaper className={inWebView ? "w-4 h-4" : "w-5 h-5"} />
                       매장소식 작성
@@ -1232,7 +1236,7 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
                     {store.is_managed ? (
                       <button
                         onClick={handleInquiry}
-                        className={`flex-1 flex items-center justify-center gap-2 bg-[#C9A227] hover:bg-[#8A6A00] text-white text-body font-semibold rounded-xl shadow-md hover:shadow-lg transition-all active:scale-[0.98] ${inWebView ? "py-2.5" : "py-3"}`}
+                        className={`flex-1 min-w-[140px] flex items-center justify-center gap-2 bg-[#C9A227] hover:bg-[#8A6A00] text-white text-body font-semibold rounded-xl shadow-md hover:shadow-lg transition-all active:scale-[0.98] ${inWebView ? "py-2.5" : "py-3"}`}
                       >
                         <MessageCircle className={inWebView ? "w-4 h-4" : "w-5 h-5"} />
                         문의하기
@@ -1241,7 +1245,7 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
                       <button
                         onClick={handleRequestRegistration}
                         disabled={hasRequestedRegistration || isRequestingRegistration}
-                        className={`flex-1 flex items-center justify-center gap-2 text-body font-semibold rounded-xl shadow-md transition-all active:scale-[0.98] ${
+                        className={`flex-1 min-w-[140px] flex items-center justify-center gap-2 text-body font-semibold rounded-xl shadow-md transition-all active:scale-[0.98] ${
                           hasRequestedRegistration
                             ? "bg-gray-300 text-gray-500 cursor-not-allowed"
                             : "bg-[#C9A227] hover:bg-[#8A6A00] text-white hover:shadow-lg"
@@ -1258,7 +1262,7 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
                     {store.phone_number && (
                       <button
                         onClick={handleCopyPhoneNumber}
-                        className={`flex-1 flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-900 text-body font-semibold rounded-xl transition-all active:scale-[0.98] ${inWebView ? "py-2.5" : "py-3"}`}
+                        className={`flex-1 min-w-[140px] flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-900 text-body font-semibold rounded-xl transition-all active:scale-[0.98] ${inWebView ? "py-2.5" : "py-3"}`}
                       >
                         <Copy className={inWebView ? "w-4 h-4" : "w-5 h-5"} />
                         전화번호 복사
@@ -1279,7 +1283,35 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
                     <span className="sr-only">길찾기</span>
                   </a>
                 )}
-                <button className={`flex items-center justify-center gap-2 bg-white border-2 border-gray-200 hover:border-gray-900 text-gray-900 text-body font-semibold rounded-xl transition-colors ${inWebView ? "px-3 py-2.5" : "px-4 py-3"}`}>
+                <button
+                  onClick={() => {
+                    if (inWebView) {
+                      postMessageToNative('SHARE', {
+                        url: window.location.href,
+                        title: store.name,
+                        text: store.description || `${store.name} - 우리동네금은방`
+                      });
+                    } else {
+                      // 웹 공유 API
+                      if (navigator.share) {
+                        navigator.share({
+                          title: store.name,
+                          text: store.description || `${store.name} - 우리동네금은방`,
+                          url: window.location.href
+                        }).catch((error) => {
+                          if (error.name !== 'AbortError') {
+                            console.error('Share failed:', error);
+                          }
+                        });
+                      } else {
+                        // 폴백: URL 복사
+                        navigator.clipboard.writeText(window.location.href);
+                        toast.success('링크가 복사되었습니다');
+                      }
+                    }
+                  }}
+                  className={`flex items-center justify-center gap-2 bg-white border-2 border-gray-200 hover:border-gray-900 text-gray-900 text-body font-semibold rounded-xl transition-colors ${inWebView ? "px-3 py-2.5" : "px-4 py-3"}`}
+                >
                   <Share2 className={inWebView ? "w-4 h-4" : "w-5 h-5"} />
                   <span className="sr-only">공유</span>
                 </button>
@@ -1368,6 +1400,10 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
                                     const result = await unpinPostAction(post.id, accessToken);
                                     if (result.success) {
                                       setPosts(prev => prev.map(p => p.id === post.id ? { ...p, is_pinned: false } : p));
+                                      toast.success("게시글 고정이 해제되었습니다.");
+                                    } else {
+                                      console.error("Unpin failed:", result.error);
+                                      toast.error(result.error || "게시글 고정 해제에 실패했습니다.");
                                     }
                                   }}
                                   className="opacity-0 group-hover:opacity-100 transition-opacity px-3 py-1.5 text-xs font-medium text-[#8A6A00] bg-white border border-[#C9A227] rounded-lg hover:bg-[#FEF9E7]"
@@ -1466,6 +1502,10 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
                                     const result = await pinPostAction(post.id, accessToken);
                                     if (result.success) {
                                       setPosts(prev => prev.map(p => p.id === post.id ? { ...p, is_pinned: true } : p));
+                                      toast.success("게시글이 고정되었습니다.");
+                                    } else {
+                                      console.error("Pin failed:", result.error);
+                                      toast.error(result.error || "게시글 고정에 실패했습니다.");
                                     }
                                   }}
                                   className="opacity-0 group-hover:opacity-100 transition-opacity px-3 py-1.5 text-xs font-medium text-[#8A6A00] bg-white border border-[#C9A227] rounded-lg hover:bg-[#FEF9E7]"
@@ -1625,6 +1665,10 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
                                       const result = await unpinPostAction(post.id, accessToken);
                                       if (result.success) {
                                         setPosts(prev => prev.map(p => p.id === post.id ? { ...p, is_pinned: false } : p));
+                                        toast.success("게시글 고정이 해제되었습니다.");
+                                      } else {
+                                        console.error("Unpin failed:", result.error);
+                                        toast.error(result.error || "게시글 고정 해제에 실패했습니다.");
                                       }
                                     }}
                                     className="opacity-0 group-hover:opacity-100 transition-opacity px-3 py-1.5 text-xs font-medium text-[#8A6A00] bg-white border border-[#C9A227] rounded-lg hover:bg-[#FEF9E7]"
@@ -1715,6 +1759,10 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
                                       const result = await pinPostAction(post.id, accessToken);
                                       if (result.success) {
                                         setPosts(prev => prev.map(p => p.id === post.id ? { ...p, is_pinned: true } : p));
+                                        toast.success("게시글이 고정되었습니다.");
+                                      } else {
+                                        console.error("Pin failed:", result.error);
+                                        toast.error(result.error || "게시글 고정에 실패했습니다.");
                                       }
                                     }}
                                     className="opacity-0 group-hover:opacity-100 transition-opacity px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"

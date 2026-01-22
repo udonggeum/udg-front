@@ -26,6 +26,17 @@ declare global {
 
 /**
  * 현재 환경이 웹뷰인지 감지
+ *
+ * 네이티브 앱 설정 방법:
+ * 1. Android (Kotlin):
+ *    webView.settings.userAgentString = "${webView.settings.userAgentString} WebView"
+ *
+ * 2. iOS (Swift):
+ *    configuration.applicationNameForUserAgent = "WebView"
+ *
+ * 3. 또는 JavaScript 브릿지 추가:
+ *    Android: webView.addJavascriptInterface(object {}, "ReactNativeWebView")
+ *    iOS: userContentController.add(self, name: "reactNative")
  */
 export function isWebView(): boolean {
   if (typeof window === 'undefined') return false;

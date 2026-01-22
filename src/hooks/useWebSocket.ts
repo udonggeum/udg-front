@@ -28,6 +28,7 @@ export function useWebSocket({
   const tokenRef = useRef(token); // 토큰을 ref로 관리하여 클로저 문제 해결
   const refreshFailureCountRef = useRef(0); // 토큰 갱신 실패 카운터
   const MAX_REFRESH_FAILURES = 3; // 최대 토큰 갱신 실패 허용 횟수
+  const MAX_RECONNECT_ATTEMPTS = 10; // 최대 재연결 시도 횟수
   const shouldStopReconnectRef = useRef(false); // 재연결 중단 플래그
 
   // onMessage 최신 상태 유지
@@ -36,8 +37,32 @@ export function useWebSocket({
   }, [onMessage]);
 
   // 토큰이 변경되면 ref 업데이트
+  // 토큰이 빈 문자열이 되면 (로그아웃) 기존 연결 종료
   useEffect(() => {
     tokenRef.current = token;
+
+    // 로그아웃으로 토큰이 빈 문자열이 되면 WebSocket 연결 종료
+    if (!token || token.trim() === "") {
+      console.log("[알림 WebSocket] 토큰이 제거되어 연결을 종료합니다");
+      shouldStopReconnectRef.current = true;
+
+      // 재연결 타이머 정리
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+        reconnectTimeoutRef.current = null;
+      }
+
+      // 기존 WebSocket 연결 종료
+      if (wsRef.current) {
+        wsRef.current.close(1000, "Token removed");
+        wsRef.current = null;
+      }
+
+      setIsConnected(false);
+    } else {
+      // 토큰이 있으면 재연결 중단 플래그 해제
+      shouldStopReconnectRef.current = false;
+    }
   }, [token]);
 
   // 토큰 갱신 함수 (ref로 저장하여 dependency 문제 방지)
@@ -170,13 +195,29 @@ export function useWebSocket({
 
     const connect = async (accessToken: string) => {
       try {
+        // 토큰이 이미 만료되었는지 사전 체크
+        if (isTokenExpired(accessToken)) {
+          console.warn("[알림 WebSocket] 토큰이 이미 만료되어 로그아웃 처리합니다");
+          shouldStopReconnectRef.current = true;
+
+          // 즉시 로그아웃 처리
+          const { clearAuth } = useAuthStore.getState();
+          clearAuth();
+          toast.error("로그인이 만료되었습니다. 다시 로그인해주세요.");
+          setTimeout(() => {
+            window.location.href = "/login";
+          }, 1000);
+          return;
+        }
+
         const ws = new WebSocket(`${url}?token=${accessToken}`);
         wsRef.current = ws;
 
         ws.onopen = () => {
-          console.log("[WebSocket] 연결 성공");
+          console.log("[알림 WebSocket] 연결 성공");
           setIsConnected(true);
           reconnectAttemptsRef.current = 0; // 연결 성공 시 재시도 카운터 초기화
+          refreshFailureCountRef.current = 0; // 재연결 실패 카운터도 초기화
         };
 
         ws.onmessage = (event) => {
@@ -184,21 +225,21 @@ export function useWebSocket({
             const data = JSON.parse(event.data) as WebSocketMessage;
             onMessageRef.current?.(data);
           } catch (error) {
-            console.error("[WebSocket] 메시지 파싱 실패:", error);
+            console.error("[알림 WebSocket] 메시지 파싱 실패:", error);
           }
         };
 
         ws.onerror = (error) => {
-          console.error("[WebSocket] 에러:", error);
+          console.error("[알림 WebSocket] 연결 에러 발생 (토큰 만료 또는 서버 문제일 수 있음)");
         };
 
         ws.onclose = async (event) => {
-          console.log("[WebSocket] 연결 종료:", event.code, event.reason);
+          console.log(`[알림 WebSocket] 연결 종료 (코드: ${event.code})`);
           setIsConnected(false);
 
           // 재연결 중단 플래그가 설정된 경우 재연결하지 않음
           if (shouldStopReconnectRef.current) {
-            console.log("[WebSocket] 재연결 중단됨 (로그아웃 처리됨)");
+            console.log("[알림 WebSocket] 재연결 중단됨");
             return;
           }
 
@@ -206,23 +247,40 @@ export function useWebSocket({
           if (event.code === 1000) {
             // 토큰 갱신으로 인한 재연결인지 확인
             if (event.reason?.includes("reconnecting") || event.reason?.includes("refreshed")) {
-              console.log("[WebSocket] 토큰 갱신으로 인한 재연결, 1초 후 재시도");
+              console.log("[알림 WebSocket] 토큰 갱신으로 인한 재연결, 1초 후 재시도");
               reconnectAttemptsRef.current = 0;
               setTimeout(() => connect(tokenRef.current), 1000);
               return;
             }
-            console.log("[WebSocket] 정상 종료");
+            console.log("[알림 WebSocket] 정상 종료");
             return;
           }
 
-          // 401 에러 (토큰 만료) - 토큰 갱신 후 재연결
-          if (event.code === 1006 || event.reason?.includes("401") || event.reason?.includes("Unauthorized")) {
-            console.warn("[WebSocket] 401 에러 감지, 토큰 갱신 시도");
+          // 1006 에러: 비정상 종료 (서버 다운, 네트워크 문제, 또는 인증 실패)
+          if (event.code === 1006) {
+            console.warn("[알림 WebSocket] 비정상 종료 (1006) - 서버 문제 또는 인증 실패 가능성");
+
+            // 현재 토큰이 만료되었는지 확인
+            if (isTokenExpired(tokenRef.current)) {
+              console.warn("[알림 WebSocket] 토큰이 만료되었습니다. 토큰 갱신 시도");
+              const newToken = await refreshTokenRef.current();
+              if (newToken && !shouldStopReconnectRef.current) {
+                console.log("[알림 WebSocket] 새 토큰으로 재연결 시도");
+                reconnectAttemptsRef.current = 0;
+                setTimeout(() => connect(newToken), 2000);
+              }
+              return;
+            }
+          }
+
+          // 401 에러 (토큰 만료) - 명시적인 인증 실패
+          if (event.reason?.includes("401") || event.reason?.includes("Unauthorized")) {
+            console.warn("[알림 WebSocket] 401 인증 에러 감지, 토큰 갱신 시도");
 
             // 토큰 갱신 시도
             const newToken = await refreshTokenRef.current();
             if (newToken && !shouldStopReconnectRef.current) {
-              console.log("[WebSocket] 새 토큰으로 재연결 시도");
+              console.log("[알림 WebSocket] 새 토큰으로 재연결 시도");
               reconnectAttemptsRef.current = 0;
               setTimeout(() => connect(newToken), 1000);
             }
@@ -232,10 +290,18 @@ export function useWebSocket({
           // Auto reconnect (네트워크 문제 등으로 인한 일반 재연결)
           if (autoReconnect && !shouldStopReconnectRef.current) {
             reconnectAttemptsRef.current++;
+
+            // 최대 재연결 시도 횟수 체크
+            if (reconnectAttemptsRef.current > MAX_RECONNECT_ATTEMPTS) {
+              console.error(`[알림 WebSocket] 최대 재연결 시도 횟수(${MAX_RECONNECT_ATTEMPTS})를 초과했습니다. 재연결을 중단합니다.`);
+              shouldStopReconnectRef.current = true;
+              return;
+            }
+
             const baseDelay = Math.min(1000 * Math.pow(2, reconnectAttemptsRef.current - 1), 30000); // Exponential backoff
             const jitter = Math.random() * 1000; // 0-1초 랜덤 jitter (thundering herd 방지)
             const delay = baseDelay + jitter;
-            console.log(`[WebSocket] ${Math.round(delay)}ms 후 재연결 시도 (${reconnectAttemptsRef.current}번째, jitter: ${Math.round(jitter)}ms)`);
+            console.log(`[알림 WebSocket] ${Math.round(delay)}ms 후 재연결 시도 (jitter: ${Math.round(jitter)}ms)`);
 
             reconnectTimeoutRef.current = setTimeout(() => {
               if (!shouldStopReconnectRef.current) {

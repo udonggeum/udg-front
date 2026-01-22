@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, memo } from "react";
 import { X, Upload, Image as ImageIcon } from "lucide-react";
 import { generatePresignedURLAction, uploadFileToS3 } from "@/actions/upload";
 import { toast } from "sonner";
+import { isWebView, postMessageToNative, onMessageFromNative } from "@/lib/webview";
 
 interface ImageUploaderProps {
   imageUrls: string[];
@@ -25,6 +26,26 @@ function ImageUploaderComponent({
     [key: string]: number;
   }>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const inWebView = isWebView();
+
+  // WebView에서 네이티브 이미지 선택 이벤트 수신
+  useEffect(() => {
+    if (!inWebView) return;
+
+    const cleanup = onMessageFromNative((event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.type === 'IMAGE_SELECTED' && data.images) {
+          // 네이티브에서 선택한 이미지 처리
+          handleNativeImages(data.images);
+        }
+      } catch (error) {
+        console.error('[ImageUploader] Failed to parse native message:', error);
+      }
+    });
+
+    return cleanup;
+  }, [inWebView, imageUrls, maxImages, accessToken]);
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -113,8 +134,84 @@ function ImageUploaderComponent({
     onImagesChange(newUrls);
   };
 
+  // 네이티브에서 받은 이미지 처리 (Base64 또는 URL)
+  const handleNativeImages = async (images: Array<{ uri: string; name?: string; type?: string }>) => {
+    if (imageUrls.length + images.length > maxImages) {
+      toast.error(`최대 ${maxImages}개까지 업로드할 수 있습니다.`);
+      return;
+    }
+
+    setUploading(true);
+
+    try {
+      const uploadedUrls: string[] = [];
+
+      for (const image of images) {
+        const filename = image.name || `image-${Date.now()}.jpg`;
+        setUploadProgress((prev) => ({ ...prev, [filename]: 0 }));
+
+        // Base64를 Blob으로 변환
+        const response = await fetch(image.uri);
+        const blob = await response.blob();
+        const file = new File([blob], filename, { type: image.type || 'image/jpeg' });
+
+        const presignedResult = await generatePresignedURLAction(
+          {
+            filename: file.name,
+            content_type: file.type,
+            file_size: file.size,
+            folder,
+          },
+          accessToken
+        );
+
+        if (!presignedResult.success || !presignedResult.data) {
+          toast.error(`${filename}: URL 생성 실패`);
+          continue;
+        }
+
+        setUploadProgress((prev) => ({ ...prev, [filename]: 50 }));
+
+        const uploadResult = await uploadFileToS3(
+          presignedResult.data.upload_url,
+          file
+        );
+
+        if (!uploadResult.success) {
+          toast.error(`${filename}: 업로드 실패`);
+          continue;
+        }
+
+        setUploadProgress((prev) => ({ ...prev, [filename]: 100 }));
+        uploadedUrls.push(presignedResult.data.file_url);
+      }
+
+      if (uploadedUrls.length > 0) {
+        onImagesChange([...imageUrls, ...uploadedUrls]);
+        toast.success(`${uploadedUrls.length}개 이미지가 업로드되었습니다.`);
+      }
+    } catch (error) {
+      console.error("Native image upload error:", error);
+      toast.error("이미지 업로드 중 오류가 발생했습니다.");
+    } finally {
+      setUploading(false);
+      setUploadProgress({});
+    }
+  };
+
   const handleClickUpload = () => {
-    fileInputRef.current?.click();
+    if (inWebView) {
+      // WebView: 네이티브 이미지 피커 호출
+      postMessageToNative('PICK_IMAGE', {
+        maxImages: maxImages - imageUrls.length,
+        maxSize: 20 * 1024 * 1024,
+        quality: 0.85,
+        allowMultiple: maxImages > 1
+      });
+    } else {
+      // 웹: 일반 파일 입력
+      fileInputRef.current?.click();
+    }
   };
 
   return (

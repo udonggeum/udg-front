@@ -257,7 +257,7 @@ export default function StoreRegisterPage() {
           <Store className={`text-[#C9A227] ${inWebView ? "w-6 h-6" : "w-8 h-8"}`} />
           매장 등록
         </h1>
-        <p className="text-gray-600">
+        <p className={`text-gray-600 ${inWebView ? "text-xs" : "text-sm"}`}>
           사업자 정보 인증을 통해 매장을 등록하고 우동금 플랫폼에서 고객을 만나보세요.
         </p>
       </div>
@@ -271,7 +271,7 @@ export default function StoreRegisterPage() {
               1. 사업자 정보 (필수)
             </h2>
           </div>
-          <p className={`text-sm text-gray-600 bg-blue-50 rounded-lg border border-blue-200 ${inWebView ? "mb-4 p-3" : "mb-6 p-4"}`}>
+          <p className={`text-gray-600 bg-blue-50 rounded-lg border border-blue-200 ${inWebView ? "mb-4 p-3 text-[10px]" : "mb-6 p-4 text-sm"}`}>
             <CheckCircle2 className="w-4 h-4 inline mr-2 text-blue-600" />
             국세청 사업자등록번호 진위 확인을 통해 자동으로 인증됩니다.
           </p>
@@ -279,7 +279,7 @@ export default function StoreRegisterPage() {
           <div className="space-y-4">
             {/* 사업자등록번호 */}
             <div>
-              <Label htmlFor="business_number" className="text-base font-semibold">
+              <Label htmlFor="business_number" className={inWebView ? "text-xs font-semibold" : "text-base font-semibold"}>
                 사업자등록번호 <span className="text-red-500">*</span>
               </Label>
               <Input
@@ -291,16 +291,16 @@ export default function StoreRegisterPage() {
                 placeholder="1234567890 (10자리, 하이픈 제외)"
                 maxLength={10}
                 required
-                className="mt-2"
+                className={`mt-2 ${inWebView ? "p-2.5 text-sm" : ""}`}
               />
-              <p className="text-sm text-gray-500 mt-1">
+              <p className={`mt-1 text-gray-500 ${inWebView ? "text-[10px]" : "text-sm"}`}>
                 {formData.business_number.length}/10자
               </p>
             </div>
 
             {/* 개업일자 */}
             <div>
-              <Label htmlFor="business_start_date" className="text-base font-semibold">
+              <Label htmlFor="business_start_date" className={inWebView ? "text-xs font-semibold" : "text-base font-semibold"}>
                 개업일자 <span className="text-red-500">*</span>
               </Label>
               <Input
@@ -312,16 +312,16 @@ export default function StoreRegisterPage() {
                 placeholder="20240101 (YYYYMMDD 형식)"
                 maxLength={8}
                 required
-                className="mt-2"
+                className={`mt-2 ${inWebView ? "p-2.5 text-sm" : ""}`}
               />
-              <p className="text-sm text-gray-500 mt-1">
+              <p className={`mt-1 text-gray-500 ${inWebView ? "text-[10px]" : "text-sm"}`}>
                 {formData.business_start_date.length}/8자 (예: 20240315)
               </p>
             </div>
 
             {/* 대표자명 */}
             <div>
-              <Label htmlFor="representative_name" className="text-base font-semibold">
+              <Label htmlFor="representative_name" className={inWebView ? "text-xs font-semibold" : "text-base font-semibold"}>
                 대표자명 <span className="text-red-500">*</span>
               </Label>
               <Input
@@ -332,7 +332,7 @@ export default function StoreRegisterPage() {
                 onChange={handleInputChange}
                 placeholder="홍길동"
                 required
-                className="mt-2"
+                className={`mt-2 ${inWebView ? "p-2.5 text-sm" : ""}`}
               />
             </div>
           </div>
@@ -350,7 +350,7 @@ export default function StoreRegisterPage() {
           <div className="space-y-4">
             {/* 매장명 */}
             <div>
-              <Label htmlFor="name" className="text-base font-semibold">
+              <Label htmlFor="name" className={inWebView ? "text-xs font-semibold" : "text-base font-semibold"}>
                 매장명 <span className="text-red-500">*</span>
               </Label>
               <Input
@@ -361,13 +361,13 @@ export default function StoreRegisterPage() {
                 onChange={handleInputChange}
                 placeholder="우동금은방"
                 required
-                className="mt-2"
+                className={`mt-2 ${inWebView ? "p-2.5 text-sm" : ""}`}
               />
             </div>
 
             {/* 주소 검색 */}
             <div>
-              <Label className="text-base font-semibold mb-2 block">
+              <Label className={`mb-2 block ${inWebView ? "text-xs font-semibold" : "text-base font-semibold"}`}>
                 매장 주소 <span className="text-red-500">*</span>
               </Label>
               <KakaoAddressSearch
@@ -377,10 +377,10 @@ export default function StoreRegisterPage() {
               />
               {formData.address && (
                 <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
-                  <p className="text-sm font-medium text-green-900">
+                  <p className={`font-medium text-green-900 ${inWebView ? "text-xs" : "text-sm"}`}>
                     선택된 주소: {formData.address}
                   </p>
-                  <p className="text-xs text-green-700 mt-1">
+                  <p className={`text-green-700 mt-1 ${inWebView ? "text-[10px]" : "text-xs"}`}>
                     {formData.region} {formData.district}
                     {formData.latitude && formData.longitude && (
                       <span className="ml-2">
@@ -394,7 +394,7 @@ export default function StoreRegisterPage() {
 
             {/* 전화번호 */}
             <div>
-              <Label htmlFor="phone_number" className="text-base font-semibold">
+              <Label htmlFor="phone_number" className={inWebView ? "text-xs font-semibold" : "text-base font-semibold"}>
                 전화번호 <span className="text-red-500">*</span>
               </Label>
               <div className="flex items-center gap-2 mt-2">
@@ -407,7 +407,7 @@ export default function StoreRegisterPage() {
                   onChange={handlePhoneChange}
                   placeholder="02-1234-5678 또는 010-1234-5678"
                   required
-                  className="flex-1"
+                  className={`flex-1 ${inWebView ? "p-2.5 text-sm" : ""}`}
                 />
               </div>
             </div>
@@ -425,9 +425,9 @@ export default function StoreRegisterPage() {
 
           <div className="space-y-4">
             {/* 영업 시간 */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className={`gap-4 ${inWebView ? "grid grid-cols-1" : "grid grid-cols-2"}`}>
               <div>
-                <Label htmlFor="open_time" className="text-base font-semibold flex items-center gap-2">
+                <Label htmlFor="open_time" className={`flex items-center gap-2 ${inWebView ? "text-xs font-semibold" : "text-base font-semibold"}`}>
                   <Clock className="w-4 h-4" />
                   오픈 시간
                 </Label>
@@ -437,12 +437,12 @@ export default function StoreRegisterPage() {
                   type="time"
                   value={formData.open_time}
                   onChange={handleInputChange}
-                  className="mt-2"
+                  className={`mt-2 ${inWebView ? "p-2.5 text-sm" : ""}`}
                 />
               </div>
 
               <div>
-                <Label htmlFor="close_time" className="text-base font-semibold flex items-center gap-2">
+                <Label htmlFor="close_time" className={`flex items-center gap-2 ${inWebView ? "text-xs font-semibold" : "text-base font-semibold"}`}>
                   <Clock className="w-4 h-4" />
                   마감 시간
                 </Label>
@@ -452,14 +452,14 @@ export default function StoreRegisterPage() {
                   type="time"
                   value={formData.close_time}
                   onChange={handleInputChange}
-                  className="mt-2"
+                  className={`mt-2 ${inWebView ? "p-2.5 text-sm" : ""}`}
                 />
               </div>
             </div>
 
             {/* 매장 소개 */}
             <div>
-              <Label htmlFor="description" className="text-base font-semibold">
+              <Label htmlFor="description" className={inWebView ? "text-xs font-semibold" : "text-base font-semibold"}>
                 매장 소개
               </Label>
               <Textarea
@@ -469,9 +469,9 @@ export default function StoreRegisterPage() {
                 onChange={handleInputChange}
                 placeholder="매장을 소개하는 간단한 설명을 입력해주세요..."
                 rows={4}
-                className="mt-2"
+                className={`mt-2 ${inWebView ? "p-2.5 text-sm" : ""}`}
               />
-              <p className="text-sm text-gray-500 mt-1">
+              <p className={`text-gray-500 mt-1 ${inWebView ? "text-[10px]" : "text-sm"}`}>
                 고객들에게 매장의 특징이나 강점을 알려주세요.
               </p>
             </div>
@@ -479,12 +479,13 @@ export default function StoreRegisterPage() {
         </Card>
 
         {/* 제출 버튼 */}
-        <div className="flex items-center justify-between pt-6 border-t">
+        <div className={`flex items-center justify-between border-t ${inWebView ? "pt-4" : "pt-6"}`}>
           <Button
             type="button"
             variant="outline"
             onClick={() => router.back()}
             disabled={isSubmitting}
+            className={inWebView ? "px-3 py-2 text-xs" : ""}
           >
             취소
           </Button>
@@ -493,16 +494,16 @@ export default function StoreRegisterPage() {
             type="submit"
             variant="brand-primary"
             disabled={isSubmitting}
-            className="px-8"
+            className={inWebView ? "px-3 py-2 text-xs" : "px-8"}
           >
             {isSubmitting ? (
               <>
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                <div className={`border-2 border-white border-t-transparent rounded-full animate-spin mr-2 ${inWebView ? "w-3 h-3" : "w-4 h-4"}`} />
                 등록 중...
               </>
             ) : (
               <>
-                <CheckCircle2 className="w-5 h-5 mr-2" />
+                <CheckCircle2 className={`mr-2 ${inWebView ? "w-4 h-4" : "w-5 h-5"}`} />
                 매장 등록하기
               </>
             )}
@@ -512,8 +513,8 @@ export default function StoreRegisterPage() {
 
       {/* 안내 메시지 */}
       <Card className={`bg-gray-50 ${inWebView ? "mt-4 p-4" : "mt-8 p-6"}`}>
-        <h3 className="font-semibold text-gray-900 mb-3">📌 안내사항</h3>
-        <ul className="space-y-2 text-sm text-gray-700">
+        <h3 className={`font-semibold text-gray-900 mb-3 ${inWebView ? "text-sm" : "text-base"}`}>📌 안내사항</h3>
+        <ul className={`space-y-2 text-gray-700 ${inWebView ? "text-xs" : "text-sm"}`}>
           <li className="flex items-start gap-2">
             <span className="text-[#C9A227] mt-0.5">•</span>
             <span>

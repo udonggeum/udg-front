@@ -472,13 +472,13 @@ export default function MyStoreEditPage() {
             onClick={() => router.push("/mypage")}
             variant="outline"
             size="sm"
-            className={`gap-2 ${inWebView ? "mb-3" : "mb-4"}`}
+            className={`gap-2 ${inWebView ? "mb-3 px-3 py-1.5 text-xs" : "mb-4"}`}
           >
             <ArrowLeft className="w-4 h-4" />
             마이페이지로 돌아가기
           </Button>
           <h1 className={`font-bold text-gray-900 ${inWebView ? "text-xl" : "text-2xl"}`}>매장 정보 수정</h1>
-          <p className="mt-1 text-sm text-gray-600">수정할 항목의 내용을 변경하세요</p>
+          <p className={`mt-1 text-gray-600 ${inWebView ? "text-xs" : "text-sm"}`}>수정할 항목의 내용을 변경하세요</p>
         </div>
 
         {/* 인증 상태 카드 */}
@@ -487,7 +487,9 @@ export default function MyStoreEditPage() {
             <div className="flex items-start justify-between">
               <div className="flex items-start gap-4">
                 {/* 인증 상태 아이콘 */}
-                <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
+                <div className={`rounded-full flex items-center justify-center ${
+                  inWebView ? "w-10 h-10" : "w-12 h-12"
+                } ${
                   myStore?.is_verified
                     ? "bg-blue-100"
                     : verificationStatus?.verification?.status === "pending"
@@ -497,19 +499,19 @@ export default function MyStoreEditPage() {
                     : "bg-gray-100"
                 }`}>
                   {myStore?.is_verified ? (
-                    <BadgeCheck className="w-6 h-6 text-blue-600" />
+                    <BadgeCheck className={inWebView ? "w-5 h-5 text-blue-600" : "w-6 h-6 text-blue-600"} />
                   ) : verificationStatus?.verification?.status === "pending" ? (
-                    <Clock3 className="w-6 h-6 text-yellow-600" />
+                    <Clock3 className={inWebView ? "w-5 h-5 text-yellow-600" : "w-6 h-6 text-yellow-600"} />
                   ) : verificationStatus?.verification?.status === "rejected" ? (
-                    <XCircle className="w-6 h-6 text-red-600" />
+                    <XCircle className={inWebView ? "w-5 h-5 text-red-600" : "w-6 h-6 text-red-600"} />
                   ) : (
-                    <ShieldCheck className="w-6 h-6 text-gray-400" />
+                    <ShieldCheck className={inWebView ? "w-5 h-5 text-gray-400" : "w-6 h-6 text-gray-400"} />
                   )}
                 </div>
 
                 {/* 인증 상태 정보 */}
                 <div>
-                  <h3 className="font-semibold text-gray-900 mb-1">
+                  <h3 className={`font-semibold text-gray-900 mb-1 ${inWebView ? "text-sm" : ""}`}>
                     {myStore?.is_verified
                       ? "인증 매장"
                       : verificationStatus?.verification?.status === "pending"
@@ -518,7 +520,7 @@ export default function MyStoreEditPage() {
                       ? "인증 반려됨"
                       : "매장 인증"}
                   </h3>
-                  <p className="text-sm text-gray-600">
+                  <p className={`text-gray-600 ${inWebView ? "text-xs" : "text-sm"}`}>
                     {myStore?.is_verified
                       ? "사업자등록증 검증이 완료된 인증 매장입니다."
                       : verificationStatus?.verification?.status === "pending"
@@ -528,7 +530,7 @@ export default function MyStoreEditPage() {
                       : "사업자등록증을 제출하여 인증 매장이 되어보세요."}
                   </p>
                   {myStore?.verified_at && (
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className={`text-gray-500 mt-1 ${inWebView ? "text-[10px]" : "text-xs"}`}>
                       인증일: {new Date(myStore.verified_at).toLocaleDateString("ko-KR")}
                     </p>
                   )}
@@ -540,7 +542,7 @@ export default function MyStoreEditPage() {
                 <Button
                   onClick={() => setIsVerificationModalOpen(true)}
                   size="sm"
-                  className="gap-2"
+                  className={`gap-2 ${inWebView ? "px-2 py-1 text-xs" : ""}`}
                 >
                   <Upload className="w-4 h-4" />
                   {verificationStatus?.verification?.status === "rejected" ? "재신청" : "인증 신청"}
@@ -554,10 +556,10 @@ export default function MyStoreEditPage() {
         <Card className={`border-0 shadow-sm ${inWebView ? "mb-4" : "mb-6"}`}>
           <CardContent className={inWebView ? "p-4" : "p-6"}>
             <div className="flex flex-col items-center">
-              <div className={`relative group ${inWebView ? "mb-3" : "mb-4"}`}>
+              <div className={`relative group ${inWebView ? "mb-2" : "mb-4"}`}>
                 <div
                   onClick={handleImageClick}
-                  className={`rounded-lg overflow-hidden border-4 border-gray-100 cursor-pointer transition-opacity hover:opacity-80 ${inWebView ? "w-32 h-32" : "w-40 h-40"}`}
+                  className={`rounded-lg overflow-hidden border-4 border-gray-100 cursor-pointer transition-opacity hover:opacity-80 ${inWebView ? "w-24 h-24" : "w-40 h-40"}`}
                 >
                   <div className={`w-full h-full ${formData.image_url ? "bg-white" : "bg-gray-100"} flex items-center justify-center`}>
                     {formData.image_url ? (
@@ -569,7 +571,7 @@ export default function MyStoreEditPage() {
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <Store className="w-16 h-16 text-gray-400" />
+                      <Store className={inWebView ? "w-10 h-10 text-gray-400" : "w-16 h-16 text-gray-400"} />
                     )}
                   </div>
                 </div>
@@ -579,9 +581,9 @@ export default function MyStoreEditPage() {
                   onClick={handleImageClick}
                 >
                   {isUploadingImage ? (
-                    <div className="w-8 h-8 border-4 border-white border-t-transparent rounded-full animate-spin" />
+                    <div className={inWebView ? "w-6 h-6 border-4 border-white border-t-transparent rounded-full animate-spin" : "w-8 h-8 border-4 border-white border-t-transparent rounded-full animate-spin"} />
                   ) : (
-                    <Camera className="w-10 h-10 text-white" />
+                    <Camera className={inWebView ? "w-8 h-8 text-white" : "w-10 h-10 text-white"} />
                   )}
                 </div>
                 {/* Hidden file input */}
@@ -594,8 +596,8 @@ export default function MyStoreEditPage() {
                   disabled={isUploadingImage}
                 />
               </div>
-              <p className="text-sm text-gray-600">매장 이미지를 클릭하여 변경</p>
-              <p className="text-xs text-gray-500 mt-1">JPG, PNG (최대 5MB)</p>
+              <p className={`text-gray-600 ${inWebView ? "text-xs" : "text-sm"}`}>매장 이미지를 클릭하여 변경</p>
+              <p className={`text-gray-500 mt-1 ${inWebView ? "text-[10px]" : "text-xs"}`}>JPG, PNG (최대 5MB)</p>
             </div>
           </CardContent>
         </Card>
@@ -607,7 +609,7 @@ export default function MyStoreEditPage() {
             <form onSubmit={handleSubmit} className={inWebView ? "space-y-4" : "space-y-6"}>
               {/* 매장명 */}
               <div>
-                <Label htmlFor="name" className="flex items-center gap-2 mb-2">
+                <Label htmlFor="name" className={`flex items-center gap-2 mb-2 ${inWebView ? "text-xs font-semibold" : ""}`}>
                   <Store className="w-4 h-4" />
                   매장명 <span className="text-red-500">*</span>
                 </Label>
@@ -618,7 +620,7 @@ export default function MyStoreEditPage() {
                   value={formData.name}
                   onChange={handleChange}
                   onBlur={handleBlur}
-                  className={`h-12 ${
+                  className={`${inWebView ? "p-2.5 text-sm" : "h-12"} ${
                     touched.name && formErrors.name ? "border-red-500" : ""
                   }`}
                   placeholder="우동금 본점"
@@ -626,14 +628,14 @@ export default function MyStoreEditPage() {
                   required
                 />
                 {touched.name && formErrors.name && (
-                  <p className="text-sm text-red-500 mt-1">{formErrors.name}</p>
+                  <p className={`text-red-500 mt-1 ${inWebView ? "text-xs" : "text-sm"}`}>{formErrors.name}</p>
                 )}
               </div>
 
               {/* 지역 선택 */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="region" className="mb-2 block">
+                  <Label htmlFor="region" className={`mb-2 block ${inWebView ? "text-xs font-semibold" : ""}`}>
                     지역
                   </Label>
                   <Select
@@ -641,7 +643,7 @@ export default function MyStoreEditPage() {
                     onValueChange={handleRegionChange}
                     disabled={isPending}
                   >
-                    <SelectTrigger className="h-12">
+                    <SelectTrigger className={inWebView ? "p-2.5 text-sm" : "h-12"}>
                       <SelectValue placeholder="지역 선택" />
                     </SelectTrigger>
                     <SelectContent>
@@ -655,7 +657,7 @@ export default function MyStoreEditPage() {
                 </div>
 
                 <div>
-                  <Label htmlFor="district" className="mb-2 block">
+                  <Label htmlFor="district" className={`mb-2 block ${inWebView ? "text-xs font-semibold" : ""}`}>
                     구/군
                   </Label>
                   <Select
@@ -663,7 +665,7 @@ export default function MyStoreEditPage() {
                     onValueChange={handleDistrictChange}
                     disabled={isPending || !selectedRegion}
                   >
-                    <SelectTrigger className="h-12">
+                    <SelectTrigger className={inWebView ? "p-2.5 text-sm" : "h-12"}>
                       <SelectValue placeholder="구/군 선택" />
                     </SelectTrigger>
                     <SelectContent>
@@ -679,7 +681,7 @@ export default function MyStoreEditPage() {
 
               {/* 연락처 */}
               <div>
-                <Label htmlFor="phone_number" className="flex items-center gap-2 mb-2">
+                <Label htmlFor="phone_number" className={`flex items-center gap-2 mb-2 ${inWebView ? "text-xs font-semibold" : ""}`}>
                   <Phone className="w-4 h-4" />
                   연락처
                 </Label>
@@ -690,7 +692,7 @@ export default function MyStoreEditPage() {
                   value={formData.phone_number || ""}
                   onChange={handleChange}
                   onBlur={handleBlur}
-                  className={`h-12 ${
+                  className={`${inWebView ? "p-2.5 text-sm" : "h-12"} ${
                     touched.phone_number && formErrors.phone_number
                       ? "border-red-500"
                       : ""
@@ -699,24 +701,24 @@ export default function MyStoreEditPage() {
                   disabled={isPending}
                 />
                 {touched.phone_number && formErrors.phone_number && (
-                  <p className="text-sm text-red-500 mt-1">
+                  <p className={`text-red-500 mt-1 ${inWebView ? "text-xs" : "text-sm"}`}>
                     {formErrors.phone_number}
                   </p>
                 )}
-                <p className="text-xs text-gray-500 mt-1">
+                <p className={`text-gray-500 mt-1 ${inWebView ? "text-[10px]" : "text-xs"}`}>
                   형식: 010-1234-5678 또는 01012345678
                 </p>
               </div>
 
               {/* 영업시간 */}
               <div>
-                <Label className="flex items-center gap-2 mb-2">
+                <Label className={`flex items-center gap-2 mb-2 ${inWebView ? "text-xs font-semibold" : ""}`}>
                   <Clock className="w-4 h-4" />
                   영업시간
                 </Label>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="open_time" className="text-sm text-gray-600 mb-1 block">
+                    <Label htmlFor="open_time" className={`text-gray-600 mb-1 block ${inWebView ? "text-xs" : "text-sm"}`}>
                       오픈시간
                     </Label>
                     <Input
@@ -725,12 +727,12 @@ export default function MyStoreEditPage() {
                       name="open_time"
                       value={formData.open_time || ""}
                       onChange={handleChange}
-                      className="h-12"
+                      className={inWebView ? "p-2.5 text-sm" : "h-12"}
                       disabled={isPending}
                     />
                   </div>
                   <div>
-                    <Label htmlFor="close_time" className="text-sm text-gray-600 mb-1 block">
+                    <Label htmlFor="close_time" className={`text-gray-600 mb-1 block ${inWebView ? "text-xs" : "text-sm"}`}>
                       마감시간
                     </Label>
                     <Input
@@ -739,19 +741,19 @@ export default function MyStoreEditPage() {
                       name="close_time"
                       value={formData.close_time || ""}
                       onChange={handleChange}
-                      className="h-12"
+                      className={inWebView ? "p-2.5 text-sm" : "h-12"}
                       disabled={isPending}
                     />
                   </div>
                 </div>
-                <p className="text-xs text-gray-500 mt-1">
+                <p className={`text-gray-500 mt-1 ${inWebView ? "text-[10px]" : "text-xs"}`}>
                   매장의 오픈 시간과 마감 시간을 입력하세요
                 </p>
               </div>
 
               {/* 매장 태그 */}
               <div>
-                <Label className="flex items-center gap-2 mb-3">
+                <Label className={`flex items-center gap-2 mb-3 ${inWebView ? "text-xs font-semibold" : ""}`}>
                   <Tags className="w-4 h-4" />
                   매장 태그
                 </Label>
@@ -760,7 +762,7 @@ export default function MyStoreEditPage() {
                     <Badge
                       key={tag.id}
                       variant={selectedTagIds.includes(tag.id) ? "default" : "outline"}
-                      className={`cursor-pointer transition-all ${
+                      className={`cursor-pointer transition-all ${inWebView ? "text-xs px-2 py-1" : ""} ${
                         selectedTagIds.includes(tag.id)
                           ? "bg-[#C9A227] text-white hover:bg-[#8A6A00]"
                           : "hover:bg-gray-100"
@@ -771,14 +773,14 @@ export default function MyStoreEditPage() {
                     </Badge>
                   ))}
                 </div>
-                <p className="text-xs text-gray-500 mt-2">
+                <p className={`text-gray-500 mt-2 ${inWebView ? "text-[10px]" : "text-xs"}`}>
                   매장의 특징을 나타내는 태그를 선택하세요 (복수 선택 가능)
                 </p>
               </div>
 
               {/* 주소 */}
               <div>
-                <Label className="flex items-center gap-2 mb-4">
+                <Label className={`flex items-center gap-2 mb-4 ${inWebView ? "text-xs font-semibold" : ""}`}>
                   <MapPin className="w-4 h-4" />
                   매장 주소
                 </Label>
@@ -801,14 +803,14 @@ export default function MyStoreEditPage() {
                   }}
                   required={{ address: false }}
                 />
-                <p className="text-xs text-gray-500 mt-2">
+                <p className={`text-gray-500 mt-2 ${inWebView ? "text-[10px]" : "text-xs"}`}>
                   매장의 위치를 정확히 입력하세요
                 </p>
               </div>
 
               {/* 매장 설명 */}
               <div>
-                <Label htmlFor="description" className="flex items-center gap-2 mb-2">
+                <Label htmlFor="description" className={`flex items-center gap-2 mb-2 ${inWebView ? "text-xs font-semibold" : ""}`}>
                   <FileText className="w-4 h-4" />
                   매장 설명
                 </Label>
@@ -817,38 +819,39 @@ export default function MyStoreEditPage() {
                   name="description"
                   value={formData.description || ""}
                   onChange={handleChange}
-                  className="min-h-[120px] resize-none"
+                  className={`resize-none ${inWebView ? "min-h-[80px] p-2.5 text-sm" : "min-h-[120px]"}`}
                   placeholder="매장에 대한 간단한 설명을 입력하세요"
                   disabled={isPending}
                 />
-                <p className="text-xs text-gray-500 mt-1">
+                <p className={`text-gray-500 mt-1 ${inWebView ? "text-[10px]" : "text-xs"}`}>
                   매장의 특징이나 안내사항을 입력하세요
                 </p>
               </div>
 
               {/* Submit Buttons */}
-              <div className="flex justify-end gap-3 pt-6 border-t">
+              <div className={`flex justify-end gap-3 border-t ${inWebView ? "pt-4" : "pt-6"}`}>
                 <Button
                   type="button"
                   onClick={() => router.push("/mypage")}
                   variant="outline"
                   disabled={isPending}
+                  className={inWebView ? "px-3 py-2 text-xs" : ""}
                 >
                   취소
                 </Button>
                 <Button
                   type="submit"
-                  className="gap-2 bg-gray-900 hover:bg-gray-800 text-white"
+                  className={`gap-2 bg-gray-900 hover:bg-gray-800 text-white ${inWebView ? "px-3 py-2 text-xs" : ""}`}
                   disabled={isPending}
                 >
                   {isPending ? (
                     <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
+                      <div className={`border-2 border-white border-t-transparent rounded-full animate-spin ${inWebView ? "w-3 h-3" : "w-4 h-4"}`} />
                       <span>저장 중...</span>
                     </>
                   ) : (
                     <>
-                      <Save className="w-4 h-4" />
+                      <Save className={inWebView ? "w-3 h-3" : "w-4 h-4"} />
                       <span>저장</span>
                     </>
                   )}

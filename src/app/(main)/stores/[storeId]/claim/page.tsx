@@ -166,14 +166,14 @@ export default function StoreClaimPage() {
     return (
       <div className={`max-w-2xl mx-auto px-4 ${inWebView ? "py-8" : "py-16"}`}>
         <Card className={`text-center ${inWebView ? "p-6" : "p-12"}`}>
-          <AlertCircle className="w-16 h-16 text-[#C9A227] mx-auto mb-4" />
-          <h2 className="text-xl font-bold text-gray-900 mb-2">
+          <AlertCircle className={`text-[#C9A227] mx-auto mb-4 ${inWebView ? "w-12 h-12" : "w-16 h-16"}`} />
+          <h2 className={`font-bold text-gray-900 mb-2 ${inWebView ? "text-lg" : "text-xl"}`}>
             로그인이 필요합니다
           </h2>
-          <p className="text-gray-600 mb-6">
+          <p className={`text-gray-600 mb-6 ${inWebView ? "text-sm" : "text-base"}`}>
             매장 소유권 등록을 위해 먼저 로그인해주세요.
           </p>
-          <Button onClick={() => router.push("/login")}>
+          <Button onClick={() => router.push("/login")} className={inWebView ? "px-4 py-2 text-sm" : "px-6 py-3"}>
             로그인하기
           </Button>
         </Card>
@@ -186,19 +186,19 @@ export default function StoreClaimPage() {
     return (
       <div className={`max-w-2xl mx-auto px-4 ${inWebView ? "py-8" : "py-16"}`}>
         <Card className={`text-center ${inWebView ? "p-6" : "p-12"}`}>
-          <Phone className="w-16 h-16 text-blue-500 mx-auto mb-4" />
-          <h2 className="text-xl font-bold text-gray-900 mb-2">
+          <Phone className={`text-blue-500 mx-auto mb-4 ${inWebView ? "w-12 h-12" : "w-16 h-16"}`} />
+          <h2 className={`font-bold text-gray-900 mb-2 ${inWebView ? "text-lg" : "text-xl"}`}>
             휴대폰 인증이 필요합니다
           </h2>
-          <p className="text-gray-600 mb-6">
+          <p className={`text-gray-600 mb-6 ${inWebView ? "text-sm" : "text-base"}`}>
             매장 소유권 등록을 위해서는 휴대폰 인증이 필요합니다.<br />
             마이페이지에서 휴대폰 인증을 완료해주세요.
           </p>
           <div className="flex gap-3 justify-center">
-            <Button variant="outline" onClick={() => router.push("/stores")}>
+            <Button variant="outline" onClick={() => router.push("/stores")} className={inWebView ? "px-3 py-2 text-xs" : "px-4 py-3 text-sm"}>
               매장 찾기
             </Button>
-            <Button onClick={() => router.push("/mypage/edit")}>
+            <Button onClick={() => router.push("/mypage/edit")} className={inWebView ? "px-3 py-2 text-xs" : "px-4 py-3 text-sm"}>
               휴대폰 인증하러 가기
             </Button>
           </div>
@@ -224,14 +224,14 @@ export default function StoreClaimPage() {
     return (
       <div className={`max-w-2xl mx-auto px-4 ${inWebView ? "py-8" : "py-16"}`}>
         <Card className={`text-center ${inWebView ? "p-6" : "p-12"}`}>
-          <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-          <h2 className="text-xl font-bold text-gray-900 mb-2">
+          <AlertCircle className={`text-red-500 mx-auto mb-4 ${inWebView ? "w-12 h-12" : "w-16 h-16"}`} />
+          <h2 className={`font-bold text-gray-900 mb-2 ${inWebView ? "text-lg" : "text-xl"}`}>
             매장을 찾을 수 없습니다
           </h2>
-          <p className="text-gray-600 mb-6">
+          <p className={`text-gray-600 mb-6 ${inWebView ? "text-sm" : "text-base"}`}>
             요청하신 매장 정보를 찾을 수 없습니다.
           </p>
-          <Button onClick={() => router.push("/stores")}>
+          <Button onClick={() => router.push("/stores")} className={inWebView ? "px-4 py-2 text-sm" : "px-6 py-3"}>
             매장 찾기
           </Button>
         </Card>
@@ -245,17 +245,17 @@ export default function StoreClaimPage() {
       <div className={inWebView ? "mb-4" : "mb-8"}>
         <button
           onClick={() => router.back()}
-          className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4 transition-colors"
+          className={`flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors ${inWebView ? "mb-3" : "mb-4"}`}
         >
-          <ArrowLeft className="w-4 h-4" />
-          <span className="text-sm font-medium">뒤로 가기</span>
+          <ArrowLeft className={inWebView ? "w-3.5 h-3.5" : "w-4 h-4"} />
+          <span className={`font-medium ${inWebView ? "text-xs" : "text-sm"}`}>뒤로 가기</span>
         </button>
 
-        <h1 className={`font-bold text-gray-900 mb-2 flex items-center gap-3 ${inWebView ? "text-2xl" : "text-3xl"}`}>
-          <ShieldCheck className={`text-[#C9A227] ${inWebView ? "w-6 h-6" : "w-8 h-8"}`} />
+        <h1 className={`font-bold text-gray-900 mb-2 flex items-center gap-3 ${inWebView ? "text-xl" : "text-3xl"}`}>
+          <ShieldCheck className={`text-[#C9A227] ${inWebView ? "w-5 h-5" : "w-8 h-8"}`} />
           매장 소유권 등록
         </h1>
-        <p className="text-gray-600">
+        <p className={`text-gray-600 ${inWebView ? "text-sm" : "text-base"}`}>
           사업자 정보 인증을 통해 매장의 소유권을 등록하세요.
         </p>
       </div>
@@ -263,21 +263,21 @@ export default function StoreClaimPage() {
       <form onSubmit={handleSubmit} className={inWebView ? "space-y-4" : "space-y-8"}>
         {/* 매장 정보 확인 */}
         <Card className={`bg-gradient-to-br from-[#FEF9E7] to-[#FAF4DC] border-2 border-[#C9A227]/30 ${inWebView ? "p-4" : "p-6"}`}>
-          <div className="flex items-start gap-4">
-            <div className="w-16 h-16 bg-[#C9A227] rounded-xl flex items-center justify-center flex-shrink-0">
-              <Store className="w-8 h-8 text-white" />
+          <div className={`flex items-start ${inWebView ? "gap-3" : "gap-4"}`}>
+            <div className={`bg-[#C9A227] rounded-xl flex items-center justify-center flex-shrink-0 ${inWebView ? "w-12 h-12" : "w-16 h-16"}`}>
+              <Store className={inWebView ? "w-6 h-6 text-white" : "w-8 h-8 text-white"} />
             </div>
             <div className="flex-1">
-              <h2 className="text-xl font-bold text-gray-900 mb-1">
+              <h2 className={`font-bold text-gray-900 mb-1 ${inWebView ? "text-base" : "text-xl"}`}>
                 이 매장이 맞나요?
               </h2>
-              <p className="text-sm text-gray-600 mb-4">
+              <p className={`text-gray-600 ${inWebView ? "text-xs mb-3" : "text-sm mb-4"}`}>
                 소유권을 등록하려는 매장 정보를 확인해주세요.
               </p>
 
-              <div className="space-y-2 text-sm">
+              <div className={`space-y-2 ${inWebView ? "text-xs" : "text-sm"}`}>
                 <div className="flex items-start gap-2">
-                  <Store className="w-4 h-4 text-gray-600 mt-0.5 flex-shrink-0" />
+                  <Store className={`text-gray-600 mt-0.5 flex-shrink-0 ${inWebView ? "w-3.5 h-3.5" : "w-4 h-4"}`} />
                   <div>
                     <span className="font-semibold text-gray-900">{store.name}</span>
                     {store.branch_name && (
@@ -288,14 +288,14 @@ export default function StoreClaimPage() {
 
                 {store.address && (
                   <div className="flex items-start gap-2">
-                    <MapPin className="w-4 h-4 text-gray-600 mt-0.5 flex-shrink-0" />
+                    <MapPin className={`text-gray-600 mt-0.5 flex-shrink-0 ${inWebView ? "w-3.5 h-3.5" : "w-4 h-4"}`} />
                     <span className="text-gray-700">{store.address}</span>
                   </div>
                 )}
 
                 {store.phone_number && (
                   <div className="flex items-start gap-2">
-                    <Phone className="w-4 h-4 text-gray-600 mt-0.5 flex-shrink-0" />
+                    <Phone className={`text-gray-600 mt-0.5 flex-shrink-0 ${inWebView ? "w-3.5 h-3.5" : "w-4 h-4"}`} />
                     <span className="text-gray-700">{store.phone_number}</span>
                   </div>
                 )}
@@ -306,22 +306,22 @@ export default function StoreClaimPage() {
 
         {/* 사업자 정보 입력 */}
         <Card className={inWebView ? "p-4" : "p-6"}>
-          <div className={`flex items-center gap-2 ${inWebView ? "mb-4" : "mb-6"}`}>
-            <Building2 className="w-5 h-5 text-blue-600" />
-            <h2 className={`font-bold text-gray-900 ${inWebView ? "text-lg" : "text-xl"}`}>
+          <div className={`flex items-center gap-2 ${inWebView ? "mb-3" : "mb-6"}`}>
+            <Building2 className={`text-blue-600 ${inWebView ? "w-4 h-4" : "w-5 h-5"}`} />
+            <h2 className={`font-bold text-gray-900 ${inWebView ? "text-base" : "text-xl"}`}>
               사업자 정보 인증 (필수)
             </h2>
           </div>
 
-          <p className={`text-sm text-gray-600 bg-blue-50 rounded-lg border border-blue-200 ${inWebView ? "mb-4 p-3" : "mb-6 p-4"}`}>
-            <CheckCircle2 className="w-4 h-4 inline mr-2 text-blue-600" />
+          <p className={`text-gray-600 bg-blue-50 rounded-lg border border-blue-200 ${inWebView ? "mb-4 p-3 text-xs" : "mb-6 p-4 text-sm"}`}>
+            <CheckCircle2 className={`inline mr-2 text-blue-600 ${inWebView ? "w-3.5 h-3.5" : "w-4 h-4"}`} />
             국세청 사업자등록번호 진위 확인을 통해 자동으로 인증됩니다.
           </p>
 
           <div className="space-y-4">
             {/* 사업자등록번호 */}
             <div>
-              <Label htmlFor="business_number" className="text-base font-semibold">
+              <Label htmlFor="business_number" className={`font-semibold ${inWebView ? "text-xs" : "text-sm"}`}>
                 사업자등록번호 <span className="text-red-500">*</span>
               </Label>
               <Input
@@ -333,7 +333,7 @@ export default function StoreClaimPage() {
                 placeholder="1234567890 (10자리, 하이픈 제외)"
                 maxLength={10}
                 required
-                className="mt-2"
+                className={`mt-2 ${inWebView ? "p-2.5 text-sm" : "p-3"}`}
               />
               <p className="text-sm text-gray-500 mt-1">
                 {formData.business_number.length}/10자
@@ -342,7 +342,7 @@ export default function StoreClaimPage() {
 
             {/* 개업일자 */}
             <div>
-              <Label htmlFor="business_start_date" className="text-base font-semibold">
+              <Label htmlFor="business_start_date" className={`font-semibold ${inWebView ? "text-xs" : "text-sm"}`}>
                 개업일자 <span className="text-red-500">*</span>
               </Label>
               <Input
@@ -354,7 +354,7 @@ export default function StoreClaimPage() {
                 placeholder="20240101 (YYYYMMDD 형식)"
                 maxLength={8}
                 required
-                className="mt-2"
+                className={`mt-2 ${inWebView ? "p-2.5 text-sm" : "p-3"}`}
               />
               <p className="text-sm text-gray-500 mt-1">
                 {formData.business_start_date.length}/8자 (예: 20240315)
@@ -363,7 +363,7 @@ export default function StoreClaimPage() {
 
             {/* 대표자명 */}
             <div>
-              <Label htmlFor="representative_name" className="text-base font-semibold">
+              <Label htmlFor="representative_name" className={`font-semibold ${inWebView ? "text-xs" : "text-sm"}`}>
                 대표자명 <span className="text-red-500">*</span>
               </Label>
               <Input
@@ -374,19 +374,20 @@ export default function StoreClaimPage() {
                 onChange={handleRepresentativeNameChange}
                 placeholder="홍길동"
                 required
-                className="mt-2"
+                className={`mt-2 ${inWebView ? "p-2.5 text-sm" : "p-3"}`}
               />
             </div>
           </div>
         </Card>
 
         {/* 제출 버튼 */}
-        <div className="flex items-center justify-between pt-6 border-t">
+        <div className={`flex items-center justify-between border-t ${inWebView ? "pt-4" : "pt-6"}`}>
           <Button
             type="button"
             variant="outline"
             onClick={() => router.back()}
             disabled={isSubmitting}
+            className={inWebView ? "px-3 py-2 text-xs" : "px-4 py-3 text-sm"}
           >
             취소
           </Button>
@@ -395,16 +396,16 @@ export default function StoreClaimPage() {
             type="submit"
             variant="brand-primary"
             disabled={isSubmitting}
-            className="px-8"
+            className={inWebView ? "px-5 py-2 text-xs" : "px-8 py-3 text-sm"}
           >
             {isSubmitting ? (
               <>
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                <div className={`border-2 border-white border-t-transparent rounded-full animate-spin mr-2 ${inWebView ? "w-3 h-3" : "w-4 h-4"}`} />
                 인증 중...
               </>
             ) : (
               <>
-                <CheckCircle2 className="w-5 h-5 mr-2" />
+                <CheckCircle2 className={`mr-2 ${inWebView ? "w-4 h-4" : "w-5 h-5"}`} />
                 소유권 등록하기
               </>
             )}
@@ -414,8 +415,8 @@ export default function StoreClaimPage() {
 
       {/* 안내 메시지 */}
       <Card className={`bg-gray-50 ${inWebView ? "mt-4 p-4" : "mt-8 p-6"}`}>
-        <h3 className="font-semibold text-gray-900 mb-3">📌 안내사항</h3>
-        <ul className="space-y-2 text-sm text-gray-700">
+        <h3 className={`font-semibold text-gray-900 ${inWebView ? "text-sm mb-2" : "text-base mb-3"}`}>📌 안내사항</h3>
+        <ul className={`space-y-2 text-gray-700 ${inWebView ? "text-xs" : "text-sm"}`}>
           <li className="flex items-start gap-2">
             <span className="text-[#C9A227] mt-0.5">•</span>
             <span>
