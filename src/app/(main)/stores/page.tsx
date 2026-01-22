@@ -182,6 +182,8 @@ function StoresPageContent() {
   const [totalCount, setTotalCount] = useState(0);
   const [isGettingLocation, setIsGettingLocation] = useState(false);
   const [inWebView, setInWebView] = useState(false);
+  const [searchCenter, setSearchCenter] = useState<{ lat: number; lng: number } | null>(null); // 지도 기반 검색 중심점
+  const [searchRadius, setSearchRadius] = useState<number>(2); // 검색 반경 (km)
 
   // 웹뷰 환경 감지
   useEffect(() => {
@@ -269,7 +271,7 @@ function StoresPageContent() {
     };
   }, []);
 
-  // 매장 목록 로드 (currentPage, selectedFilter, userLocation 변경 시마다 실행)
+  // 매장 목록 로드 (currentPage, selectedFilter, userLocation, searchCenter 변경 시마다 실행)
   useEffect(() => {
     const loadStores = async () => {
       setIsLoading(true);
@@ -282,8 +284,15 @@ function StoresPageContent() {
           page_size: PAGE_SIZE,
         };
 
-        // 사용자 위치를 백엔드로 전달 (거리순 정렬용)
-        if (userLocation) {
+        // 지도 기반 검색이 활성화된 경우 (우선순위 높음)
+        if (searchCenter) {
+          params.center_lat = searchCenter.lat;
+          params.center_lng = searchCenter.lng;
+          params.radius = searchRadius * 1000; // km -> m 변환
+          console.log(`🗺️ Map-based search: center=(${searchCenter.lat}, ${searchCenter.lng}), radius=${searchRadius}km`);
+        }
+        // 지도 검색이 아니면 사용자 위치 기준 거리순 정렬
+        else if (userLocation) {
           params.user_lat = userLocation.lat;
           params.user_lng = userLocation.lng;
         }
@@ -375,7 +384,7 @@ function StoresPageContent() {
     };
 
     loadStores();
-  }, [accessToken, currentPage, selectedFilter, appliedSearchQuery, userLocation]);
+  }, [accessToken, currentPage, selectedFilter, appliedSearchQuery, userLocation, searchCenter, searchRadius]);
 
   // URL 파라미터에서 검색어 처리 (메인 화면의 인기 검색어 클릭 시)
   useEffect(() => {
@@ -479,15 +488,102 @@ function StoresPageContent() {
     setTimeout(() => setSelectedStore(null), 300); // 애니메이션 후 상태 초기화
   };
 
-  const handleSearch = useCallback((e: React.FormEvent) => {
+  const handleSearch = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // 검색어를 적용하고 페이지를 1로 리셋
-    setAppliedSearchQuery(searchQuery);
-    setCurrentPage(1);
+    if (!searchQuery.trim()) {
+      toast.error("검색어를 입력해주세요");
+      return;
+    }
 
     console.log("🔍 Search initiated:", searchQuery);
+
+    // Kakao Maps Geocoding을 사용하여 주소/장소 검색
+    if (window.kakao && window.kakao.maps && window.kakao.maps.services) {
+      const geocoder = new window.kakao.maps.services.Geocoder();
+
+      // 1. 키워드로 장소 검색 (예: "강남역", "종로타워")
+      const places = new window.kakao.maps.services.Places();
+
+      places.keywordSearch(searchQuery, (result: any, status: any) => {
+        if (status === window.kakao.maps.services.Status.OK && result.length > 0) {
+          // 검색 성공: 첫 번째 결과의 좌표로 지도 이동 + 지도 기반 검색
+          const firstPlace = result[0];
+          const location = {
+            lat: parseFloat(firstPlace.y),
+            lng: parseFloat(firstPlace.x),
+          };
+
+          console.log("✅ Found place:", firstPlace.place_name, location);
+
+          // 지도 중심 이동
+          setMapCenter(location);
+
+          // 해당 위치 기준으로 매장 검색
+          setSearchCenter(location);
+          setCurrentPage(1);
+          setAppliedSearchQuery("");
+
+          // 모바일에서는 지도 탭으로 전환
+          if (window.innerWidth < 768) {
+            setIsMobileMapOpen(true);
+          }
+
+          toast.success(`${firstPlace.place_name || searchQuery} 근처 매장을 검색합니다`);
+        } else {
+          // 장소 검색 실패: 2. 주소로 검색 시도
+          geocoder.addressSearch(searchQuery, (result: any, status: any) => {
+            if (status === window.kakao.maps.services.Status.OK && result.length > 0) {
+              // 주소 검색 성공
+              const location = {
+                lat: parseFloat(result[0].y),
+                lng: parseFloat(result[0].x),
+              };
+
+              console.log("✅ Found address:", result[0].address_name, location);
+
+              // 지도 중심 이동
+              setMapCenter(location);
+
+              // 해당 위치 기준으로 매장 검색
+              setSearchCenter(location);
+              setCurrentPage(1);
+              setAppliedSearchQuery("");
+
+              // 모바일에서는 지도 탭으로 전환
+              if (window.innerWidth < 768) {
+                setIsMobileMapOpen(true);
+              }
+
+              toast.success(`${result[0].address_name} 근처 매장을 검색합니다`);
+            } else {
+              // 주소 검색도 실패: 일반 텍스트 검색
+              console.log("⚠️ Geocoding failed, using text search");
+              setAppliedSearchQuery(searchQuery);
+              setCurrentPage(1);
+              setSearchCenter(null);
+            }
+          });
+        }
+      });
+    } else {
+      // Kakao Maps API가 로드되지 않은 경우: 일반 텍스트 검색
+      console.log("⚠️ Kakao Maps not loaded, using text search");
+      setAppliedSearchQuery(searchQuery);
+      setCurrentPage(1);
+      setSearchCenter(null);
+    }
   }, [searchQuery]);
+
+  // 지도 기반 검색 (현재 지역 재검색)
+  const handleSearchThisArea = useCallback((center: { lat: number; lng: number }) => {
+    console.log("🗺️ Searching this area:", center);
+    setSearchCenter(center);
+    setCurrentPage(1);
+    setAppliedSearchQuery(""); // 텍스트 검색 초기화
+    setSearchQuery("");
+    toast.success("현재 지역 매장을 검색합니다");
+  }, []);
 
   // 현재 위치 가져오기 (Geolocation API 사용, 실패 시 설정된 위치 폴백)
   const getCurrentLocation = () => {
@@ -497,6 +593,7 @@ function StoresPageContent() {
         setSearchQuery(currentLocation);
         setAppliedSearchQuery(currentLocation);
         setCurrentPage(1);
+        setSearchCenter(null); // 지도 기반 검색 비활성화
         toast.success(`${currentLocation} 지역 매장을 검색합니다`);
       } else {
         alert("이 브라우저에서는 위치 정보를 지원하지 않습니다.");
@@ -512,10 +609,9 @@ function StoresPageContent() {
         const location = { lat: latitude, lng: longitude };
         setUserLocation(location);
         setMapCenter(location);
+        setSearchCenter(null); // 지도 기반 검색 비활성화
         setIsGettingLocation(false);
         toast.success("현재 위치로 매장을 검색합니다");
-        // TODO: Backend API 호출 - 반경 2km 내 매장 검색
-        // fetchNearbyStores(latitude, longitude, 2000);
       },
       (error) => {
         console.error("위치 정보를 가져올 수 없습니다:", error);
@@ -526,6 +622,7 @@ function StoresPageContent() {
           setSearchQuery(currentLocation);
           setAppliedSearchQuery(currentLocation);
           setCurrentPage(1);
+          setSearchCenter(null); // 지도 기반 검색 비활성화
           toast.success(`${currentLocation} 지역 매장을 검색합니다`);
           return;
         }
@@ -711,6 +808,7 @@ function StoresPageContent() {
                     }
                     setSelectedFilter(tag.id);
                     setCurrentPage(1); // 필터 변경 시 1페이지로 리셋
+                    setSearchCenter(null); // 지도 기반 검색 비활성화
                   }}
                   className={`font-medium rounded-full border whitespace-nowrap transition-all duration-200 ${
                     inWebView ? "px-2.5 py-1.5 min-h-[32px] text-[11px]" : "px-3 md:px-4 py-2 md:py-2.5 min-h-[40px] md:min-h-[44px] text-small"
@@ -733,8 +831,37 @@ function StoresPageContent() {
             isMobileMapOpen ? "hidden md:flex" : "flex"
           }`}>
             <div className="flex items-center gap-2">
-              <span className={`text-gray-500 ${inWebView ? "text-[11px]" : "text-caption"}`}>검색결과</span>
-              <span className={`font-bold text-gray-900 ${inWebView ? "text-[11px]" : "text-caption"}`}>{filteredStores.length}</span>
+              {searchCenter ? (
+                <>
+                  <span className={`text-[#C9A227] font-medium ${inWebView ? "text-[11px]" : "text-caption"}`}>
+                    📍 지도 검색 (반경 {searchRadius}km)
+                  </span>
+                  <span className={`text-gray-500 ${inWebView ? "text-[11px]" : "text-caption"}`}>·</span>
+                  <span className={`font-bold text-gray-900 ${inWebView ? "text-[11px]" : "text-caption"}`}>
+                    {filteredStores.length}개
+                  </span>
+                  <button
+                    onClick={() => {
+                      setSearchCenter(null);
+                      setCurrentPage(1);
+                      toast.info("지도 검색이 해제되었습니다");
+                    }}
+                    className={`ml-1 text-gray-400 hover:text-gray-600 transition-colors ${
+                      inWebView ? "p-0.5" : "p-1"
+                    }`}
+                    title="지도 검색 해제"
+                  >
+                    <X className={inWebView ? "w-3 h-3" : "w-4 h-4"} />
+                  </button>
+                </>
+              ) : (
+                <>
+                  <span className={`text-gray-500 ${inWebView ? "text-[11px]" : "text-caption"}`}>검색결과</span>
+                  <span className={`font-bold text-gray-900 ${inWebView ? "text-[11px]" : "text-caption"}`}>
+                    {filteredStores.length}개
+                  </span>
+                </>
+              )}
             </div>
             <div className="relative">
               <select
@@ -789,9 +916,40 @@ function StoresPageContent() {
               <div className="flex flex-col items-center justify-center py-20 px-page text-center">
                 <StoreIcon className="w-12 h-12 text-gray-300 mb-4" />
                 <h3 className="text-[16px] font-semibold text-gray-900 mb-2">검색 결과가 없습니다</h3>
-                <p className="text-caption text-gray-500">
-                  다른 검색어를 입력하거나 필터를 변경해보세요
-                </p>
+                {searchCenter ? (
+                  <>
+                    <p className="text-caption text-gray-500 mb-4">
+                      이 지역 반경 {searchRadius}km 내에 매장이 없습니다
+                    </p>
+                    <div className="flex flex-col gap-2">
+                      <Button
+                        onClick={() => {
+                          setSearchRadius(5);
+                          toast.info("검색 반경을 5km로 확대합니다");
+                        }}
+                        variant="outline"
+                        className="min-h-[44px]"
+                      >
+                        반경 5km로 확대
+                      </Button>
+                      <Button
+                        onClick={() => {
+                          setSearchCenter(null);
+                          setCurrentPage(1);
+                          toast.info("지도 검색이 해제되었습니다");
+                        }}
+                        variant="outline"
+                        className="min-h-[44px]"
+                      >
+                        전체 매장 보기
+                      </Button>
+                    </div>
+                  </>
+                ) : (
+                  <p className="text-caption text-gray-500">
+                    다른 검색어를 입력하거나 필터를 변경해보세요
+                  </p>
+                )}
               </div>
             ) : (
               <>
@@ -1065,6 +1223,7 @@ function StoresPageContent() {
             onStoreClick={handleMapStoreClick}
             center={mapCenter}
             onCenterChange={setMapCenter}
+            onSearchThisArea={handleSearchThisArea}
             userLocation={userLocation}
           />
         </div>

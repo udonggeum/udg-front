@@ -13,6 +13,8 @@ import { Eye, EyeOff, AlertCircle, CheckCircle2 } from "lucide-react";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useUIStore } from "@/stores/useUIStore";
 import { registerUserAction, sendEmailVerificationAction, verifyEmailAction, checkEmailAvailabilityAction } from "@/actions/auth";
+import { TermsModal } from "@/components/TermsModal";
+import type { TermsType } from "@/lib/terms";
 
 interface FormErrors {
   email?: string;
@@ -70,6 +72,16 @@ export default function SignupPage() {
     email: false,
     push: false,
   });
+
+  // 약관 모달 상태
+  const [termsModalOpen, setTermsModalOpen] = useState(false);
+  const [currentTermsType, setCurrentTermsType] = useState<TermsType>("terms");
+
+  // 약관 보기 핸들러
+  const handleViewTerms = (type: TermsType) => {
+    setCurrentTermsType(type);
+    setTermsModalOpen(true);
+  };
 
   /**
    * 비밀번호 조건 충족 여부 확인
@@ -967,6 +979,7 @@ export default function SignupPage() {
                   <Button
                     type="button"
                     variant="ghost"
+                    onClick={() => handleViewTerms("terms")}
                     className="text-small text-gray-400 hover:text-gray-600 h-auto p-0"
                   >
                     보기
@@ -992,6 +1005,7 @@ export default function SignupPage() {
                   <Button
                     type="button"
                     variant="ghost"
+                    onClick={() => handleViewTerms("privacy")}
                     className="text-small text-gray-400 hover:text-gray-600 h-auto p-0"
                   >
                     보기
@@ -1017,6 +1031,7 @@ export default function SignupPage() {
                   <Button
                     type="button"
                     variant="ghost"
+                    onClick={() => handleViewTerms("location")}
                     className="text-small text-gray-400 hover:text-gray-600 h-auto p-0"
                   >
                     보기
@@ -1042,6 +1057,7 @@ export default function SignupPage() {
                   <Button
                     type="button"
                     variant="ghost"
+                    onClick={() => handleViewTerms("marketing")}
                     className="text-small text-gray-400 hover:text-gray-600 h-auto p-0"
                   >
                     보기
@@ -1157,6 +1173,13 @@ export default function SignupPage() {
           </p>
         </div>
       </footer>
+
+      {/* 약관 모달 */}
+      <TermsModal
+        isOpen={termsModalOpen}
+        onClose={() => setTermsModalOpen(false)}
+        type={currentTermsType}
+      />
     </div>
   );
 }

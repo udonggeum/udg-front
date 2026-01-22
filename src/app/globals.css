@@ -186,6 +186,30 @@
   html {
     scroll-behavior: smooth;
   }
+
+  /* 텍스트 선택 스타일 */
+  ::selection {
+    background-color: rgba(201, 162, 39, 0.15); /* 연한 골드 색상 */
+    color: inherit;
+  }
+
+  ::-moz-selection {
+    background-color: rgba(201, 162, 39, 0.15);
+    color: inherit;
+  }
+
+  /* 입력 필드 선택 스타일 */
+  input::selection,
+  textarea::selection {
+    background-color: rgba(201, 162, 39, 0.2); /* 입력 필드는 조금 더 진하게 */
+    color: inherit;
+  }
+
+  input::-moz-selection,
+  textarea::-moz-selection {
+    background-color: rgba(201, 162, 39, 0.2);
+    color: inherit;
+  }
 }
 
 @layer utilities {

@@ -269,13 +269,31 @@ function ImageUploaderComponent({
           {imageUrls.map((url, index) => (
             <div
               key={url}
-              className="relative aspect-square rounded-lg overflow-hidden border border-gray-200 bg-white group"
+              className="relative aspect-square rounded-lg overflow-hidden border border-gray-200 bg-gray-50 group"
             >
               <img
                 src={url}
                 alt={`업로드 이미지 ${index + 1}`}
-                className="w-full h-full object-contain bg-white"
-                crossOrigin="anonymous"
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  console.error("이미지 로드 실패:", url);
+                  const target = e.target as HTMLImageElement;
+                  target.style.display = 'none';
+                  const parent = target.parentElement;
+                  if (parent) {
+                    parent.innerHTML = `
+                      <div class="flex flex-col items-center justify-center h-full text-red-500">
+                        <svg class="w-8 h-8 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                        <p class="text-xs">로드 실패</p>
+                      </div>
+                    `;
+                  }
+                }}
+                onLoad={() => {
+                  console.log("이미지 로드 성공:", url);
+                }}
                 loading="lazy"
               />
               {/* 삭제 버튼 */}

@@ -33,6 +33,7 @@ interface StoreMapProps {
   onStoreClick?: (store: StoreLocation) => void;
   center?: { lat: number; lng: number };
   onCenterChange?: (center: { lat: number; lng: number }) => void;
+  onSearchThisArea?: (center: { lat: number; lng: number }) => void;
   userLocation?: { lat: number; lng: number } | null;
 }
 
@@ -54,6 +55,7 @@ function StoreMap({
   onStoreClick,
   center: propCenter,
   onCenterChange,
+  onSearchThisArea,
   userLocation,
 }: StoreMapProps) {
   const router = useRouter();
@@ -64,6 +66,8 @@ function StoreMap({
   const [level, setLevel] = useState(5); // 지도 줌 레벨 (1~14)
   const [bounds, setBounds] = useState<kakao.maps.LatLngBounds | null>(null);
   const [prevSelectedStoreId, setPrevSelectedStoreId] = useState<number | null | undefined>(null);
+  const [initialCenter, setInitialCenter] = useState(propCenter || { lat: 37.5665, lng: 126.978 });
+  const [showSearchButton, setShowSearchButton] = useState(false);
 
   // prop center가 변경되면 지도 중심 업데이트 (선택된 매장이 변경될 때만)
   // 사용자가 지도를 움직인 후에는 강제로 중심을 변경하지 않음
@@ -110,8 +114,36 @@ function StoreMap({
     const newCenter = { lat: latlng.getLat(), lng: latlng.getLng() };
     setCenter(newCenter);
     setBounds(map.getBounds());
+
+    // 지도가 이동했는지 확인 (100m 이상 이동 시 버튼 표시)
+    const distance = getDistance(initialCenter.lat, initialCenter.lng, newCenter.lat, newCenter.lng);
+    if (distance > 0.1) { // 100m 이상 이동
+      setShowSearchButton(true);
+    }
+
     if (onCenterChange) {
       onCenterChange(newCenter);
+    }
+  };
+
+  // 거리 계산 함수 (km 단위)
+  const getDistance = (lat1: number, lng1: number, lat2: number, lng2: number) => {
+    const R = 6371; // 지구 반지름 (km)
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLng = (lng2 - lng1) * Math.PI / 180;
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+      Math.sin(dLng / 2) * Math.sin(dLng / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  };
+
+  // 현재 지역 재검색
+  const handleSearchThisArea = () => {
+    if (onSearchThisArea) {
+      onSearchThisArea(center);
+      setInitialCenter(center);
+      setShowSearchButton(false);
     }
   };
 
@@ -130,14 +162,40 @@ function StoreMap({
   }, [bounds, stores]);
 
   return (
-    <Map
-      center={center}
-      style={{ width: "100%", height: "100%" }}
-      level={level}
-      onCreate={setMap}
-      onCenterChanged={handleCenterChanged}
-      onZoomChanged={(map) => setLevel(map.getLevel())}
-    >
+    <div className="relative w-full h-full">
+      {/* 현재 지역 재검색 버튼 */}
+      {showSearchButton && onSearchThisArea && (
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10">
+          <button
+            onClick={handleSearchThisArea}
+            className="bg-white hover:bg-gray-50 text-gray-900 font-semibold rounded-full shadow-lg border border-gray-200 px-6 py-3 flex items-center gap-2 transition-all duration-200 hover:shadow-xl active:scale-95"
+          >
+            <svg
+              className="w-5 h-5 text-[#C9A227]"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+              />
+            </svg>
+            <span className="text-sm">현재 지역 재검색</span>
+          </button>
+        </div>
+      )}
+
+      <Map
+        center={center}
+        style={{ width: "100%", height: "100%" }}
+        level={level}
+        onCreate={setMap}
+        onCenterChanged={handleCenterChanged}
+        onZoomChanged={(map) => setLevel(map.getLevel())}
+      >
       {visibleStores.map((store) => {
         const isSelected = selectedStoreId === store.id;
         const isOpen = store.isOpen !== false; // 기본값 true
@@ -336,7 +394,8 @@ function StoreMap({
           </div>
         </CustomOverlayMap>
       )}
-    </Map>
+      </Map>
+    </div>
   );
 }
 

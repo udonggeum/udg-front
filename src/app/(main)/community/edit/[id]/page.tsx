@@ -6,15 +6,18 @@ import Link from "next/link";
 import { updatePostAction, getPostDetailAction, generateContentAction } from "@/actions/community";
 import { getMyStoreAction } from "@/actions/stores";
 import { useAuthStore } from "@/stores/useAuthStore";
+import { useAuthenticatedAction } from "@/hooks/useAuthenticatedAction";
 import { toast } from "sonner";
 import { Sparkles } from "lucide-react";
 import { ImageUploader } from "@/components/image-uploader";
+import { KOREA_REGIONS } from "@/lib/regions";
 import { isWebView } from "@/lib/webview";
 import {
   POST_CATEGORY_LABELS,
   POST_TYPE_LABELS,
   CATEGORY_TYPES,
   ADMIN_ONLY_TYPES,
+  USER_ONLY_TYPES,
   type PostCategory,
   type PostType,
   type CreatePostRequest,
@@ -25,6 +28,7 @@ export default function CommunityEditPage() {
   const router = useRouter();
   const params = useParams();
   const { user, tokens } = useAuthStore();
+  const { withTokenRefresh } = useAuthenticatedAction();
   const postId = Number(params?.id);
 
   const [isLoading, setIsLoading] = useState(true);
@@ -36,10 +40,13 @@ export default function CommunityEditPage() {
   const [goldType, setGoldType] = useState("");
   const [goldTypeUnknown, setGoldTypeUnknown] = useState(false);
   const [weight, setWeight] = useState("");
+  const [weightUnit, setWeightUnit] = useState<"g" | "don">("g"); // 중량 단위 (g 또는 돈)
   const [weightUnknown, setWeightUnknown] = useState(false);
   const [price, setPrice] = useState("");
   const [priceNegotiable, setPriceNegotiable] = useState(false);
   const [location, setLocation] = useState("");
+  const [region, setRegion] = useState("");
+  const [district, setDistrict] = useState("");
   const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -76,6 +83,15 @@ export default function CommunityEditPage() {
           setPrice(post.price ? String(post.price) : "");
           setPriceNegotiable(post.price === 0);
           setLocation(post.location || "");
+
+          // location을 region과 district로 분리
+          if (post.location) {
+            const parts = post.location.split(" ");
+            if (parts.length >= 2) {
+              setRegion(parts[0]);
+              setDistrict(parts[1]);
+            }
+          }
         }
       } else {
         toast.error("게시글을 불러오는데 실패했습니다.");
@@ -87,6 +103,15 @@ export default function CommunityEditPage() {
 
     loadPost();
   }, [postId, tokens?.access_token, router]);
+
+  // region과 district가 변경되면 location 자동 업데이트
+  useEffect(() => {
+    if (region && district) {
+      setLocation(`${region} ${district}`);
+    } else {
+      setLocation("");
+    }
+  }, [region, district]);
 
   if (!user || !tokens?.access_token) {
     return (
@@ -197,13 +222,18 @@ export default function CommunityEditPage() {
     setIsGenerating(true);
 
     try {
+      // 중량을 g 단위로 변환
+      const weightInGrams = weight && !weightUnknown
+        ? (weightUnit === "don" ? parseFloat(weight) * 3.75 : parseFloat(weight))
+        : undefined;
+
       const result = await generateContentAction(
         {
           type: selectedType,
           keywords,
           title: title || undefined,
           gold_type: goldType || (goldTypeUnknown ? "알 수 없음" : undefined),
-          weight: weight ? parseFloat(weight) : undefined,
+          weight: weightInGrams,
           price: price ? parseInt(price, 10) : (priceNegotiable ? 0 : undefined),
           location: location || undefined,
         },
@@ -247,9 +277,12 @@ export default function CommunityEditPage() {
         requestData.gold_type = goldType;
       }
 
-      // 중량: "모름"이면 저장 안 함, 아니면 입력값
+      // 중량: "모름"이면 저장 안 함, 아니면 입력값 (돈 단위면 g로 변환)
       if (!weightUnknown && weight) {
-        requestData.weight = parseFloat(weight);
+        const weightInGrams = weightUnit === "don"
+          ? parseFloat(weight) * 3.75  // 돈 -> g 변환
+          : parseFloat(weight);
+        requestData.weight = weightInGrams;
       }
 
       // 가격: "가격 문의"면 0으로 저장, 아니면 입력값
@@ -260,6 +293,18 @@ export default function CommunityEditPage() {
       }
 
       if (location) requestData.location = location;
+
+      // sell_gold의 경우 알림을 위해 region, district도 전송
+      if (selectedType === "sell_gold" && region && district) {
+        requestData.region = region;
+        requestData.district = district;
+      }
+    }
+
+    // 매장 관련 게시글(ADMIN_ONLY_TYPES)의 경우 region, district 추가
+    if (ADMIN_ONLY_TYPES.includes(selectedType)) {
+      if (region) requestData.region = region;
+      if (district) requestData.district = district;
     }
 
     // 이미지 추가
@@ -410,17 +455,38 @@ export default function CommunityEditPage() {
                     {/* 중량 */}
                     <div>
                       <label className={`block font-medium text-gray-700 mb-2 ${inWebView ? "text-xs" : "text-sm"}`}>
-                        중량 (g) <span className="text-red-500">*</span>
+                        중량 <span className="text-red-500">*</span>
                       </label>
-                      <input
-                        type="number"
-                        step="0.01"
-                        className={`w-full rounded-lg border ${inWebView ? "p-2.5 text-sm" : "p-3"} ${errors.weight ? "border-red-500" : "border-gray-200"} focus:outline-none focus:ring-2 focus:ring-[#C9A227] focus:border-transparent disabled:bg-gray-100`}
-                        placeholder="예: 18.75"
-                        value={weight}
-                        onChange={(e) => setWeight(e.target.value)}
-                        disabled={weightUnknown}
-                      />
+                      <div className="flex gap-2">
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          className={`flex-1 min-w-0 rounded-lg border ${inWebView ? "p-2.5 text-sm" : "p-3"} ${errors.weight ? "border-red-500" : "border-gray-200"} focus:outline-none focus:ring-2 focus:ring-[#C9A227] focus:border-transparent disabled:bg-gray-100`}
+                          placeholder={weightUnit === "g" ? "18.75" : "5"}
+                          value={weight}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            // 음수 방지
+                            if (value === "" || parseFloat(value) >= 0) {
+                              setWeight(value);
+                            }
+                          }}
+                          disabled={weightUnknown}
+                        />
+                        <select
+                          value={weightUnit}
+                          onChange={(e) => setWeightUnit(e.target.value as "g" | "don")}
+                          disabled={weightUnknown}
+                          className={`flex-shrink-0 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#C9A227] focus:border-transparent disabled:bg-gray-100 ${inWebView ? "px-2 py-2.5 text-sm" : "px-3 py-3"}`}
+                        >
+                          <option value="g">g</option>
+                          <option value="don">돈</option>
+                        </select>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {weightUnit === "don" ? "1돈 = 3.75g" : "1g = 약 0.27돈"}
+                      </p>
                       <label className="flex items-center mt-2 cursor-pointer">
                         <input
                           type="checkbox"
@@ -445,10 +511,17 @@ export default function CommunityEditPage() {
                       </label>
                       <input
                         type="number"
+                        min="0"
                         className={`w-full rounded-lg border ${inWebView ? "p-2.5 text-sm" : "p-3"} ${errors.price ? "border-red-500" : "border-gray-200"} focus:outline-none focus:ring-2 focus:ring-[#C9A227] focus:border-transparent disabled:bg-gray-100`}
                         placeholder={inWebView ? "3500000" : "예: 3500000"}
                         value={price}
-                        onChange={(e) => setPrice(e.target.value)}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          // 음수 방지
+                          if (value === "" || parseInt(value, 10) >= 0) {
+                            setPrice(value);
+                          }
+                        }}
                         disabled={priceNegotiable}
                       />
                       <label className="flex items-center mt-2 cursor-pointer">
@@ -473,15 +546,52 @@ export default function CommunityEditPage() {
                       <label className={`block font-medium text-gray-700 mb-2 ${inWebView ? "text-xs" : "text-sm"}`}>
                         거래 지역 <span className="text-red-500">*</span>
                       </label>
-                      <input
-                        type="text"
-                        className={`w-full rounded-lg border ${inWebView ? "p-2.5 text-sm" : "p-3"} ${errors.location ? "border-red-500" : "border-gray-200"} focus:outline-none focus:ring-2 focus:ring-[#C9A227] focus:border-transparent`}
-                        placeholder="예: 서울 강남구"
-                        value={location}
-                        onChange={(e) => setLocation(e.target.value)}
-                      />
+                      <div className="grid grid-cols-2 gap-2">
+                        <select
+                          value={region}
+                          onChange={(e) => {
+                            setRegion(e.target.value);
+                            setDistrict(""); // 시/도 변경 시 구/군 초기화
+                          }}
+                          disabled={user.role === "admin" && ADMIN_ONLY_TYPES.includes(selectedType)}
+                          className={`w-full rounded-lg border ${inWebView ? "p-2.5 text-sm" : "p-3"} ${
+                            errors.location ? "border-red-500" : "border-gray-200"
+                          } focus:outline-none focus:ring-2 focus:ring-[#C9A227] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed`}
+                        >
+                          <option value="">시/도</option>
+                          {KOREA_REGIONS.map(({ region: regionName }) => (
+                            <option key={regionName} value={regionName}>
+                              {regionName}
+                            </option>
+                          ))}
+                        </select>
+
+                        <select
+                          value={district}
+                          onChange={(e) => setDistrict(e.target.value)}
+                          disabled={!region || (user.role === "admin" && ADMIN_ONLY_TYPES.includes(selectedType))}
+                          className={`w-full rounded-lg border ${inWebView ? "p-2.5 text-sm" : "p-3"} ${
+                            errors.location ? "border-red-500" : "border-gray-200"
+                          } focus:outline-none focus:ring-2 focus:ring-[#C9A227] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed`}
+                        >
+                          <option value="">구/군</option>
+                          {region &&
+                            KOREA_REGIONS.find((r) => r.region === region)?.districts.map(
+                              (districtName) => (
+                                <option key={districtName} value={districtName}>
+                                  {districtName}
+                                </option>
+                              )
+                            )}
+                        </select>
+                      </div>
                       {errors.location && (
                         <p className="mt-1 text-sm text-red-500">{errors.location}</p>
+                      )}
+                      {user.role === "admin" && ADMIN_ONLY_TYPES.includes(selectedType) && (
+                        <p className={`mt-1 text-gray-500 ${inWebView ? "text-[10px]" : "text-xs"}`}>
+                          * 매장 주인은 자동으로 매장 주소가 설정됩니다
+                        </p>
                       )}
                     </div>
                   </div>

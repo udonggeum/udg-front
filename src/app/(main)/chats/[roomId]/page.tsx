@@ -714,7 +714,7 @@ export default function ChatRoomPage() {
     const parts = text.split(new RegExp(`(${keyword})`, "gi"));
     return parts.map((part, index) =>
       part.toLowerCase() === keyword.toLowerCase() ? (
-        <mark key={index} className="bg-[#FEF9E7] text-gray-900">
+        <mark key={index} className="bg-[#C9A227] text-white font-semibold px-0.5 rounded">
           {part}
         </mark>
       ) : (
@@ -915,13 +915,14 @@ export default function ChatRoomPage() {
               value={searchKeyword}
               onChange={(e) => setSearchKeyword(e.target.value)}
               placeholder="메시지 검색..."
-              className={`w-full border border-gray-300 rounded-lg focus:outline-none focus:border-[#C9A227] ${
+              className={`w-full border border-gray-300 rounded-lg focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/20 transition-all ${
                 inWebView ? "px-3 py-1.5 text-[13px]" : "px-4 py-2 text-sm"
               }`}
             />
             {searchKeyword && (
-              <div className={`mt-2 text-gray-600 ${inWebView ? "text-[11px]" : "text-xs"}`}>
-                {filteredMessages.length}개의 메시지 검색됨
+              <div className={`mt-2 font-medium ${inWebView ? "text-[11px]" : "text-xs"}`}>
+                <span className="text-[#C9A227]">{filteredMessages.length}개</span>
+                <span className="text-gray-600">의 메시지 검색됨</span>
               </div>
             )}
           </div>
@@ -976,8 +977,8 @@ export default function ChatRoomPage() {
                     isMine
                       ? isFailed
                         ? "bg-red-100 text-gray-900"
-                        : "bg-[#C9A227] text-gray-900"
-                      : "bg-gray-100 text-gray-900"
+                        : "bg-[#FEF9E7] text-gray-900 border border-[#C9A227]/30"
+                      : "bg-white text-gray-900 border border-gray-200"
                   } ${isPending ? "opacity-60" : ""} ${
                     inWebView ? "max-w-[80%] sm:max-w-[75%] px-3 py-2" : "max-w-[85%] sm:max-w-[70%] px-4 py-2.5"
                   }`}
@@ -1009,17 +1010,17 @@ export default function ChatRoomPage() {
                     <a
                       href={message.file_url}
                       download={message.file_name}
-                      className={`flex items-center gap-2 bg-white bg-opacity-50 rounded-lg hover:bg-opacity-70 transition-colors ${
+                      className={`flex items-center gap-2 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors ${
                         inWebView ? "p-2 mb-1.5" : "p-3 mb-2"
                       }`}
                     >
-                      <FileText className={`flex-shrink-0 ${inWebView ? "w-4 h-4" : "w-5 h-5"}`} />
+                      <FileText className={`flex-shrink-0 text-[#C9A227] ${inWebView ? "w-4 h-4" : "w-5 h-5"}`} />
                       <div className="flex-1 min-w-0">
                         <p className={`font-medium truncate ${inWebView ? "text-[12px]" : "text-sm"}`}>
                           {message.file_name}
                         </p>
                       </div>
-                      <Download className={`flex-shrink-0 ${inWebView ? "w-3.5 h-3.5" : "w-4 h-4"}`} />
+                      <Download className={`flex-shrink-0 text-[#8A6A00] ${inWebView ? "w-3.5 h-3.5" : "w-4 h-4"}`} />
                     </a>
                   )}
 
@@ -1030,7 +1031,7 @@ export default function ChatRoomPage() {
                       <textarea
                         value={editingContent}
                         onChange={(e) => setEditingContent(e.target.value)}
-                        className={`w-full border border-gray-300 rounded-lg resize-none ${
+                        className={`w-full border border-[#C9A227] rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-[#C9A227]/30 ${
                           inWebView ? "p-1.5 text-[13px]" : "p-2 text-sm"
                         }`}
                         rows={3}
@@ -1040,7 +1041,7 @@ export default function ChatRoomPage() {
                         <Button
                           size="sm"
                           onClick={() => handleSaveEdit(message.id)}
-                          className={inWebView ? "text-[11px] px-2.5 py-1" : "text-xs"}
+                          className={`bg-[#C9A227] hover:bg-[#8A6A00] ${inWebView ? "text-[11px] px-2.5 py-1" : "text-xs"}`}
                         >
                           저장
                         </Button>
@@ -1048,7 +1049,7 @@ export default function ChatRoomPage() {
                           size="sm"
                           variant="outline"
                           onClick={handleCancelEdit}
-                          className={inWebView ? "text-[11px] px-2.5 py-1" : "text-xs"}
+                          className={`border-gray-300 hover:bg-gray-100 ${inWebView ? "text-[11px] px-2.5 py-1" : "text-xs"}`}
                         >
                           취소
                         </Button>
@@ -1074,15 +1075,15 @@ export default function ChatRoomPage() {
 
                   {/* 수정/삭제 버튼 (호버 시에만 표시) */}
                   {isMine && !message.is_deleted && editingMessageId !== message.id && !isPending && !isFailed && (
-                    <div className={`absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity flex gap-0.5 bg-white bg-opacity-90 rounded-md shadow-sm ${
-                      inWebView ? "p-0" : "p-0.5"
+                    <div className={`absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity flex gap-0.5 bg-white rounded-md shadow-md border border-gray-200 ${
+                      inWebView ? "p-0.5" : "p-0.5"
                     }`}>
                       <button
                         onClick={() => handleStartEdit(message)}
-                        className={`hover:bg-gray-100 rounded transition-colors ${inWebView ? "p-1" : "p-1.5"}`}
+                        className={`hover:bg-[#FEF9E7] rounded transition-colors ${inWebView ? "p-1" : "p-1.5"}`}
                         title="수정"
                       >
-                        <Edit2 className={inWebView ? "w-3 h-3 text-gray-600" : "w-3.5 h-3.5 text-gray-600"} />
+                        <Edit2 className={inWebView ? "w-3 h-3 text-[#C9A227]" : "w-3.5 h-3.5 text-[#C9A227]"} />
                       </button>
                       <button
                         onClick={() => handleDeleteMessage(message.id)}
@@ -1096,11 +1097,11 @@ export default function ChatRoomPage() {
 
                   <div
                     className={`flex items-center gap-1 mt-1 ${
-                      isMine ? "text-gray-700" : "text-gray-600"
+                      isMine ? "text-[#8A6A00]" : "text-gray-500"
                     } ${inWebView ? "text-[10px]" : "text-xs"}`}
                   >
                     {isPending ? (
-                      <span className="text-gray-600">전송 중...</span>
+                      <span className="text-gray-500">전송 중...</span>
                     ) : (
                       <>
                         <span>
@@ -1113,7 +1114,7 @@ export default function ChatRoomPage() {
                           )}
                         </span>
                         {isMine && !isFailed && message.is_read && (
-                          <span className="text-blue-600 font-medium">읽음</span>
+                          <span className="text-[#C9A227] font-semibold">읽음</span>
                         )}
                       </>
                     )}
@@ -1125,11 +1126,11 @@ export default function ChatRoomPage() {
           components={{
             Footer: () => isOtherUserTyping ? (
               <div className={`flex justify-start ${inWebView ? "py-1" : "py-1.5"}`}>
-                <div className={`bg-gray-100 rounded-2xl ${inWebView ? "px-3 py-2" : "px-4 py-3"}`}>
+                <div className={`bg-white border border-gray-200 rounded-2xl ${inWebView ? "px-3 py-2" : "px-4 py-3"}`}>
                   <div className="flex items-center gap-1">
-                    <div className={`bg-gray-400 rounded-full animate-bounce ${inWebView ? "w-1.5 h-1.5" : "w-2 h-2"}`} style={{ animationDelay: '0ms' }} />
-                    <div className={`bg-gray-400 rounded-full animate-bounce ${inWebView ? "w-1.5 h-1.5" : "w-2 h-2"}`} style={{ animationDelay: '150ms' }} />
-                    <div className={`bg-gray-400 rounded-full animate-bounce ${inWebView ? "w-1.5 h-1.5" : "w-2 h-2"}`} style={{ animationDelay: '300ms' }} />
+                    <div className={`bg-[#C9A227] rounded-full animate-bounce ${inWebView ? "w-1.5 h-1.5" : "w-2 h-2"}`} style={{ animationDelay: '0ms' }} />
+                    <div className={`bg-[#C9A227] rounded-full animate-bounce ${inWebView ? "w-1.5 h-1.5" : "w-2 h-2"}`} style={{ animationDelay: '150ms' }} />
+                    <div className={`bg-[#C9A227] rounded-full animate-bounce ${inWebView ? "w-1.5 h-1.5" : "w-2 h-2"}`} style={{ animationDelay: '300ms' }} />
                   </div>
                 </div>
               </div>
@@ -1142,10 +1143,10 @@ export default function ChatRoomPage() {
       <div className={`border-t border-gray-200 flex-shrink-0 ${inWebView ? "pt-2.5" : "pt-4"}`}>
         {/* File Preview */}
         {selectedFile && (
-          <div className={`bg-gray-50 rounded-lg ${inWebView ? "mb-2 p-2" : "mb-3 p-3"}`}>
+          <div className={`bg-[#FEF9E7] border border-[#C9A227]/30 rounded-lg ${inWebView ? "mb-2 p-2" : "mb-3 p-3"}`}>
             <div className={`flex items-start ${inWebView ? "gap-2" : "gap-3"}`}>
               {filePreviewUrl ? (
-                <div className={`rounded overflow-hidden ${inWebView ? "w-16 h-16" : "w-20 h-20"}`}>
+                <div className={`rounded overflow-hidden border border-[#C9A227]/20 ${inWebView ? "w-16 h-16" : "w-20 h-20"}`}>
                   <img
                     src={filePreviewUrl}
                     alt="미리보기"
@@ -1153,22 +1154,22 @@ export default function ChatRoomPage() {
                   />
                 </div>
               ) : (
-                <div className={`bg-gray-200 rounded flex items-center justify-center ${inWebView ? "w-16 h-16" : "w-20 h-20"}`}>
-                  <FileText className={`text-gray-400 ${inWebView ? "w-6 h-6" : "w-8 h-8"}`} />
+                <div className={`bg-white border border-[#C9A227]/20 rounded flex items-center justify-center ${inWebView ? "w-16 h-16" : "w-20 h-20"}`}>
+                  <FileText className={`text-[#C9A227] ${inWebView ? "w-6 h-6" : "w-8 h-8"}`} />
                 </div>
               )}
               <div className="flex-1 min-w-0">
-                <p className={`font-medium truncate ${inWebView ? "text-[12px]" : "text-sm"}`}>{selectedFile.name}</p>
-                <p className={`text-gray-600 ${inWebView ? "text-[10px]" : "text-xs"}`}>
+                <p className={`font-medium truncate text-gray-900 ${inWebView ? "text-[12px]" : "text-sm"}`}>{selectedFile.name}</p>
+                <p className={`text-[#8A6A00] ${inWebView ? "text-[10px]" : "text-xs"}`}>
                   {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
                 </p>
               </div>
               <button
                 type="button"
                 onClick={handleCancelFile}
-                className={`hover:bg-gray-200 rounded ${inWebView ? "p-0.5" : "p-1"}`}
+                className={`hover:bg-white rounded transition-colors ${inWebView ? "p-0.5" : "p-1"}`}
               >
-                <X className={inWebView ? "w-3.5 h-3.5" : "w-4 h-4"} />
+                <X className={`text-gray-600 hover:text-red-600 transition-colors ${inWebView ? "w-3.5 h-3.5" : "w-4 h-4"}`} />
               </button>
             </div>
           </div>
@@ -1204,7 +1205,7 @@ export default function ChatRoomPage() {
             value={newMessage}
             onChange={handleInputChange}
             placeholder={selectedFile ? "메시지 추가 (선택사항)..." : "메시지를 입력하세요..."}
-            className={`flex-1 border border-gray-300 rounded-full focus:outline-none focus:border-[#C9A227] ${
+            className={`flex-1 border border-gray-300 rounded-full focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/20 transition-all ${
               inWebView ? "px-3 py-2 text-[13px]" : "px-4 py-3"
             }`}
             disabled={isSending || isUploading}
