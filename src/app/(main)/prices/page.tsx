@@ -228,17 +228,17 @@ export default function PricesPage() {
                   </div>
                 </div>
 
-                {/* 가격 - 더 크고 명확하게 */}
+                {/* 가격 - 더 크고 명확하게 (1돈 기준) */}
                 <div className={inWebView ? "mb-2" : "mb-3"}>
                   <div className="flex items-baseline gap-1">
                     <span className={`font-bold text-gray-900 tabular-nums leading-none ${
                       inWebView ? "text-[18px]" : "text-[24px]"
                     }`}>
-                      {price.sell_price.toLocaleString()}
+                      {price.price_per_don.toLocaleString()}
                     </span>
                     <span className={`text-gray-500 ${inWebView ? "text-[10px]" : "text-[12px]"}`}>원</span>
                   </div>
-                  <div className={`text-gray-400 mt-0.5 ${inWebView ? "text-[9px]" : "text-[11px]"}`}>그램당 매도가</div>
+                  <div className={`text-gray-400 mt-0.5 ${inWebView ? "text-[9px]" : "text-[11px]"}`}>1돈(3.75g) 매도가</div>
                 </div>
 
                 {/* 변동률 - 더 눈에 띄게 */}
@@ -292,14 +292,14 @@ export default function PricesPage() {
                     </div>
                   )}
 
-                  {/* 1돈 가격 - 회색 배경으로 구분 */}
+                  {/* 그램당 가격 - 회색 배경으로 보조 정보 표시 */}
                   <div className={`bg-gray-50 rounded-lg ${inWebView ? "px-2 py-0.5" : "px-2.5 py-1"}`}>
                     <div className="flex items-center justify-between">
-                      <span className={`text-gray-500 ${inWebView ? "text-[9px]" : "text-[11px]"}`}>1돈(3.75g)</span>
+                      <span className={`text-gray-500 ${inWebView ? "text-[9px]" : "text-[11px]"}`}>그램당(1g)</span>
                       <span className={`font-bold text-gray-900 tabular-nums ${
                         inWebView ? "text-[11px]" : "text-small"
                       }`}>
-                        {price.price_per_don.toLocaleString()}원
+                        {price.sell_price.toLocaleString()}원
                       </span>
                     </div>
                   </div>
@@ -403,7 +403,7 @@ export default function PricesPage() {
               {selectedPrice ? (
                 <GoldPriceChart
                   type={selectedType}
-                  currentPrice={selectedPrice.sell_price}
+                  currentPrice={selectedPrice.price_per_don}
                   period={selectedPeriod}
                 />
               ) : (
@@ -424,27 +424,27 @@ export default function PricesPage() {
                 <div className="text-center lg:text-left">
                   <p className={`text-gray-500 font-medium ${inWebView ? "mb-1 text-[10px]" : "mb-1.5 text-[12px]"}`}>기간 최고가</p>
                   <p className={`font-bold text-gray-900 tabular-nums ${inWebView ? "text-sm" : "text-[18px]"}`}>
-                    {selectedPrice ? (selectedPrice.sell_price + 6000).toLocaleString() : "-"}원
+                    {selectedPrice ? Math.round((selectedPrice.sell_price + 6000) * 3.75).toLocaleString() : "-"}원
                   </p>
                   <p className={`text-gray-400 mt-0.5 ${inWebView ? "text-[9px]" : "text-[11px]"}`}>11/15</p>
                 </div>
                 <div className="text-center lg:text-left">
                   <p className={`text-gray-500 font-medium ${inWebView ? "mb-1 text-[10px]" : "mb-1.5 text-[12px]"}`}>기간 최저가</p>
                   <p className={`font-bold text-gray-900 tabular-nums ${inWebView ? "text-sm" : "text-[18px]"}`}>
-                    {selectedPrice ? (selectedPrice.sell_price - 7000).toLocaleString() : "-"}원
+                    {selectedPrice ? Math.round((selectedPrice.sell_price - 7000) * 3.75).toLocaleString() : "-"}원
                   </p>
                   <p className={`text-gray-400 mt-0.5 ${inWebView ? "text-[9px]" : "text-[11px]"}`}>11/03</p>
                 </div>
                 <div className="text-center lg:text-left">
                   <p className={`text-gray-500 font-medium ${inWebView ? "mb-1 text-[10px]" : "mb-1.5 text-[12px]"}`}>기간 평균가</p>
                   <p className={`font-bold text-gray-900 tabular-nums ${inWebView ? "text-sm" : "text-[18px]"}`}>
-                    {selectedPrice ? (selectedPrice.sell_price - 800).toLocaleString() : "-"}원
+                    {selectedPrice ? Math.round((selectedPrice.sell_price - 800) * 3.75).toLocaleString() : "-"}원
                   </p>
                 </div>
                 <div className="text-center lg:text-left">
                   <p className={`text-gray-500 font-medium ${inWebView ? "mb-1 text-[10px]" : "mb-1.5 text-[12px]"}`}>기간 변동폭</p>
                   <p className={`font-bold text-red-500 tabular-nums ${inWebView ? "text-sm" : "text-[18px]"}`}>+1.57%</p>
-                  <p className={`text-gray-400 mt-0.5 ${inWebView ? "text-[9px]" : "text-[11px]"}`}>+7,000원</p>
+                  <p className={`text-gray-400 mt-0.5 ${inWebView ? "text-[9px]" : "text-[11px]"}`}>+26,250원</p>
                 </div>
               </div>
             </>
@@ -454,7 +454,7 @@ export default function PricesPage() {
                 <PriceTableHistory
                   type={selectedType}
                   period={selectedPeriod}
-                  currentPrice={selectedPrice.sell_price}
+                  currentPrice={selectedPrice.price_per_don}
                 />
               )}
             </>

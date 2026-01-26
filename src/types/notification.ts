@@ -1,6 +1,6 @@
 // ==================== Enums ====================
 
-export type NotificationType = 'new_sell_post' | 'post_comment' | 'store_liked';
+export type NotificationType = 'new_sell_post' | 'post_comment' | 'store_liked' | 'new_chat_message';
 
 export type NotificationRange = 'district' | 'region' | 'nationwide';
 
@@ -27,8 +27,11 @@ export interface Notification {
 
   // 관련 데이터
   related_post_id?: number | null;
+  related_post_title?: string | null;
   related_store_id?: number | null;
+  related_store_name?: string | null;
   related_user_id?: number | null;
+  related_chat_room_id?: number | null;
 }
 
 export interface NotificationSettings {
@@ -87,6 +90,7 @@ export const NOTIFICATION_TYPE_LABELS: Record<NotificationType, string> = {
   new_sell_post: '새 금 판매글',
   post_comment: '댓글',
   store_liked: '매장 찜',
+  new_chat_message: '새 메시지',
 };
 
 export const NOTIFICATION_RANGE_LABELS: Record<NotificationRange, string> = {
@@ -99,4 +103,5 @@ export const NOTIFICATION_TYPE_ICONS: Record<NotificationType, string> = {
   new_sell_post: '📢',
   post_comment: '💭',
   store_liked: '❤️',
+  new_chat_message: '💬',
 };

@@ -76,8 +76,8 @@ function GoldPriceChart({ type, period }: GoldPriceChartProps) {
       }
     });
 
-    // 가격 데이터 (매도가 사용)
-    const prices = historyData.map((item) => Math.round(item.sell_price));
+    // 가격 데이터 (매도가 사용, 1돈 = 3.75g 기준)
+    const prices = historyData.map((item) => Math.round(item.sell_price * 3.75));
 
     return { labels, prices };
   }, [historyData, period]);
@@ -149,7 +149,7 @@ function GoldPriceChart({ type, period }: GoldPriceChartProps) {
         displayColors: false,
         callbacks: {
           label: function (context: any) {
-            return `${context.parsed.y.toLocaleString()}원/g`;
+            return `${context.parsed.y.toLocaleString()}원/돈`;
           },
         },
       },

@@ -1396,8 +1396,8 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
                                 <button
                                   onClick={async (e) => {
                                     e.stopPropagation();
-                                    if (!accessToken) return;
-                                    const result = await unpinPostAction(post.id, accessToken);
+                                    if (!accessToken || !store) return;
+                                    const result = await unpinPostAction(post.id, accessToken, store.id);
                                     if (result.success) {
                                       setPosts(prev => prev.map(p => p.id === post.id ? { ...p, is_pinned: false } : p));
                                       toast.success("게시글 고정이 해제되었습니다.");
@@ -1498,8 +1498,8 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
                                 <button
                                   onClick={async (e) => {
                                     e.stopPropagation();
-                                    if (!accessToken) return;
-                                    const result = await pinPostAction(post.id, accessToken);
+                                    if (!accessToken || !store) return;
+                                    const result = await pinPostAction(post.id, accessToken, store.id);
                                     if (result.success) {
                                       setPosts(prev => prev.map(p => p.id === post.id ? { ...p, is_pinned: true } : p));
                                       toast.success("게시글이 고정되었습니다.");
@@ -1661,8 +1661,8 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
                                   <button
                                     onClick={async (e) => {
                                       e.stopPropagation();
-                                      if (!accessToken) return;
-                                      const result = await unpinPostAction(post.id, accessToken);
+                                      if (!accessToken || !store) return;
+                                      const result = await unpinPostAction(post.id, accessToken, store.id);
                                       if (result.success) {
                                         setPosts(prev => prev.map(p => p.id === post.id ? { ...p, is_pinned: false } : p));
                                         toast.success("게시글 고정이 해제되었습니다.");
@@ -1755,8 +1755,8 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
                                   <button
                                     onClick={async (e) => {
                                       e.stopPropagation();
-                                      if (!accessToken) return;
-                                      const result = await pinPostAction(post.id, accessToken);
+                                      if (!accessToken || !store) return;
+                                      const result = await pinPostAction(post.id, accessToken, store.id);
                                       if (result.success) {
                                         setPosts(prev => prev.map(p => p.id === post.id ? { ...p, is_pinned: true } : p));
                                         toast.success("게시글이 고정되었습니다.");

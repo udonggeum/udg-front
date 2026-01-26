@@ -360,12 +360,13 @@ export async function generateContentAction(
  */
 export async function pinPostAction(
   postId: number,
-  accessToken: string
+  accessToken: string,
+  storeId?: number
 ): Promise<ApiResponse> {
   try {
     await apiClient.post(
       `/community/posts/${postId}/pin`,
-      {},
+      storeId ? { store_id: storeId } : {},
       {
         headers: {
           Authorization: `Bearer ${accessToken}`,
@@ -386,12 +387,13 @@ export async function pinPostAction(
  */
 export async function unpinPostAction(
   postId: number,
-  accessToken: string
+  accessToken: string,
+  storeId?: number
 ): Promise<ApiResponse> {
   try {
     await apiClient.post(
       `/community/posts/${postId}/unpin`,
-      {},
+      storeId ? { store_id: storeId } : {},
       {
         headers: {
           Authorization: `Bearer ${accessToken}`,

@@ -13,6 +13,7 @@ import {
 } from "@/actions/notifications";
 import type { Notification, NotificationType } from "@/types/notification";
 import { NOTIFICATION_TYPE_ICONS, NOTIFICATION_TYPE_LABELS } from "@/types/notification";
+import { getNotificationLink } from "@/lib/notification-link";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import { ko } from "date-fns/locale";
@@ -140,7 +141,9 @@ export default function NotificationsPage() {
       }
     }
 
-    router.push(notification.link);
+    // 올바른 링크로 이동
+    const correctedLink = getNotificationLink(notification);
+    router.push(correctedLink);
   };
 
   // 알림 삭제
@@ -247,6 +250,19 @@ export default function NotificationsPage() {
               }`}
             >
               {NOTIFICATION_TYPE_ICONS.store_liked} 매장 찜
+            </button>
+            <button
+              onClick={() => {
+                setFilteredType("new_chat_message");
+                setCurrentPage(1);
+              }}
+              className={`text-sm font-medium rounded-lg transition-colors ${inWebView ? "px-3 py-1.5" : "px-4 py-2"} ${
+                filteredType === "new_chat_message"
+                  ? "bg-[#C9A227] text-white"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              }`}
+            >
+              {NOTIFICATION_TYPE_ICONS.new_chat_message} 메시지
             </button>
           </div>
 

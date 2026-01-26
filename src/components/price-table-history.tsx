@@ -42,14 +42,15 @@ function PriceTableHistory({ type, period }: PriceTableHistoryProps) {
 
     return rawHistoryData
       .map((item, index) => {
-        const price = Math.round(item.sell_price);
+        // 1돈 = 3.75g 기준으로 가격 계산
+        const price = Math.round(item.sell_price * 3.75);
 
         // 전일 대비 계산 (첫 번째 항목은 이전 데이터 없음)
         let change = 0;
         let changePercent = 0;
 
         if (index > 0) {
-          const prevPrice = rawHistoryData[index - 1].sell_price;
+          const prevPrice = Math.round(rawHistoryData[index - 1].sell_price * 3.75);
           change = price - prevPrice;
           changePercent = (change / prevPrice) * 100;
         }
@@ -142,7 +143,7 @@ function PriceTableHistory({ type, period }: PriceTableHistoryProps) {
           <thead className="sticky top-0 z-10">
             <tr className="bg-gray-50 text-[12px] text-gray-500 font-medium">
               <th className="py-3 px-6 text-left">날짜</th>
-              <th className="py-3 px-4 text-right">가격 (원/g)</th>
+              <th className="py-3 px-4 text-right">가격 (원/돈)</th>
               <th className="py-3 px-4 text-right">전일대비</th>
               <th className="py-3 px-4 text-right">등락률</th>
             </tr>

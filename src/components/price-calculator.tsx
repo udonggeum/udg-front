@@ -26,7 +26,7 @@ const PURITY_MAP: Record<GoldType, number> = {
 export default function PriceCalculator({ prices }: PriceCalculatorProps) {
   const [selectedType, setSelectedType] = useState<GoldType>("24K");
   const [weight, setWeight] = useState<string>("");
-  const [unit, setUnit] = useState<WeightUnit>("g");
+  const [unit, setUnit] = useState<WeightUnit>("돈");
 
   // 순도 변환 모드
   const [purityConversionEnabled, setPurityConversionEnabled] = useState<boolean>(false);

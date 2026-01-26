@@ -11,6 +11,7 @@ import {
   markAllNotificationsAsReadAction,
 } from "@/actions/notifications";
 import { NOTIFICATION_TYPE_ICONS } from "@/types/notification";
+import { getNotificationLink } from "@/lib/notification-link";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import { ko } from "date-fns/locale";
@@ -226,22 +227,23 @@ export function NotificationDropdown() {
     };
   }, [isOpen]);
 
-  const handleMarkAsRead = async (notificationId: number, link: string) => {
+  const handleMarkAsRead = async (notification: typeof recentNotifications[0]) => {
     if (!tokens?.access_token) return;
 
     // 읽음 처리
     const result = await markNotificationAsReadAction(
-      notificationId,
+      notification.id,
       tokens.access_token
     );
 
     if (result.success) {
-      markAsRead(notificationId);
+      markAsRead(notification.id);
     }
 
-    // 링크로 이동
+    // 올바른 링크로 이동
     setIsOpen(false);
-    router.push(link);
+    const correctedLink = getNotificationLink(notification);
+    router.push(correctedLink);
   };
 
   const handleMarkAllAsRead = async () => {
@@ -311,9 +313,7 @@ export function NotificationDropdown() {
                 {recentNotifications.map((notification) => (
                   <button
                     key={notification.id}
-                    onClick={() =>
-                      handleMarkAsRead(notification.id, notification.link)
-                    }
+                    onClick={() => handleMarkAsRead(notification)}
                     className={`w-full text-left p-4 hover:bg-gray-50 transition-colors ${
                       !notification.is_read ? "bg-gray-50" : ""
                     }`}
