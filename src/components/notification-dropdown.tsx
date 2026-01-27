@@ -31,7 +31,6 @@ export function NotificationDropdown() {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const tokenRef = useRef(tokens?.access_token); // 토큰을 ref로 관리하여 클로저 문제 해결
 
   // fetchNotifications를 ref로 저장하여 dependency 문제 방지
   const fetchNotificationsRef = useRef(async (showLoading = false) => {
@@ -66,9 +65,11 @@ export function NotificationDropdown() {
     return fetchNotificationsRef.current(showLoading);
   }, []);
 
-  // 토큰이 변경되면 ref 업데이트
+  // 초기 알림 로드
   useEffect(() => {
-    tokenRef.current = tokens?.access_token;
+    if (tokens?.access_token) {
+      fetchNotificationsRef.current(false);
+    }
   }, [tokens?.access_token]);
 
   // 드롭다운 열 때 알림 조회
@@ -77,135 +78,6 @@ export function NotificationDropdown() {
       fetchNotifications(true); // 로딩 표시
     }
   }, [isOpen, tokens?.access_token, fetchNotifications]);
-
-  // WebSocket 연결 및 실시간 알림 수신
-  useEffect(() => {
-    if (!tokenRef.current) return;
-
-    console.log("[알림 WebSocket] 연결 초기화");
-
-    // 초기 로드
-    fetchNotificationsRef.current(false);
-
-    // WebSocket 연결
-    const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8080/api/v1/chats/ws';
-
-    let ws: WebSocket | null = null;
-    let reconnectTimeout: NodeJS.Timeout;
-    let shouldReconnect = true; // 재연결 플래그
-
-    const connect = () => {
-      if (!shouldReconnect || !tokenRef.current) return;
-
-      try {
-        // 최신 토큰으로 연결 (재연결 시에도 갱신된 토큰 사용)
-        const wsUrlWithToken = `${wsUrl}?token=${tokenRef.current}`;
-        ws = new WebSocket(wsUrlWithToken);
-
-        ws.onopen = () => {
-          console.log("[알림 WebSocket] 연결됨");
-        };
-
-        ws.onmessage = (event) => {
-          try {
-            const data = JSON.parse(event.data);
-            console.log("[알림 WebSocket] 메시지 수신:", data);
-
-            // 인증 실패 메시지 감지
-            if (data.type === "error" && data.message === "unauthorized") {
-              console.log("[알림 WebSocket] 인증 실패, 재연결 중단");
-              shouldReconnect = false;
-              ws?.close();
-              return;
-            }
-
-            if (data.type === "new_notification") {
-              // 새 알림 수신
-              setUnreadCount(data.unread_count);
-              // 알림 목록 새로고침 (항상 실행 - 드롭다운 열릴 때 최신 데이터 표시)
-              fetchNotificationsRef.current(false);
-              // 알림 토스트 표시
-              toast.info(data.notification?.title || "새 알림이 도착했습니다");
-            } else if (data.type === "unread_count") {
-              // 안읽은 개수만 업데이트
-              setUnreadCount(data.unread_count);
-            }
-          } catch (error) {
-            console.error("[알림 WebSocket] 메시지 파싱 오류:", error);
-          }
-        };
-
-        ws.onerror = (error) => {
-          // WebSocket 연결 실패는 예상된 상황 (서버 미실행 등)
-          // 재연결 로직이 있으므로 조용히 처리
-          if (process.env.NODE_ENV === 'development') {
-            console.warn("[알림 WebSocket] 연결 실패 (서버 미실행 가능성)");
-          }
-        };
-
-        ws.onclose = (event) => {
-          console.log("[알림 WebSocket] 연결 종료, 코드:", event.code);
-
-          // 1008: Policy Violation (인증 실패)
-          // 1000: Normal Closure (정상 종료)
-          // 1006: Abnormal Closure (비정상 종료)
-          if (event.code === 1008 || event.code === 4401) {
-            // 인증 실패 - 재연결 중단
-            console.log("[알림 WebSocket] 인증 만료, 재연결 중단");
-            shouldReconnect = false;
-            return;
-          }
-
-          // 정상 종료가 아닌 경우에만 재연결
-          if (shouldReconnect && event.code !== 1000) {
-            const baseDelay = 5000;
-            const jitter = Math.random() * 1000; // 0-1초 jitter (thundering herd 방지)
-            const delay = baseDelay + jitter;
-            console.log(`[알림 WebSocket] ${Math.round(delay)}ms 후 재연결 시도 (jitter: ${Math.round(jitter)}ms)`);
-            reconnectTimeout = setTimeout(() => {
-              connect();
-            }, delay);
-          }
-        };
-      } catch (error) {
-        console.error("[알림 WebSocket] 연결 오류:", error);
-        if (shouldReconnect) {
-          const baseDelay = 5000;
-          const jitter = Math.random() * 1000; // 0-1초 jitter
-          const delay = baseDelay + jitter;
-          reconnectTimeout = setTimeout(() => {
-            connect();
-          }, delay);
-        }
-      }
-    };
-
-    connect();
-
-    // 페이지 포커스 시 즉시 재연결 (탭 전환 후 돌아왔을 때)
-    const handleVisibilityChange = () => {
-      if (!document.hidden && ws?.readyState !== WebSocket.OPEN && shouldReconnect) {
-        console.log("[알림 WebSocket] 페이지 포커스 복귀, 재연결 시도");
-        if (reconnectTimeout) {
-          clearTimeout(reconnectTimeout);
-        }
-        connect();
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      shouldReconnect = false; // cleanup 시 재연결 중단
-      if (ws) {
-        ws.close(1000); // 정상 종료 코드
-      }
-      if (reconnectTimeout) {
-        clearTimeout(reconnectTimeout);
-      }
-    };
-  }, [setUnreadCount]); // ✅ tokens를 의존성에서 제거하여 토큰 변경 시 재연결 방지
 
   // 외부 클릭 감지
   useEffect(() => {

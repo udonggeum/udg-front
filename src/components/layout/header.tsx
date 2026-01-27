@@ -6,9 +6,11 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useLocationStore } from "@/stores/useLocationStore";
+import { useNotificationStore } from "@/stores/useNotificationStore";
 import { logoutUserAction } from "@/actions/auth";
 import { getChatRoomsAction } from "@/actions/chat";
 import { getMyStoreAction } from "@/actions/stores";
+import { getNotificationsAction } from "@/actions/notifications";
 import { useWebSocket } from "@/hooks/useWebSocket";
 import { toast } from "sonner";
 import { User, Settings, LogOut, ChevronDown, MapPin, Menu, X, Store, MessageSquare, TrendingUp, MapPinned, Sparkles } from "lucide-react";
@@ -77,9 +79,9 @@ export function Header() {
     return fetchUnreadCountRef.current();
   }, []);
 
-  // WebSocket 메시지 핸들러 (실시간 채팅 알림)
+  // WebSocket 메시지 핸들러 (실시간 채팅 + 알림)
   const handleWebSocketMessage = useCallback((data: any) => {
-    // 새 메시지가 왔을 때 (내가 보낸 메시지가 아닌 경우)
+    // 1. 채팅 메시지 처리
     if (data.type === "new_message" && data.message) {
       if (data.message.sender_id !== user?.id) {
         // 실시간으로 안읽은 개수 증가
@@ -89,6 +91,36 @@ export function Header() {
     // 메시지를 읽었을 때는 정확한 개수를 다시 가져오기
     if (data.type === "read") {
       fetchUnreadCount();
+    }
+
+    // 2. 알림 메시지 처리
+    if (data.type === "new_notification") {
+      const { setUnreadCount, setRecentNotifications } = useNotificationStore.getState();
+
+      // 안읽은 개수 업데이트
+      if (typeof data.unread_count === "number") {
+        setUnreadCount(data.unread_count);
+      }
+
+      // 알림 목록 새로고침 (최신 데이터 가져오기)
+      const { tokens } = useAuthStore.getState();
+      if (tokens?.access_token) {
+        getNotificationsAction(
+          { page: 1, page_size: 5 },
+          tokens.access_token
+        ).then((result) => {
+          if (result.success && result.data) {
+            setRecentNotifications(result.data.data);
+          }
+        }).catch((error) => {
+          console.error("Failed to fetch notifications:", error);
+        });
+      }
+
+      // 알림 토스트 표시
+      if (data.notification?.title) {
+        toast.info(data.notification.title);
+      }
     }
   }, [user?.id, fetchUnreadCount]);
 
