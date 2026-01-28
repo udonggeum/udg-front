@@ -143,20 +143,21 @@ export default function Home() {
     fetchNearbyStores();
   }, [isAuthenticated, user?.id, user?.address, user?.latitude, user?.longitude]); // ✅ user 전체 대신 필요한 필드만 의존성으로 사용
 
-  // 금 시세 데이터 매핑
+  // 금 시세 데이터 매핑 (1돈 = 3.75g 기준)
   const goldPriceDisplay = goldPrices.length > 0
     ? goldPrices.slice(0, 4).map((price) => ({
         karat: price.type,
         name: price.type === "24K" ? "순금" : price.type === "18K" ? "18K금" : price.type === "14K" ? "14K금" : price.type === "Platinum" ? "백금" : "은",
-        price: `${Math.floor(price.buy_price).toLocaleString()}원`,
-        change: Math.floor(price.change_amount || 0),
+        price_per_don: Math.round(price.sell_price * 3.75), // 1돈 기준 가격
+        price_per_gram: Math.round(price.sell_price), // 그램당 가격
+        change: Math.floor((price.change_amount || 0) * 3.75), // 1돈 기준 변동
         changePercent: price.change_percent || 0,
       }))
     : [
-        { karat: "24K", name: "순금", price: "452,000원", change: -1000, changePercent: -0.22 },
-        { karat: "18K", name: "18K금", price: "339,000원", change: 500, changePercent: 0.15 },
-        { karat: "14K", name: "14K금", price: "264,000원", change: 0, changePercent: 0 },
-        { karat: "Pt", name: "백금", price: "158,000원", change: 2000, changePercent: 1.28 },
+        { karat: "24K", name: "순금", price_per_don: 1695000, price_per_gram: 452000, change: -3750, changePercent: -0.22 },
+        { karat: "18K", name: "18K금", price_per_don: 1271250, price_per_gram: 339000, change: 1875, changePercent: 0.15 },
+        { karat: "14K", name: "14K금", price_per_don: 990000, price_per_gram: 264000, change: 0, changePercent: 0 },
+        { karat: "Pt", name: "백금", price_per_don: 592500, price_per_gram: 158000, change: 7500, changePercent: 1.28 },
       ];
 
   return (
@@ -381,19 +382,55 @@ export default function Home() {
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {goldPriceDisplay.map((item) => (
-              <Card key={item.karat} className="bg-white p-5 rounded-2xl card-shadow smooth-transition hover-lift cursor-pointer border-0">
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="w-8 h-8 bg-[#FEF9E7] border border-[#C9A227]/30 rounded-lg flex items-center justify-center">
-                    <span className="text-[12px] font-bold text-[#C9A227]">{item.karat}</span>
+              <Link key={item.karat} href="/prices">
+                <Card className="bg-white p-5 rounded-2xl card-shadow smooth-transition hover-lift cursor-pointer border-0">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-8 h-8 bg-[#FEF9E7] border border-[#C9A227]/30 rounded-lg flex items-center justify-center">
+                      <span className="text-[12px] font-bold text-[#C9A227]">{item.karat}</span>
+                    </div>
+                    <span className="text-body font-semibold text-gray-900">{item.name}</span>
                   </div>
-                  <span className="text-body font-semibold text-gray-900">{item.name}</span>
-                </div>
-                <div className="text-[20px] font-bold text-gray-900 mb-1">{item.price}</div>
-                <div className={`flex items-center gap-1 text-small font-medium ${item.change > 0 ? "text-green-500" : item.change < 0 ? "text-red-500" : "text-gray-400"}`}>
-                  {item.change !== 0 ? (item.change > 0 ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />) : <span>-</span>}
-                  {item.change !== 0 ? `${Math.abs(item.change).toLocaleString()} (${item.change > 0 ? "+" : ""}${item.changePercent}%)` : "0 (0.00%)"}
-                </div>
-              </Card>
+
+                  {/* 1돈 기준 가격 (메인) */}
+                  <div className="mb-2">
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-[22px] font-bold text-gray-900 tabular-nums">
+                        {item.price_per_don.toLocaleString()}
+                      </span>
+                      <span className="text-[13px] text-gray-500">원</span>
+                    </div>
+                    <div className="text-[11px] text-gray-400 mt-0.5">1돈(3.75g) 매도가</div>
+                  </div>
+
+                  {/* 변동 정보 */}
+                  <div className="mb-2">
+                    {item.change !== 0 ? (
+                      <div className={`flex items-center gap-1 text-small font-medium ${item.change > 0 ? "text-green-500" : "text-red-500"}`}>
+                        {item.change > 0 ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />}
+                        <span>
+                          {item.change > 0 ? "+" : ""}
+                          {Math.abs(item.change).toLocaleString()}원
+                        </span>
+                        <span className={`text-[11px] ${item.change > 0 ? "text-green-400" : "text-red-400"}`}>
+                          ({item.change > 0 ? "+" : ""}{item.changePercent.toFixed(2)}%)
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="text-small font-medium text-gray-400">변동없음</div>
+                    )}
+                  </div>
+
+                  {/* 그램당 가격 (보조 정보) */}
+                  <div className="bg-gray-50 rounded-lg px-2.5 py-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] text-gray-500">그램당(1g)</span>
+                      <span className="text-small font-bold text-gray-900 tabular-nums">
+                        {item.price_per_gram.toLocaleString()}원
+                      </span>
+                    </div>
+                  </div>
+                </Card>
+              </Link>
             ))}
             </div>
           )}

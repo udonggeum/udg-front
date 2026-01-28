@@ -332,7 +332,9 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
         });
 
         if (result.success && result.data) {
-          setPosts(result.data.data);
+          // store_id가 있는 게시글만 필터링 (고정 기능을 위해 필수)
+          const storePosts = result.data.data.filter(post => post.store_id !== null && post.store_id !== undefined);
+          setPosts(storePosts);
         } else {
           setPosts([]);
         }

@@ -3,13 +3,13 @@
 import { useMemo, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronDown, ChevronUp, MapPin } from "lucide-react";
-import { getLatestGoldPricesAction } from "@/actions/goldPrices";
+import { getLatestGoldPricesAction, getGoldPriceHistoryAction } from "@/actions/goldPrices";
 import GoldPriceChart from "@/components/gold-price-chart";
 import PriceTableHistory from "@/components/price-table-history";
 import PriceCalculator from "@/components/price-calculator";
 import { Container } from "@/components/layout-primitives";
 import { Button } from "@/components/ui/button";
-import type { GoldPrice, GoldType, HistoryPeriod } from "@/types/goldPrices";
+import type { GoldPrice, GoldType, HistoryPeriod, GoldPriceHistory } from "@/types/goldPrices";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { PullToRefreshIndicator } from "@/components/PullToRefreshIndicator";
 import { isWebView } from "@/lib/webview";
@@ -25,7 +25,9 @@ interface GoldPriceWithCalculations extends GoldPrice {
 export default function PricesPage() {
   const router = useRouter();
   const [pricesData, setPricesData] = useState<GoldPrice[]>([]);
+  const [historyData, setHistoryData] = useState<GoldPriceHistory[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [selectedType, setSelectedType] = useState<GoldType>("24K");
   const [selectedPeriod, setSelectedPeriod] = useState<HistoryPeriod>("1개월");
   const [viewMode, setViewMode] = useState<"chart" | "table">("chart");
@@ -45,13 +47,27 @@ export default function PricesPage() {
     setIsLoading(false);
   };
 
+  const loadHistory = async () => {
+    setIsLoadingHistory(true);
+    const result = await getGoldPriceHistoryAction(selectedType, selectedPeriod);
+    if (result.success && result.data) {
+      setHistoryData(result.data);
+    }
+    setIsLoadingHistory(false);
+  };
+
   useEffect(() => {
     loadPrices();
   }, []);
 
+  // 선택된 타입이나 기간이 변경될 때 히스토리 로드
+  useEffect(() => {
+    loadHistory();
+  }, [selectedType, selectedPeriod]);
+
   // Pull to Refresh 핸들러
   const handleRefresh = async () => {
-    await loadPrices();
+    await Promise.all([loadPrices(), loadHistory()]);
     await new Promise(resolve => setTimeout(resolve, 300));
   };
 
@@ -126,6 +142,63 @@ export default function PricesPage() {
 
   // 선택된 금 유형의 가격 (차트용)
   const selectedPrice = prices.find((p) => p.type === selectedType);
+
+  // 히스토리 데이터 기반 통계 계산
+  const historyStats = useMemo(() => {
+    if (!historyData || historyData.length === 0) {
+      return {
+        maxPrice: 0,
+        maxPriceDate: "",
+        minPrice: 0,
+        minPriceDate: "",
+        avgPrice: 0,
+        priceChange: 0,
+        priceChangePercent: 0,
+      };
+    }
+
+    // 1돈 기준으로 변환 (3.75g)
+    const sellPrices = historyData.map((item) => ({
+      price: item.sell_price * 3.75,
+      date: item.date,
+    }));
+
+    // 최고가
+    const maxEntry = sellPrices.reduce((max, current) =>
+      current.price > max.price ? current : max
+    );
+
+    // 최저가
+    const minEntry = sellPrices.reduce((min, current) =>
+      current.price < min.price ? current : min
+    );
+
+    // 평균가
+    const avgPrice =
+      sellPrices.reduce((sum, item) => sum + item.price, 0) / sellPrices.length;
+
+    // 변동폭 (첫 데이터 대비 마지막 데이터)
+    const firstPrice = sellPrices[0].price;
+    const lastPrice = sellPrices[sellPrices.length - 1].price;
+    const priceChange = lastPrice - firstPrice;
+    const priceChangePercent = (priceChange / firstPrice) * 100;
+
+    // 날짜 포맷 (YYYY-MM-DD -> MM/DD)
+    const formatDate = (dateStr: string) => {
+      const date = new Date(dateStr);
+      return `${date.getMonth() + 1}/${date.getDate()}`;
+    };
+
+    return {
+      maxPrice: Math.round(maxEntry.price),
+      maxPriceDate: formatDate(maxEntry.date),
+      minPrice: Math.round(minEntry.price),
+      minPriceDate: formatDate(minEntry.date),
+      avgPrice: Math.round(avgPrice),
+      priceChange: Math.round(priceChange),
+      priceChangePercent: priceChangePercent,
+    };
+  }, [historyData]);
 
   // 현재 시각
   const currentTime = new Date().toLocaleString("ko-KR", {
@@ -424,27 +497,46 @@ export default function PricesPage() {
                 <div className="text-center lg:text-left">
                   <p className={`text-gray-500 font-medium ${inWebView ? "mb-1 text-[10px]" : "mb-1.5 text-[12px]"}`}>기간 최고가</p>
                   <p className={`font-bold text-gray-900 tabular-nums ${inWebView ? "text-sm" : "text-[18px]"}`}>
-                    {selectedPrice ? Math.round((selectedPrice.sell_price + 6000) * 3.75).toLocaleString() : "-"}원
+                    {isLoadingHistory ? "..." : historyStats.maxPrice > 0 ? historyStats.maxPrice.toLocaleString() : "-"}원
                   </p>
-                  <p className={`text-gray-400 mt-0.5 ${inWebView ? "text-[9px]" : "text-[11px]"}`}>11/15</p>
+                  {historyStats.maxPriceDate && (
+                    <p className={`text-gray-400 mt-0.5 ${inWebView ? "text-[9px]" : "text-[11px]"}`}>
+                      {historyStats.maxPriceDate}
+                    </p>
+                  )}
                 </div>
                 <div className="text-center lg:text-left">
                   <p className={`text-gray-500 font-medium ${inWebView ? "mb-1 text-[10px]" : "mb-1.5 text-[12px]"}`}>기간 최저가</p>
                   <p className={`font-bold text-gray-900 tabular-nums ${inWebView ? "text-sm" : "text-[18px]"}`}>
-                    {selectedPrice ? Math.round((selectedPrice.sell_price - 7000) * 3.75).toLocaleString() : "-"}원
+                    {isLoadingHistory ? "..." : historyStats.minPrice > 0 ? historyStats.minPrice.toLocaleString() : "-"}원
                   </p>
-                  <p className={`text-gray-400 mt-0.5 ${inWebView ? "text-[9px]" : "text-[11px]"}`}>11/03</p>
+                  {historyStats.minPriceDate && (
+                    <p className={`text-gray-400 mt-0.5 ${inWebView ? "text-[9px]" : "text-[11px]"}`}>
+                      {historyStats.minPriceDate}
+                    </p>
+                  )}
                 </div>
                 <div className="text-center lg:text-left">
                   <p className={`text-gray-500 font-medium ${inWebView ? "mb-1 text-[10px]" : "mb-1.5 text-[12px]"}`}>기간 평균가</p>
                   <p className={`font-bold text-gray-900 tabular-nums ${inWebView ? "text-sm" : "text-[18px]"}`}>
-                    {selectedPrice ? Math.round((selectedPrice.sell_price - 800) * 3.75).toLocaleString() : "-"}원
+                    {isLoadingHistory ? "..." : historyStats.avgPrice > 0 ? historyStats.avgPrice.toLocaleString() : "-"}원
                   </p>
                 </div>
                 <div className="text-center lg:text-left">
                   <p className={`text-gray-500 font-medium ${inWebView ? "mb-1 text-[10px]" : "mb-1.5 text-[12px]"}`}>기간 변동폭</p>
-                  <p className={`font-bold text-red-500 tabular-nums ${inWebView ? "text-sm" : "text-[18px]"}`}>+1.57%</p>
-                  <p className={`text-gray-400 mt-0.5 ${inWebView ? "text-[9px]" : "text-[11px]"}`}>+26,250원</p>
+                  <p className={`font-bold tabular-nums ${inWebView ? "text-sm" : "text-[18px]"} ${
+                    historyStats.priceChange >= 0 ? "text-red-500" : "text-blue-500"
+                  }`}>
+                    {isLoadingHistory ? "..." : historyStats.priceChangePercent !== 0
+                      ? `${historyStats.priceChange >= 0 ? "+" : ""}${historyStats.priceChangePercent.toFixed(2)}%`
+                      : "0%"
+                    }
+                  </p>
+                  {historyStats.priceChange !== 0 && (
+                    <p className={`text-gray-400 mt-0.5 ${inWebView ? "text-[9px]" : "text-[11px]"}`}>
+                      {historyStats.priceChange >= 0 ? "+" : ""}{historyStats.priceChange.toLocaleString()}원
+                    </p>
+                  )}
                 </div>
               </div>
             </>

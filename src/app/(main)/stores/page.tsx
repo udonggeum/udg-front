@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback, Suspense, memo } from "react";
+import { useState, useEffect, useMemo, useCallback, Suspense, memo, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import {
@@ -24,7 +24,7 @@ import { useLocationStore } from "@/stores/useLocationStore";
 import { toast } from "sonner";
 import { useAuthenticatedAction } from "@/hooks/useAuthenticatedAction";
 import { Button } from "@/components/ui/button";
-import { Virtuoso } from "react-virtuoso";
+import { Virtuoso, VirtuosoHandle } from "react-virtuoso";
 import { StoreListSkeleton } from "@/components/skeletons/StoreListSkeleton";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { PullToRefreshIndicator } from "@/components/PullToRefreshIndicator";
@@ -174,6 +174,7 @@ function StoresPageContent() {
     lat: 37.5665,
     lng: 126.978,
   }); // 서울시청 기본 좌표
+  const [mapLevel, setMapLevel] = useState<number>(5); // 지도 줌 레벨 (1~14, 작을수록 확대)
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [stores, setStores] = useState<StoreWithExtras[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -184,6 +185,9 @@ function StoresPageContent() {
   const [inWebView, setInWebView] = useState(false);
   const [searchCenter, setSearchCenter] = useState<{ lat: number; lng: number } | null>(null); // 지도 기반 검색 중심점
   const [searchRadius, setSearchRadius] = useState<number>(2); // 검색 반경 (km)
+  const [searchPending, setSearchPending] = useState(false); // 검색 진행 중
+  const [lastSearchQuery, setLastSearchQuery] = useState<string>(""); // 마지막 검색어
+  const virtuosoRef = useRef<VirtuosoHandle>(null); // Virtuoso 스크롤 제어용 ref
 
   // 웹뷰 환경 감지
   useEffect(() => {
@@ -192,45 +196,39 @@ function StoresPageContent() {
 
   // 매장 클릭 핸들러 (useCallback으로 메모이제이션)
   const handleStoreClick = useCallback((store: StoreWithExtras) => {
-    // 모바일에서는 상세 페이지로 바로 이동
-    if (window.innerWidth < 768) {
-      router.push(`/stores/${store.id}/${store.slug}`);
-    } else {
-      // PC에서는 우측 패널 열기 + 지도 중심 이동
-      setSelectedStore(store);
-      setIsDetailPanelOpen(true);
+    // 매장 선택 상태로 변경
+    setSelectedStore(store);
 
-      // 선택된 매장 위치로 지도 중심 이동
-      if (store.lat && store.lng) {
-        setMapCenter({ lat: store.lat, lng: store.lng });
-      }
+    // 모바일에서는 지도 탭으로 전환
+    if (window.innerWidth < 768) {
+      setIsMobileMapOpen(true);
+    } else {
+      // PC에서는 우측 패널 열기
+      setIsDetailPanelOpen(true);
     }
-  }, [router]);
+
+    // 선택된 매장 위치로 지도 중심 이동
+    if (store.lat && store.lng) {
+      setMapCenter({ lat: store.lat, lng: store.lng });
+    }
+  }, []);
 
   // 초기 로드 시 사용자 위치 자동 획득 (비침입적)
   useEffect(() => {
     if (navigator.geolocation) {
-      console.log("🔄 Requesting user location...");
       navigator.geolocation.getCurrentPosition(
         (position) => {
           const { latitude, longitude } = position.coords;
           const location = { lat: latitude, lng: longitude };
-          console.log("✅ User location obtained:", location);
           setUserLocation(location);
           setMapCenter(location);
         },
         (error) => {
-          console.log("❌ Failed to get user location:", error.message);
-          console.log("ℹ️ Trying user profile location as fallback");
-
           // GPS 실패 시 사용자 프로필의 위경도 사용
           if (user?.latitude !== undefined && user?.longitude !== undefined) {
             const location = { lat: user.latitude, lng: user.longitude };
-            console.log("✅ Using user profile location:", location);
             setUserLocation(location);
             setMapCenter(location);
-          } else {
-            console.log("ℹ️ No user profile location available");
           }
         },
         {
@@ -242,7 +240,6 @@ function StoresPageContent() {
     } else if (user?.latitude !== undefined && user?.longitude !== undefined) {
       // Geolocation API가 없으면 프로필 위치 사용
       const location = { lat: user.latitude, lng: user.longitude };
-      console.log("✅ Using user profile location (no geolocation API):", location);
       setUserLocation(location);
       setMapCenter(location);
     }
@@ -284,36 +281,28 @@ function StoresPageContent() {
           page_size: PAGE_SIZE,
         };
 
-        // 지도 기반 검색이 활성화된 경우 (우선순위 높음)
         if (searchCenter) {
           params.center_lat = searchCenter.lat;
           params.center_lng = searchCenter.lng;
-          params.radius = searchRadius * 1000; // km -> m 변환
-          console.log(`🗺️ Map-based search: center=(${searchCenter.lat}, ${searchCenter.lng}), radius=${searchRadius}km`);
-        }
-        // 지도 검색이 아니면 사용자 위치 기준 거리순 정렬
-        else if (userLocation) {
+          params.radius = searchRadius * 1000;
+        } else if (userLocation) {
           params.user_lat = userLocation.lat;
           params.user_lng = userLocation.lng;
         }
 
-        // 검색어를 백엔드로 전달
         if (appliedSearchQuery) {
           params.search = appliedSearchQuery;
         }
 
-        // 백엔드 필터 (verified, managed)
         if (selectedFilter === "verified") {
           params.is_verified = true;
         } else if (selectedFilter === "managed") {
           params.is_managed = true;
         }
-        // open, liked 필터는 클라이언트에서 처리
 
         const result = await getStoresAction(params, accessToken);
 
         if (result.success && result.data) {
-          // 백엔드 데이터에 UI용 추가 정보 추가
           const iconColors = [
             { bg: "bg-[#FEF9E7]", color: "text-[#C9A227]" },
             { bg: "bg-blue-100", color: "text-blue-600" },
@@ -325,25 +314,11 @@ function StoresPageContent() {
 
           const transformedStores = result.data.stores.map((store, index) => {
             const colorSet = iconColors[index % iconColors.length];
-
-            // 백엔드에서 받은 위도/경도 사용
             const lat = store.latitude || 37.5665;
             const lng = store.longitude || 126.978;
-
-            // 사용자 위치가 있으면 실제 거리 계산
             const distance = userLocation
               ? getDistanceText(userLocation.lat, userLocation.lng, lat, lng)
               : null;
-
-            if (index === 0) {
-              console.log("🔍 Distance calculation for first store:");
-              console.log("  - User location:", userLocation);
-              console.log("  - Store coords:", { lat, lng });
-              console.log("  - Calculated distance:", distance);
-              console.log("  - Store image_url:", store.image_url);
-            }
-
-            // 영업 시간 확인
             const isOpen = checkIfOpen(store.open_time, store.close_time);
 
             return {
@@ -355,24 +330,12 @@ function StoresPageContent() {
               isOpen,
               lat,
               lng,
-              isLiked: store.is_liked || false, // API에서 받은 좋아요 상태 사용
+              isLiked: store.is_liked || false,
             };
           });
 
-          console.log(
-            "🗺️ Stores with coordinates:",
-            transformedStores.map((s) => ({ id: s.id, name: s.name, lat: s.lat, lng: s.lng }))
-          );
-          console.log(
-            "🖼️ Stores with images:",
-            transformedStores.map((s) => ({ id: s.id, name: s.name, image_url: s.image_url }))
-          );
-
           setStores(transformedStores);
-
-          // 총 개수 저장
           setTotalCount(result.data.count);
-          console.log(`📊 Loaded ${transformedStores.length} of ${result.data.count} stores`);
         } else {
           setError(result.error || "매장 목록을 불러올 수 없습니다.");
         }
@@ -380,42 +343,43 @@ function StoresPageContent() {
         setError("매장 목록을 불러오는 중 오류가 발생했습니다.");
       } finally {
         setIsLoading(false);
+        setSearchPending(false);
       }
     };
 
     loadStores();
   }, [accessToken, currentPage, selectedFilter, appliedSearchQuery, userLocation, searchCenter, searchRadius]);
 
-  // URL 파라미터에서 검색어 처리 (메인 화면의 인기 검색어 클릭 시)
+  // URL 파라미터에서 검색어 처리
   useEffect(() => {
     const searchParam = searchParams.get("search");
-    if (searchParam) {
-      // 검색어가 있으면 자동으로 검색 실행
+    if (searchParam && searchParam !== appliedSearchQuery) {
       setSearchQuery(searchParam);
       setAppliedSearchQuery(searchParam);
+      setSearchPending(true);
+      setLastSearchQuery(`"${searchParam}"`);
+      setCurrentPage(1);
+      setSearchCenter(null);
+    }
+  }, [searchParams]);
 
-      // 검색 결과가 로드되면 첫 번째 매장으로 지도 이동
-      if (stores.length > 0) {
-        const firstStore = stores[0];
-        if (firstStore.lat && firstStore.lng) {
-          setMapCenter({ lat: firstStore.lat, lng: firstStore.lng });
-          handleStoreClick(firstStore);
-        }
+  // 검색 결과 로드 후 첫 번째 매장으로 이동
+  useEffect(() => {
+    const searchParam = searchParams.get("search");
+    if (searchParam && stores.length > 0 && !selectedStore) {
+      const firstStore = stores[0];
+      if (firstStore.lat && firstStore.lng) {
+        setMapCenter({ lat: firstStore.lat, lng: firstStore.lng });
+        handleStoreClick(firstStore);
       }
     }
-  }, [searchParams, stores.length, handleStoreClick]); // ✅ handleStoreClick 의존성 추가
+  }, [stores, searchParams, selectedStore, handleStoreClick]); // selectedStore 제외
 
   // 좋아요 토글 핸들러
   const handleStoreLike = useCallback(async (storeId: number, e: React.MouseEvent) => {
-    e.stopPropagation(); // 부모 클릭 이벤트 방지
+    e.stopPropagation();
 
-    if (!user) {
-      toast.error("로그인이 필요합니다");
-      router.push("/login");
-      return;
-    }
-
-    if (!accessToken) {
+    if (!user || !accessToken) {
       toast.error("로그인이 필요합니다");
       router.push("/login");
       return;
@@ -454,25 +418,15 @@ function StoresPageContent() {
   }, [user, accessToken, router, selectedStore]);
 
   const filteredStores = useMemo(() => {
-    // 1. 필터링 (백엔드에서 verified, managed, search 필터는 이미 처리됨)
-    const filtered = stores.filter((store) => {
-      // 클라이언트 전용 필터 (open, liked)
+    return stores.filter((store) => {
       if (selectedFilter === "open") {
-        // 영업중 필터 (관리매장만)
         return store.is_managed === true && store.isOpen === true;
       }
-
       if (selectedFilter === "liked") {
-        // 관심매장 필터
         return store.isLiked === true;
       }
-
-      // verified, managed, all, search 필터는 백엔드에서 이미 처리됨
       return true;
     });
-
-    // 백엔드에서 이미 거리순으로 정렬되어 있으므로 클라이언트에서는 정렬하지 않음
-    return filtered;
   }, [stores, selectedFilter]);
 
   const filterTags: Array<{ id: FilterTag; label: string }> = [
@@ -485,7 +439,7 @@ function StoresPageContent() {
 
   const closeDetailPanel = () => {
     setIsDetailPanelOpen(false);
-    setTimeout(() => setSelectedStore(null), 300); // 애니메이션 후 상태 초기화
+    setTimeout(() => setSelectedStore(null), 300);
   };
 
   const handleSearch = useCallback(async (e: React.FormEvent) => {
@@ -495,94 +449,150 @@ function StoresPageContent() {
       toast.error("검색어를 입력해주세요");
       return;
     }
+    if (!window.kakao || !window.kakao.maps || !window.kakao.maps.services) {
+      setAppliedSearchQuery(searchQuery);
+      setCurrentPage(1);
+      setSearchCenter(null);
+      toast.info("매장명으로 검색합니다");
+      return;
+    }
 
-    console.log("🔍 Search initiated:", searchQuery);
+    const geocoder = new window.kakao.maps.services.Geocoder();
+    const places = new window.kakao.maps.services.Places();
 
-    // Kakao Maps Geocoding을 사용하여 주소/장소 검색
-    if (window.kakao && window.kakao.maps && window.kakao.maps.services) {
-      const geocoder = new window.kakao.maps.services.Geocoder();
+    const getZoomLevelForAddress = (addressName: string) => {
+      if (/^(서울|부산|대구|인천|광주|대전|울산|세종|경기도|강원도|충청북도|충청남도|전라북도|전라남도|경상북도|경상남도|제주)/.test(addressName)) {
+        return 9;
+      }
+      if (/[시군구]/.test(addressName)) {
+        return 6;
+      }
+      if (/[동읍면]/.test(addressName)) {
+        return 5;
+      }
+      return 6;
+    };
+    geocoder.addressSearch(searchQuery, (addressResult: any, addressStatus: any) => {
+      if (addressStatus === window.kakao.maps.services.Status.OK && addressResult.length > 0) {
+        const location = {
+          lat: parseFloat(addressResult[0].y),
+          lng: parseFloat(addressResult[0].x),
+        };
 
-      // 1. 키워드로 장소 검색 (예: "강남역", "종로타워")
-      const places = new window.kakao.maps.services.Places();
+        const addressName = addressResult[0].address_name;
+        const zoomLevel = getZoomLevelForAddress(addressName);
+        setMapCenter(location);
+        setMapLevel(zoomLevel);
 
-      places.keywordSearch(searchQuery, (result: any, status: any) => {
-        if (status === window.kakao.maps.services.Status.OK && result.length > 0) {
-          // 검색 성공: 첫 번째 결과의 좌표로 지도 이동 + 지도 기반 검색
-          const firstPlace = result[0];
+        // 해당 위치 기준으로 매장 검색
+        setSearchCenter(location);
+        setCurrentPage(1);
+        setAppliedSearchQuery("");
+        setSearchPending(true);
+        setLastSearchQuery(`${addressName} 지역`);
+
+        if (window.innerWidth < 768) {
+          setIsMobileMapOpen(true);
+        }
+
+        toast.loading(`${addressName} 지역 매장을 검색하는 중...`);
+        return;
+      }
+      places.keywordSearch(searchQuery, (placeResult: any, placeStatus: any) => {
+        if (placeStatus === window.kakao.maps.services.Status.OK && placeResult.length > 0) {
+          const firstPlace = placeResult[0];
           const location = {
             lat: parseFloat(firstPlace.y),
             lng: parseFloat(firstPlace.x),
           };
-
-          console.log("✅ Found place:", firstPlace.place_name, location);
-
-          // 지도 중심 이동
           setMapCenter(location);
+          setMapLevel(4);
 
           // 해당 위치 기준으로 매장 검색
           setSearchCenter(location);
           setCurrentPage(1);
           setAppliedSearchQuery("");
+          setSearchPending(true);
+          setLastSearchQuery(`${firstPlace.place_name} 근처`);
 
-          // 모바일에서는 지도 탭으로 전환
           if (window.innerWidth < 768) {
             setIsMobileMapOpen(true);
           }
 
-          toast.success(`${firstPlace.place_name || searchQuery} 근처 매장을 검색합니다`);
-        } else {
-          // 장소 검색 실패: 2. 주소로 검색 시도
-          geocoder.addressSearch(searchQuery, (result: any, status: any) => {
-            if (status === window.kakao.maps.services.Status.OK && result.length > 0) {
-              // 주소 검색 성공
-              const location = {
-                lat: parseFloat(result[0].y),
-                lng: parseFloat(result[0].x),
-              };
-
-              console.log("✅ Found address:", result[0].address_name, location);
-
-              // 지도 중심 이동
-              setMapCenter(location);
-
-              // 해당 위치 기준으로 매장 검색
-              setSearchCenter(location);
-              setCurrentPage(1);
-              setAppliedSearchQuery("");
-
-              // 모바일에서는 지도 탭으로 전환
-              if (window.innerWidth < 768) {
-                setIsMobileMapOpen(true);
-              }
-
-              toast.success(`${result[0].address_name} 근처 매장을 검색합니다`);
-            } else {
-              // 주소 검색도 실패: 일반 텍스트 검색
-              console.log("⚠️ Geocoding failed, using text search");
-              setAppliedSearchQuery(searchQuery);
-              setCurrentPage(1);
-              setSearchCenter(null);
-            }
-          });
+          toast.loading(`${firstPlace.place_name} 근처 매장을 검색하는 중...`);
+          return;
         }
+        setAppliedSearchQuery(searchQuery);
+        setCurrentPage(1);
+        setSearchCenter(null);
+        setSearchPending(true);
+        setLastSearchQuery(`"${searchQuery}"`);
+
+        if (window.innerWidth < 768) {
+          setIsMobileMapOpen(false);
+        }
+
+        toast.loading(`"${searchQuery}" 매장명으로 검색하는 중...`);
       });
-    } else {
-      // Kakao Maps API가 로드되지 않은 경우: 일반 텍스트 검색
-      console.log("⚠️ Kakao Maps not loaded, using text search");
-      setAppliedSearchQuery(searchQuery);
-      setCurrentPage(1);
-      setSearchCenter(null);
-    }
+    });
   }, [searchQuery]);
 
-  // 지도 기반 검색 (현재 지역 재검색)
-  const handleSearchThisArea = useCallback((center: { lat: number; lng: number }) => {
-    console.log("🗺️ Searching this area:", center);
+  useEffect(() => {
+    if (!searchPending && lastSearchQuery && !isLoading) {
+      const hasResults = stores.length > 0;
+
+      if (hasResults) {
+        toast.dismiss();
+        toast.success(`${lastSearchQuery}에서 ${stores.length}개 매장을 찾았습니다`);
+      } else {
+        toast.dismiss();
+        toast.error(`${lastSearchQuery}에서 매장을 찾지 못했습니다`);
+      }
+
+      setLastSearchQuery("");
+    }
+  }, [searchPending, lastSearchQuery, isLoading, stores.length]);
+  useEffect(() => {
+    if (selectedStore && virtuosoRef.current && window.innerWidth >= 768) {
+      const index = filteredStores.findIndex(s => s.id === selectedStore.id);
+      if (index !== -1) {
+        virtuosoRef.current.scrollToIndex({
+          index,
+          align: 'center',
+          behavior: 'smooth',
+        });
+      }
+    }
+  }, [selectedStore, filteredStores]);
+
+  useEffect(() => {
+    if (selectedStore && window.innerWidth < 768 && !isMobileMapOpen) {
+      const element = document.querySelector(`[data-store-id="${selectedStore.id}"]`);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
+  }, [selectedStore, isMobileMapOpen]);
+
+  const handleSearchThisArea = useCallback((center: { lat: number; lng: number }, level: number) => {
+    const radiusFromLevel = (level: number) => {
+      if (level <= 3) return 1;
+      if (level <= 5) return 2;
+      if (level <= 7) return 5;
+      if (level <= 9) return 10;
+      return 20;
+    };
+
+    const newRadius = radiusFromLevel(level);
+
     setSearchCenter(center);
+    setSearchRadius(newRadius);
     setCurrentPage(1);
-    setAppliedSearchQuery(""); // 텍스트 검색 초기화
+    setAppliedSearchQuery("");
     setSearchQuery("");
-    toast.success("현재 지역 매장을 검색합니다");
+    setSearchPending(true);
+    setLastSearchQuery(`현재 지역 (반경 ${newRadius}km)`);
+    toast.loading(`현재 지역 (반경 ${newRadius}km) 매장을 검색하는 중...`);
   }, []);
 
   // 현재 위치 가져오기 (Geolocation API 사용, 실패 시 설정된 위치 폴백)
@@ -670,6 +680,11 @@ function StoresPageContent() {
       handleStoreClick(fullStore);
     }
   };
+
+  // 지도 인포윈도우 닫기
+  const handleMapStoreClose = useCallback(() => {
+    setSelectedStore(null);
+  }, []);
 
   // 페이지 변경 핸들러
   const handlePageChange = (newPage: number) => {
@@ -808,7 +823,7 @@ function StoresPageContent() {
                     }
                     setSelectedFilter(tag.id);
                     setCurrentPage(1); // 필터 변경 시 1페이지로 리셋
-                    setSearchCenter(null); // 지도 기반 검색 비활성화
+                    // 검색 상태 유지 (searchCenter, appliedSearchQuery 유지)
                   }}
                   className={`font-medium rounded-full border whitespace-nowrap transition-all duration-200 ${
                     inWebView ? "px-2.5 py-1.5 min-h-[32px] text-[11px]" : "px-3 md:px-4 py-2 md:py-2.5 min-h-[40px] md:min-h-[44px] text-small"
@@ -897,7 +912,7 @@ function StoresPageContent() {
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mb-4"></div>
                 <p className="text-caption text-gray-600">현재 위치를 확인하는 중입니다...</p>
               </div>
-            ) : isLoading ? (
+            ) : (isLoading || searchPending) ? (
               <StoreListSkeleton count={8} />
             ) : error ? (
               <div className="flex flex-col items-center justify-center py-20 px-page text-center">
@@ -912,7 +927,8 @@ function StoresPageContent() {
                   다시 시도
                 </Button>
               </div>
-            ) : filteredStores.length === 0 ? (
+            ) : stores.length === 0 ? (
+              // 백엔드 검색 결과가 없음
               <div className="flex flex-col items-center justify-center py-20 px-page text-center">
                 <StoreIcon className="w-12 h-12 text-gray-300 mb-4" />
                 <h3 className="text-[16px] font-semibold text-gray-900 mb-2">검색 결과가 없습니다</h3>
@@ -924,17 +940,23 @@ function StoresPageContent() {
                     <div className="flex flex-col gap-2">
                       <Button
                         onClick={() => {
-                          setSearchRadius(5);
-                          toast.info("검색 반경을 5km로 확대합니다");
+                          const newRadius = searchRadius * 2; // 현재 반경의 2배로 확대
+                          setSearchRadius(newRadius);
+                          setCurrentPage(1);
+                          setSearchPending(true);
+                          setLastSearchQuery(`반경 ${newRadius}km`);
+                          toast.loading(`검색 반경을 ${newRadius}km로 확대하는 중...`);
                         }}
                         variant="outline"
                         className="min-h-[44px]"
                       >
-                        반경 5km로 확대
+                        반경 {searchRadius * 2}km로 확대
                       </Button>
                       <Button
                         onClick={() => {
                           setSearchCenter(null);
+                          setAppliedSearchQuery("");
+                          setSearchQuery("");
                           setCurrentPage(1);
                           toast.info("지도 검색이 해제되었습니다");
                         }}
@@ -951,6 +973,27 @@ function StoresPageContent() {
                   </p>
                 )}
               </div>
+            ) : filteredStores.length === 0 ? (
+              // 백엔드 결과는 있지만 클라이언트 필터(영업중, 관심매장)로 걸러짐
+              <div className="flex flex-col items-center justify-center py-20 px-page text-center">
+                <StoreIcon className="w-12 h-12 text-gray-300 mb-4" />
+                <h3 className="text-[16px] font-semibold text-gray-900 mb-2">
+                  {selectedFilter === "open" ? "영업중인 매장이 없습니다" : "관심 매장이 없습니다"}
+                </h3>
+                <p className="text-caption text-gray-500 mb-4">
+                  총 {stores.length}개 매장 중 조건에 맞는 매장이 없습니다
+                </p>
+                <Button
+                  onClick={() => {
+                    setSelectedFilter("all");
+                    toast.info("필터가 해제되었습니다");
+                  }}
+                  variant="outline"
+                  className="min-h-[44px]"
+                >
+                  전체 매장 보기
+                </Button>
+              </div>
             ) : (
               <>
                 {/* 모바일: 일반 렌더링 */}
@@ -958,8 +1001,8 @@ function StoresPageContent() {
                   {filteredStores.map((store) => (
                     <div
                       key={store.id}
-                      onClick={() => handleStoreClick(store)}
-                      className={`border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors duration-200 border-l-4 ${
+                      data-store-id={store.id}
+                      className={`border-b border-gray-100 transition-colors duration-200 border-l-4 ${
                         inWebView ? "p-2" : "p-3"
                       } ${
                         selectedStore?.id === store.id
@@ -967,19 +1010,23 @@ function StoresPageContent() {
                           : "border-l-transparent"
                       }`}
                     >
-                      <div className={`flex ${inWebView ? "gap-2" : "gap-3"}`}>
-                        <div className={`rounded-xl overflow-hidden flex-shrink-0 ${
-                          inWebView ? "w-14 h-14" : "w-16 h-16"
-                        }`}>
-                          <StoreImage
-                            imageUrl={store.image_url}
-                            storeName={store.name}
-                            iconBg={store.iconBg}
-                            iconColor={store.iconColor}
-                            size="sm"
-                          />
-                        </div>
-                        <div className="flex-1 min-w-0">
+                      <div
+                        onClick={() => handleStoreClick(store)}
+                        className="cursor-pointer hover:bg-gray-50 -m-2 p-2 md:-m-3 md:p-3 rounded-lg"
+                      >
+                        <div className={`flex ${inWebView ? "gap-2" : "gap-3"}`}>
+                          <div className={`rounded-xl overflow-hidden flex-shrink-0 ${
+                            inWebView ? "w-14 h-14" : "w-16 h-16"
+                          }`}>
+                            <StoreImage
+                              imageUrl={store.image_url}
+                              storeName={store.name}
+                              iconBg={store.iconBg}
+                              iconColor={store.iconColor}
+                              size="sm"
+                            />
+                          </div>
+                          <div className="flex-1 min-w-0">
                           <div className={`flex items-center gap-2 ${inWebView ? "mb-0.5" : "mb-1"}`}>
                             <h3 className={`font-semibold text-gray-900 truncate flex-1 ${
                               inWebView ? "text-sm" : "text-[16px]"
@@ -1065,6 +1112,20 @@ function StoresPageContent() {
                           )}
                         </div>
                       </div>
+                      </div>
+
+                      {/* 상세보기 버튼 */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          router.push(`/stores/${store.id}/${store.slug}`);
+                        }}
+                        className={`w-full mt-2 bg-[#C9A227] hover:bg-[#8A6A00] text-white font-medium rounded-lg transition-colors ${
+                          inWebView ? "py-1.5 text-xs" : "py-2 text-sm"
+                        }`}
+                      >
+                        상세보기
+                      </button>
                     </div>
                   ))}
                 </div>
@@ -1072,6 +1133,7 @@ function StoresPageContent() {
                 {/* 데스크톱: Virtuoso로 최적화 */}
                 <div className="hidden md:block md:h-full">
                   <Virtuoso
+                    ref={virtuosoRef}
                     data={filteredStores}
                     itemContent={(_index, store) => (
                       <div
@@ -1221,10 +1283,15 @@ function StoresPageContent() {
             }))}
             selectedStoreId={selectedStore?.id}
             onStoreClick={handleMapStoreClick}
+            onStoreClose={handleMapStoreClose}
             center={mapCenter}
+            level={mapLevel}
             onCenterChange={setMapCenter}
             onSearchThisArea={handleSearchThisArea}
             userLocation={userLocation}
+            isDetailPanelOpen={isDetailPanelOpen}
+            searchCenter={searchCenter}
+            searchRadius={searchRadius}
           />
         </div>
 
