@@ -26,6 +26,7 @@ export default function PricesPage() {
   const router = useRouter();
   const [pricesData, setPricesData] = useState<GoldPrice[]>([]);
   const [historyData, setHistoryData] = useState<GoldPriceHistory[]>([]);
+  const [allHistoryData, setAllHistoryData] = useState<Record<string, GoldPriceHistory[]>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [selectedType, setSelectedType] = useState<GoldType>("24K");
@@ -43,6 +44,20 @@ export default function PricesPage() {
     const result = await getLatestGoldPricesAction();
     if (result.success && result.data) {
       setPricesData(result.data);
+
+      // 모든 타입의 최근 히스토리 데이터 로드 (전일대비 계산용)
+      const types: GoldType[] = ["24K", "18K", "14K", "Platinum", "Silver"];
+      const historyPromises = types.map(async (type) => {
+        const historyResult = await getGoldPriceHistoryAction(type, "1주");
+        return { type, data: historyResult.success && historyResult.data ? historyResult.data : [] };
+      });
+
+      const allHistory = await Promise.all(historyPromises);
+      const historyMap: Record<string, GoldPriceHistory[]> = {};
+      allHistory.forEach(({ type, data }) => {
+        historyMap[type] = data;
+      });
+      setAllHistoryData(historyMap);
     }
     setIsLoading(false);
   };
@@ -111,6 +126,27 @@ export default function PricesPage() {
       return { bg: "bg-[#FEF9E7]", text: "text-[#8A6A00]" };
     };
 
+    // 히스토리 데이터에서 전일대비 계산
+    const calculateChange = (type: string, currentPrice: number): { change_amount: number; change_percent: number } => {
+      const history = allHistoryData[type];
+      if (!history || history.length < 2) {
+        return { change_amount: 0, change_percent: 0 };
+      }
+
+      // 히스토리는 오래된 순으로 정렬되어 있음
+      // 마지막 항목이 오늘, 그 전 항목이 어제
+      const todayData = history[history.length - 1];
+      const yesterdayData = history[history.length - 2];
+
+      const todayPrice = Math.round(todayData.sell_price * 3.75); // 1돈 기준
+      const yesterdayPrice = Math.round(yesterdayData.sell_price * 3.75);
+
+      const change_amount = todayPrice - yesterdayPrice;
+      const change_percent = (change_amount / yesterdayPrice) * 100;
+
+      return { change_amount, change_percent };
+    };
+
     // 정렬 순서 정의: 24K > 18K > 14K > Platinum > Silver
     const typeOrder: Record<string, number> = {
       "24K": 1,
@@ -123,22 +159,25 @@ export default function PricesPage() {
     return pricesData
       .map((price: GoldPrice) => {
         const colors = getBadgeColors(price.type);
+        const pricePerDon = Math.round(price.sell_price * 3.75);
+        const { change_amount, change_percent } = calculateChange(price.type, pricePerDon);
+
         return {
           ...price,
           sell_price: Math.round(price.sell_price),
           buy_price: Math.round(price.buy_price),
           // 1돈 = 3.75g
-          price_per_don: Math.round(price.sell_price * 3.75),
+          price_per_don: pricePerDon,
           purity: getPurity(price.type),
           badge_bg: colors.bg,
           badge_text: colors.text,
-          change_percent: price.change_percent ?? 0,
-          change_amount: price.change_amount ?? 0,
+          change_percent: change_percent,
+          change_amount: change_amount,
           sortOrder: typeOrder[price.type] || 99,
         };
       })
       .sort((a, b) => a.sortOrder - b.sortOrder);
-  }, [pricesData]);
+  }, [pricesData, allHistoryData]);
 
   // 선택된 금 유형의 가격 (차트용)
   const selectedPrice = prices.find((p) => p.type === selectedType);
@@ -200,15 +239,17 @@ export default function PricesPage() {
     };
   }, [historyData]);
 
-  // 현재 시각
-  const currentTime = new Date().toLocaleString("ko-KR", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-    weekday: "short",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  // 기준 시각 (매일 오전 9시 업데이트 기준)
+  const baseTime = (() => {
+    const today = new Date();
+    const dateStr = today.toLocaleDateString("ko-KR", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      weekday: "short",
+    });
+    return `${dateStr} 09:00`;
+  })();
 
   return (
     <>
@@ -228,7 +269,7 @@ export default function PricesPage() {
             <span className={`font-semibold text-green-700 ${inWebView ? "text-[10px]" : "text-[12px]"}`}>LIVE</span>
           </div>
         </div>
-        <p className={`text-gray-500 ${inWebView ? "text-xs" : "text-body"}`}>{currentTime} 기준</p>
+        <p className={`text-gray-500 ${inWebView ? "text-xs" : "text-body"}`}>{baseTime} 기준</p>
       </div>
 
       {/* 메인 시세 카드 - 개선된 UI */}
@@ -360,7 +401,7 @@ export default function PricesPage() {
                       <span className={`font-medium text-gray-500 tabular-nums ${
                         inWebView ? "text-[11px]" : "text-small"
                       }`}>
-                        변동없음
+                        전일대비 0원
                       </span>
                     </div>
                   )}

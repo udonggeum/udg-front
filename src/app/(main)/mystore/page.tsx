@@ -569,6 +569,7 @@ export default function MyStoreEditPage() {
                         width={160}
                         height={160}
                         className="w-full h-full object-cover"
+                        unoptimized
                       />
                     ) : (
                       <Store className={inWebView ? "w-10 h-10 text-gray-400" : "w-16 h-16 text-gray-400"} />

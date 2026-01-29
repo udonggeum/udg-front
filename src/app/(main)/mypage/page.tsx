@@ -799,6 +799,7 @@ export default function MyPage() {
                                     width={48}
                                     height={48}
                                     className="w-full h-full object-cover"
+                                    unoptimized
                                   />
                                 ) : (
                                   <Store className="w-6 h-6 text-gray-400" />

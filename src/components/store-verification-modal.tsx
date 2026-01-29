@@ -167,6 +167,7 @@ export function StoreVerificationModal({
                     alt="사업자등록증"
                     fill
                     className="object-contain bg-gray-50"
+                    unoptimized
                   />
                 </div>
                 <button

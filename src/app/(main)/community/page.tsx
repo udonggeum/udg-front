@@ -789,6 +789,7 @@ function CommunityPageContent() {
                             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                             className="object-cover group-hover:scale-105 transition-transform duration-300"
                             loading="lazy"
+                            unoptimized
                           />
                         </div>
                       ) : (
@@ -844,6 +845,7 @@ function CommunityPageContent() {
                                 sizes="24px"
                                 className="object-cover"
                                 loading="lazy"
+                                unoptimized
                               />
                             ) : post.user.role === "admin" ? (
                               <StoreIcon className="w-3.5 h-3.5 text-[#C9A227]" />
@@ -925,6 +927,7 @@ function CommunityPageContent() {
                               sizes="144px"
                               className="object-cover"
                               loading="lazy"
+                              unoptimized
                             />
                           ) : post.user.role === "admin" ? (
                             <StoreIcon className="w-16 h-16 text-[#C9A227]" />
@@ -947,6 +950,7 @@ function CommunityPageContent() {
                                   sizes="42px"
                                   className="object-cover"
                                   loading="lazy"
+                                  unoptimized
                                 />
                               </div>
                             ))}

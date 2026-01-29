@@ -28,9 +28,14 @@ import {
   Sparkles,
   Building2,
   BadgeCheck,
+  Upload,
+  Clock3,
+  XCircle,
+  ShieldCheck,
 } from "lucide-react";
-import { getStoreDetailAction, toggleStoreLikeAction, getStoreRegistrationRequestStatusAction, requestStoreRegistrationAction } from "@/actions/stores";
+import { getStoreDetailAction, toggleStoreLikeAction, getStoreRegistrationRequestStatusAction, requestStoreRegistrationAction, getVerificationStatusAction } from "@/actions/stores";
 import { StoreClaimModal } from "@/components/store-claim-modal";
+import { StoreVerificationModal } from "@/components/store-verification-modal";
 import { getTagsAction } from "@/actions/tags";
 import { createChatRoomAction } from "@/actions/chat";
 import { getPostsAction, getStoreGalleryAction, pinPostAction, unpinPostAction } from "@/actions/community";
@@ -209,6 +214,10 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
   const [hasRequestedRegistration, setHasRequestedRegistration] = useState(false);
   const [isRequestingRegistration, setIsRequestingRegistration] = useState(false);
 
+  // 인증 관련 상태
+  const [verificationStatus, setVerificationStatus] = useState<any>(null);
+  const [isVerificationModalOpen, setIsVerificationModalOpen] = useState(false);
+
   // 웹뷰 감지
   const [inWebView, setInWebView] = useState(false);
 
@@ -367,6 +376,24 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
 
     loadRegistrationRequestStatus();
   }, [store?.id, store?.is_managed, isMyStore, accessToken]);
+
+  // 인증 상태 로드 (내 매장인 경우에만)
+  useEffect(() => {
+    if (!isMyStore || !accessToken) return;
+
+    const loadVerificationStatus = async () => {
+      try {
+        const result = await getVerificationStatusAction(accessToken);
+        if (result.success && result.data) {
+          setVerificationStatus(result.data);
+        }
+      } catch (err) {
+        console.error("인증 상태 조회 에러:", err);
+      }
+    };
+
+    loadVerificationStatus();
+  }, [isMyStore, accessToken]);
 
   // 갤러리 로드
   useEffect(() => {
@@ -953,6 +980,7 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
                     className="object-cover"
                     sizes="(max-width: 640px) 96px, (max-width: 768px) 112px, 128px"
                     quality={85}
+                    unoptimized
                     onError={(e) => {
                       if (isMountedRef.current) {
                         setImageError(true);
@@ -1033,6 +1061,24 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
                       )}
                     </div>
 
+                    {/* 저장/취소 버튼 (매장명) */}
+                    {isMyStore && editSections.name && (
+                      <div className="flex justify-end gap-2 px-3">
+                        <button
+                          onClick={() => handleCancelSectionEdit("name")}
+                          className="px-3 py-1.5 bg-white hover:bg-gray-100 text-gray-900 text-[12px] font-semibold rounded-lg border border-gray-200 transition-colors"
+                        >
+                          취소
+                        </button>
+                        <button
+                          onClick={() => handleSaveSection("name")}
+                          className="px-3 py-1.5 bg-[#C9A227] hover:bg-[#8A6A00] text-white text-[12px] font-semibold rounded-lg transition-colors"
+                        >
+                          저장
+                        </button>
+                      </div>
+                    )}
+
                     {/* 뱃지들 (매장명 수정 중이 아닐 때만 표시) */}
                     {!editSections.name && (
                       <div className="flex flex-wrap items-center gap-2 px-3">
@@ -1061,24 +1107,35 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
                         )}
                       </div>
                     )}
+
+                    {/* 매장 인증 버튼 (내 매장이고 편집 중이 아닐 때) */}
+                    {!editSections.name && isMyStore && !store.is_verified && (
+                      <div className="px-3 mt-2">
+                        {verificationStatus?.verification?.status === "pending" ? (
+                          <div className={`flex items-center gap-2 ${inWebView ? "text-xs" : "text-sm"} text-yellow-600`}>
+                            <Clock3 className={inWebView ? "w-3 h-3" : "w-4 h-4"} />
+                            <span className="font-medium">인증 심사 중입니다</span>
+                          </div>
+                        ) : verificationStatus?.verification?.status === "rejected" ? (
+                          <button
+                            onClick={() => setIsVerificationModalOpen(true)}
+                            className={`inline-flex items-center gap-2 px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-700 ${inWebView ? "text-xs" : "text-sm"} font-semibold rounded-lg transition-colors`}
+                          >
+                            <XCircle className={inWebView ? "w-3 h-3" : "w-4 h-4"} />
+                            인증 반려됨 - 재신청
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => setIsVerificationModalOpen(true)}
+                            className={`inline-flex items-center gap-2 px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 ${inWebView ? "text-xs" : "text-sm"} font-semibold rounded-lg transition-colors`}
+                          >
+                            <Upload className={inWebView ? "w-3 h-3" : "w-4 h-4"} />
+                            매장 인증하기
+                          </button>
+                        )}
+                      </div>
+                    )}
                   </div>
-                  {/* 저장/취소 버튼 (매장명) */}
-                  {isMyStore && editSections.name && (
-                    <div className="flex gap-2 mb-2 ml-3">
-                      <button
-                        onClick={() => handleCancelSectionEdit("name")}
-                        className="px-3 py-1.5 bg-white hover:bg-gray-100 text-gray-900 text-[12px] font-semibold rounded-lg border border-gray-200 transition-colors"
-                      >
-                        취소
-                      </button>
-                      <button
-                        onClick={() => handleSaveSection("name")}
-                        className="px-3 py-1.5 bg-[#C9A227] hover:bg-[#8A6A00] text-white text-[12px] font-semibold rounded-lg transition-colors"
-                      >
-                        저장
-                      </button>
-                    </div>
-                  )}
 
                   {/* 매장 한줄 소개 */}
                   {(store.description || isMyStore) && (
@@ -1432,6 +1489,7 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
                                   className="object-cover"
                                   sizes="(max-width: 768px) 100vw, 400px"
                                   quality={80}
+                                  unoptimized
                                 />
                               </div>
                             )}
@@ -1534,6 +1592,7 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
                                   className="object-cover"
                                   sizes="(max-width: 768px) 100vw, 400px"
                                   quality={80}
+                                  unoptimized
                                 />
                               </div>
                             )}
@@ -1846,6 +1905,7 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
                               className="object-cover transition-transform duration-300 md:group-hover:scale-110"
                               sizes="(max-width: 768px) 50vw, 33vw"
                               quality={80}
+                              unoptimized
                             />
 
                             {/* 호버 오버레이 */}
@@ -2149,6 +2209,30 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
           onOpenChange={setIsBackgroundModalOpen}
           currentBackground={storeBackground}
           onSave={handleSaveBackground}
+        />
+      )}
+
+      {/* Store Verification Modal */}
+      {isMyStore && (
+        <StoreVerificationModal
+          open={isVerificationModalOpen}
+          onOpenChange={setIsVerificationModalOpen}
+          onSuccess={async () => {
+            // 인증 상태 다시 로드
+            if (accessToken) {
+              const result = await getVerificationStatusAction(accessToken);
+              if (result.success && result.data) {
+                setVerificationStatus(result.data);
+              }
+            }
+            // 매장 정보도 다시 로드하여 is_verified 상태 업데이트
+            if (storeId) {
+              const storeResult = await getStoreDetailAction(storeId, accessToken);
+              if (storeResult.success && storeResult.data) {
+                setStore(storeResult.data.store);
+              }
+            }
+          }}
         />
       )}
     </div>

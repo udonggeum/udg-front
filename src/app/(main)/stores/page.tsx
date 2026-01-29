@@ -92,7 +92,7 @@ const StoreImage = memo(function StoreImage({
         sizes={size === "sm" ? "80px" : size === "md" ? "400px" : "100vw"}
         quality={75}
         loading="lazy"
-        unoptimized={isBase64}
+        unoptimized
         onError={() => setImageError(true)}
       />
     </div>
