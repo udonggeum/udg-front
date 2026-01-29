@@ -683,7 +683,8 @@ function StoresPageContent() {
 
   // 지도 인포윈도우 닫기
   const handleMapStoreClose = useCallback(() => {
-    setSelectedStore(null);
+    setIsDetailPanelOpen(false);
+    setTimeout(() => setSelectedStore(null), 300); // 애니메이션 후 상태 초기화
   }, []);
 
   // 페이지 변경 핸들러

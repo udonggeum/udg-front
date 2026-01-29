@@ -138,6 +138,10 @@ function StoreMap({
     const distance = getDistance(initialCenter.lat, initialCenter.lng, newCenter.lat, newCenter.lng);
     if (distance > 0.1) { // 100m 이상 이동
       setShowSearchButton(true);
+      // 지도가 이동하면 선택된 매장 해제
+      if (selectedStoreId && onStoreClose) {
+        onStoreClose();
+      }
     }
 
     if (onCenterChange) {

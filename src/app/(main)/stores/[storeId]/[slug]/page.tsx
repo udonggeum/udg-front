@@ -2227,7 +2227,7 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
             }
             // 매장 정보도 다시 로드하여 is_verified 상태 업데이트
             if (storeId) {
-              const storeResult = await getStoreDetailAction(storeId, accessToken);
+              const storeResult = await getStoreDetailAction(storeId, undefined, accessToken);
               if (storeResult.success && storeResult.data) {
                 setStore(storeResult.data.store);
               }
