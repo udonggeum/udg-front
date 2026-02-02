@@ -13,7 +13,7 @@ import { getMyStoreAction } from "@/actions/stores";
 import { getNotificationsAction } from "@/actions/notifications";
 import { useWebSocket } from "@/hooks/useWebSocket";
 import { toast } from "sonner";
-import { User, Settings, LogOut, ChevronDown, MapPin, Menu, X, Store, MessageSquare, TrendingUp, MapPinned, Sparkles } from "lucide-react";
+import { User, Settings, LogOut, ChevronDown, MapPin, Menu, X, Store, MessageSquare, TrendingUp, MapPinned, Sparkles, ShieldCheck } from "lucide-react";
 import { isWebView } from "@/lib/webview";
 import LocationSettingModal from "@/components/LocationSettingModal";
 import { NotificationDropdown } from "@/components/notification-dropdown";
@@ -170,30 +170,30 @@ export function Header() {
     setIsLoggingOut(true);
     setIsDropdownOpen(false);
 
-    try {
-      // 서버에 로그아웃 요청 (refresh token 무효화)
-      if (tokens?.refresh_token) {
-        const result = await logoutUserAction(tokens.refresh_token);
+    // 먼저 홈으로 이동 (페이지 전환 후 인증 상태 정리)
+    router.push("/");
 
-        if (!result.success) {
-          console.warn("로그아웃 API 호출 실패:", result.error);
-          // API 실패해도 클라이언트 측 정리는 진행
+    // 약간의 지연 후 인증 정리 (라우팅 완료를 기다림)
+    setTimeout(async () => {
+      try {
+        // 서버에 로그아웃 요청 (refresh token 무효화)
+        if (tokens?.refresh_token) {
+          const result = await logoutUserAction(tokens.refresh_token);
+
+          if (!result.success) {
+            console.warn("로그아웃 API 호출 실패:", result.error);
+            // API 실패해도 클라이언트 측 정리는 진행
+          }
         }
+      } catch (error) {
+        console.error("Logout error:", error);
+      } finally {
+        // 클라이언트 측 인증 상태 정리
+        clearAuth();
+        toast.success("로그아웃되었습니다.");
+        setIsLoggingOut(false);
       }
-
-      // 클라이언트 측 인증 상태 정리
-      clearAuth();
-      toast.success("로그아웃되었습니다.");
-      router.push("/");
-    } catch (error) {
-      console.error("Logout error:", error);
-      // 에러가 발생해도 클라이언트 측 정리는 진행
-      clearAuth();
-      toast.success("로그아웃되었습니다.");
-      router.push("/");
-    } finally {
-      setIsLoggingOut(false);
-    }
+    }, 100);
   };
 
   return (
@@ -338,6 +338,9 @@ export function Header() {
                       {user?.role === "admin" && (
                         <p className="text-xs text-[#C9A227] font-semibold mt-0.5">관리자</p>
                       )}
+                      {user?.role === "master" && (
+                        <p className="text-xs text-purple-600 font-semibold mt-0.5">마스터</p>
+                      )}
                     </div>
 
                     {/* 마이페이지 */}
@@ -359,6 +362,18 @@ export function Header() {
                       >
                         <Store className="w-4 h-4" />
                         내 매장
+                      </Link>
+                    )}
+
+                    {/* Master 전용: 인증 관리 */}
+                    {user?.role === "master" && (
+                      <Link
+                        href="/admin/verifications"
+                        onClick={() => setIsDropdownOpen(false)}
+                        className="flex items-center gap-2 px-4 py-2.5 text-caption text-purple-700 hover:bg-purple-50 smooth-transition"
+                      >
+                        <ShieldCheck className="w-4 h-4" />
+                        인증 관리
                       </Link>
                     )}
 

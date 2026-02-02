@@ -270,3 +270,29 @@ export interface StoreRegistrationRequestStatus {
   request_count: number;
   has_requested: boolean;
 }
+
+/**
+ * Verification with store info
+ * 매장 정보를 포함한 인증 정보
+ */
+export interface VerificationWithStore extends StoreVerification {
+  store?: StoreDetail;
+}
+
+/**
+ * Verifications list response
+ * 인증 요청 목록 응답
+ */
+export interface VerificationsListResponse {
+  count: number;
+  verifications: VerificationWithStore[];
+}
+
+/**
+ * Approve/Reject verification request
+ * 인증 승인/거부 요청
+ */
+export interface ReviewVerificationRequest {
+  action: 'approve' | 'reject';  // 백엔드와 맞춤
+  reason?: string;  // 거부 사유 (action이 'reject'일 때 필수)
+}

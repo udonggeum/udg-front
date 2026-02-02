@@ -15,6 +15,8 @@ import type {
   SubmitVerificationResponse,
   VerificationStatusResponse,
   StoreRegistrationRequestStatus,
+  VerificationsListResponse,
+  ReviewVerificationRequest,
 } from "@/types/stores";
 import type { UpdateStoreRequest } from "@/schemas/stores";
 import { apiClient, handleApiError, type ApiResponse } from "@/lib/axios";
@@ -352,5 +354,64 @@ export async function requestStoreRegistrationAction(
     };
   } catch (error) {
     return handleApiError(error, "매장 등록 요청에 실패했습니다.");
+  }
+}
+
+/**
+ * 인증 요청 목록 조회 Server Action (master 전용)
+ */
+export async function getVerificationsListAction(
+  accessToken: string,
+  params?: {
+    status?: 'pending' | 'approved' | 'rejected';
+    page?: number;
+    page_size?: number;
+  }
+): Promise<ApiResponse<VerificationsListResponse>> {
+  try {
+    const response = await apiClient.get<VerificationsListResponse>(
+      "/admin/verifications",
+      {
+        params,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+
+    return {
+      success: true,
+      data: response.data,
+    };
+  } catch (error) {
+    return handleApiError(error, "인증 요청 목록 조회에 실패했습니다.");
+  }
+}
+
+/**
+ * 인증 요청 승인/거부 Server Action (master 전용)
+ */
+export async function reviewVerificationAction(
+  verificationId: number,
+  data: ReviewVerificationRequest,
+  accessToken: string
+): Promise<ApiResponse<SubmitVerificationResponse>> {
+  try {
+    const response = await apiClient.put<SubmitVerificationResponse>(
+      `/admin/verifications/${verificationId}`,
+      data,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+
+    return {
+      success: true,
+      data: response.data,
+    };
+  } catch (error) {
+    return handleApiError(error, "인증 검토 처리에 실패했습니다.");
   }
 }

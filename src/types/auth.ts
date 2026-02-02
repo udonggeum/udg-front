@@ -19,7 +19,7 @@ export interface User {
   latitude?: number;  // 위도 (주소 기반)
   longitude?: number; // 경도 (주소 기반)
   profile_image?: string;
-  role: 'user' | 'admin';
+  role: 'user' | 'admin' | 'master';
 
   // 매장 정보 (admin인 경우)
   store_id?: number;

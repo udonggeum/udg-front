@@ -15,7 +15,7 @@ import { toast } from "sonner";
 import { submitVerificationAction } from "@/actions/stores";
 import { getPresignedUrlAction, uploadToS3 } from "@/actions/upload";
 import { useAuthStore } from "@/stores/useAuthStore";
-import Image from "next/image";
+// Image 컴포넌트 제거 - 일반 img 태그 사용
 
 interface StoreVerificationModalProps {
   open: boolean;
@@ -160,16 +160,12 @@ export function StoreVerificationModal({
             </label>
 
             {imageUrl ? (
-              <div className="relative border rounded-lg overflow-hidden">
-                <div className="aspect-[4/3] relative">
-                  <Image
-                    src={imageUrl}
-                    alt="사업자등록증"
-                    fill
-                    className="object-contain bg-gray-50"
-                    unoptimized
-                  />
-                </div>
+              <div className="relative border rounded-lg overflow-hidden bg-gray-50">
+                <img
+                  src={imageUrl}
+                  alt="사업자등록증"
+                  className="w-full h-auto max-h-[400px] object-contain"
+                />
                 <button
                   type="button"
                   onClick={handleRemoveImage}

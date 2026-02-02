@@ -30,7 +30,7 @@ export const UserSchema = z.object({
     .optional(),
   address: z.string().optional(),
   profile_image: z.string().optional(),
-  role: z.enum(['user', 'admin']),
+  role: z.enum(['user', 'admin', 'master']),
   created_at: z.string().optional(),
   updated_at: z.string().optional(),
 });

@@ -267,11 +267,15 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
     }
 
     const loadStore = async () => {
+      if (!isMountedRef.current) return;
+
       setIsLoadingStore(true);
       setStoreError(null);
 
       try {
         const result = await getStoreDetailAction(storeId, false, accessToken);
+
+        if (!isMountedRef.current) return;
 
         if (result.success && result.data) {
           setStore(result.data.store);
@@ -283,9 +287,12 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
           setStoreError(result.error || "매장 정보를 불러올 수 없습니다.");
         }
       } catch (err) {
+        if (!isMountedRef.current) return;
         setStoreError("매장 정보를 불러오는 중 오류가 발생했습니다.");
       } finally {
-        setIsLoadingStore(false);
+        if (isMountedRef.current) {
+          setIsLoadingStore(false);
+        }
       }
     };
 
@@ -329,6 +336,8 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
     if (!store || (activeTab !== "home" && activeTab !== "news")) return;
 
     const loadPosts = async () => {
+      if (!isMountedRef.current) return;
+
       setIsLoadingPosts(true);
 
       try {
@@ -340,6 +349,8 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
           sort_order: "desc",
         });
 
+        if (!isMountedRef.current) return;
+
         if (result.success && result.data) {
           // store_id가 있는 게시글만 필터링 (고정 기능을 위해 필수)
           const storePosts = result.data.data.filter(post => post.store_id !== null && post.store_id !== undefined);
@@ -348,10 +359,13 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
           setPosts([]);
         }
       } catch (err) {
+        if (!isMountedRef.current) return;
         console.error("게시글 조회 에러:", err);
         setPosts([]);
       } finally {
-        setIsLoadingPosts(false);
+        if (isMountedRef.current) {
+          setIsLoadingPosts(false);
+        }
       }
     };
 
@@ -363,8 +377,13 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
     if (!store || store.is_managed || isMyStore) return;
 
     const loadRegistrationRequestStatus = async () => {
+      if (!isMountedRef.current) return;
+
       try {
         const result = await getStoreRegistrationRequestStatusAction(store.id, accessToken);
+
+        if (!isMountedRef.current) return;
+
         if (result.success && result.data) {
           setRegistrationRequestCount(result.data.request_count);
           setHasRequestedRegistration(result.data.has_requested);
@@ -382,8 +401,13 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
     if (!isMyStore || !accessToken) return;
 
     const loadVerificationStatus = async () => {
+      if (!isMountedRef.current) return;
+
       try {
         const result = await getVerificationStatusAction(accessToken);
+
+        if (!isMountedRef.current) return;
+
         if (result.success && result.data) {
           setVerificationStatus(result.data);
         }
@@ -400,10 +424,14 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
     if (!store || activeTab !== "gallery") return;
 
     const loadGallery = async () => {
+      if (!isMountedRef.current) return;
+
       setIsLoadingGallery(true);
 
       try {
         const result = await getStoreGalleryAction(store.id, 1, 20);
+
+        if (!isMountedRef.current) return;
 
         if (result.success && result.data) {
           setGallery(result.data.data);
@@ -411,10 +439,13 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
           setGallery([]);
         }
       } catch (err) {
+        if (!isMountedRef.current) return;
         console.error("갤러리 조회 에러:", err);
         setGallery([]);
       } finally {
-        setIsLoadingGallery(false);
+        if (isMountedRef.current) {
+          setIsLoadingGallery(false);
+        }
       }
     };
 
