@@ -37,10 +37,19 @@ export const apiClient = axios.create({
 
 // 토큰 갱신 중인지 추적
 let isRefreshing = false;
+let refreshPromise: Promise<any> | null = null; // refresh Promise 저장
 let failedQueue: Array<{
   resolve: (value?: any) => void;
   reject: (reason?: any) => void;
 }> = [];
+
+// 디버깅용: 마지막 refresh 시도 시간
+let lastRefreshAttempt = 0;
+const REFRESH_COOLDOWN = 1000; // 1초 내 중복 refresh 방지
+const REFRESH_TIMEOUT = 10000; // 10초 후에도 refresh가 안 끝나면 강제 리셋
+
+// refresh 타임아웃 타이머
+let refreshTimeoutId: NodeJS.Timeout | null = null;
 
 /**
  * Request interceptor to automatically inject access token and log requests
@@ -69,10 +78,14 @@ apiClient.interceptors.request.use(
 
           if (accessToken && !config.headers.Authorization) {
             config.headers.Authorization = `Bearer ${accessToken}`;
+          } else if (!accessToken) {
+            console.warn("[Request] Access token 없음 - 인증이 필요한 요청은 401 발생 예상");
           }
+        } else {
+          console.warn("[Request] Auth storage 없음 - 로그인 필요");
         }
       } catch (error) {
-        // 토큰 주입 실패는 조용히 처리 (보안)
+        console.error("[Request] 토큰 주입 실패:", error);
       }
     }
 
@@ -84,6 +97,11 @@ apiClient.interceptors.request.use(
 );
 
 const processQueue = (error: any = null) => {
+  const queueLength = failedQueue.length;
+  if (queueLength > 0) {
+    console.log(`[Token Refresh] 대기열 처리 중 (${queueLength}개 요청)`);
+  }
+
   failedQueue.forEach((prom) => {
     if (error) {
       prom.reject(error);
@@ -122,14 +140,22 @@ apiClient.interceptors.response.use(
 
     // Handle 401 Unauthorized errors
     if (error.response?.status === 401 && !originalRequest._retry) {
+      console.log("[Token Refresh] 401 에러 감지", {
+        url: sanitizeUrl(originalRequest.url),
+        isRefreshing,
+        hasRetried: originalRequest._retry,
+      });
+
       // 로그인/회원가입 엔드포인트는 401 자동 처리 제외 (로그인 실패와 토큰 만료를 구분)
       if (originalRequest.url?.includes('/auth/login') ||
           originalRequest.url?.includes('/auth/register')) {
+        console.log("[Token Refresh] 로그인/회원가입 엔드포인트 401 - 자동 처리 제외");
         return Promise.reject(error);
       }
 
       // refresh 엔드포인트 자체에서 401이 나면 즉시 로그아웃
       if (originalRequest.url?.includes('/auth/refresh')) {
+        console.error("[Token Refresh] Refresh 엔드포인트에서 401 - 로그아웃 처리");
         if (typeof window !== "undefined") {
           import("@/stores/useAuthStore").then(({ useAuthStore }) => {
             const { clearAuth } = useAuthStore.getState();
@@ -152,121 +178,168 @@ apiClient.interceptors.response.use(
       const isTokenExpired = error.response?.data?.token_expired === true;
 
       // 토큰 갱신 시도
-      if (isRefreshing) {
-        // 이미 갱신 중이면 대기열에 추가
-        return new Promise((resolve, reject) => {
-          failedQueue.push({ resolve, reject });
-        })
+      if (isRefreshing && refreshPromise) {
+        // 이미 갱신 중이면 기존 Promise를 재사용
+        console.log("[Token Refresh] 이미 갱신 중 - 대기열에 추가");
+        return refreshPromise
           .then(() => {
             // 최신 토큰을 가져와서 헤더에 적용
-            const authStorage = localStorage.getItem('auth-storage');
-            if (authStorage) {
-              const parsed = JSON.parse(authStorage);
-              const latestToken = parsed.state?.tokens?.access_token;
+            if (typeof window !== "undefined") {
+              const authStorage = localStorage.getItem('auth-storage');
+              if (authStorage) {
+                const parsed = JSON.parse(authStorage);
+                const latestToken = parsed.state?.tokens?.access_token;
 
-              if (originalRequest.headers && latestToken) {
-                originalRequest.headers.Authorization = `Bearer ${latestToken}`;
+                if (originalRequest.headers && latestToken) {
+                  originalRequest.headers.Authorization = `Bearer ${latestToken}`;
+                  console.log("[Token Refresh] 대기 중이던 요청 재시도:", sanitizeUrl(originalRequest.url));
+                  return apiClient(originalRequest);
+                }
               }
             }
-            return apiClient(originalRequest);
+            throw new Error("No token after refresh");
           })
           .catch((err) => {
+            console.error("[Token Refresh] 대기 중 에러:", err.message);
             return Promise.reject(err);
           });
       }
 
+      // 중복 refresh 방지 (1초 내 재시도 방지)
+      const now = Date.now();
+      if (now - lastRefreshAttempt < REFRESH_COOLDOWN) {
+        console.warn("[Token Refresh] 너무 빠른 재시도 차단");
+        return Promise.reject(error);
+      }
+
       originalRequest._retry = true;
       isRefreshing = true;
+      lastRefreshAttempt = now;
+      console.log("[Token Refresh] 토큰 갱신 시작");
+
+      // 타임아웃 안전장치: 10초 후에도 refresh가 안 끝나면 강제 리셋
+      refreshTimeoutId = setTimeout(() => {
+        if (isRefreshing) {
+          console.error("[Token Refresh] 타임아웃 - 강제 리셋");
+          isRefreshing = false;
+          refreshPromise = null;
+          processQueue(new Error("Token refresh timeout"));
+        }
+      }, REFRESH_TIMEOUT);
 
       if (typeof window !== "undefined") {
-        try {
-          const { useAuthStore } = await import("@/stores/useAuthStore");
-          const { tokens, updateTokens, clearAuth } = useAuthStore.getState();
+        // refresh Promise 생성 및 저장
+        refreshPromise = (async () => {
+          try {
+            const { useAuthStore } = await import("@/stores/useAuthStore");
+            const { tokens, updateTokens, clearAuth } = useAuthStore.getState();
 
-          if (!tokens?.refresh_token) {
-            throw new Error("No refresh token available");
-          }
-
-          // 리프레시 토큰으로 새 액세스 토큰 요청 (타임아웃 5초)
-          const response = await axios.post(
-            `${apiClient.defaults.baseURL}/auth/refresh`,
-            { refresh_token: tokens.refresh_token },
-            { timeout: 5000 }
-          );
-
-          if (response.data.tokens) {
-            // 백엔드는 항상 새 refresh_token을 보내야 함 (token rotation)
-            if (!response.data.tokens.access_token || !response.data.tokens.refresh_token) {
-              throw new Error("Invalid token response: missing access_token or refresh_token");
+            // refresh_token 검증
+            if (!tokens?.refresh_token) {
+              console.error("[Token Refresh] Refresh token 없음");
+              throw new Error("No refresh token available");
             }
 
-            const newTokens = {
-              access_token: response.data.tokens.access_token,
-              refresh_token: response.data.tokens.refresh_token, // fallback 제거
-            };
+            console.log("[Token Refresh] Refresh token으로 새 토큰 요청 중...");
 
-            // 새 토큰 저장
-            updateTokens(newTokens);
+            // 리프레시 토큰으로 새 액세스 토큰 요청 (타임아웃 5초)
+            const response = await axios.post(
+              `${apiClient.defaults.baseURL}/auth/refresh`,
+              { refresh_token: tokens.refresh_token },
+              { timeout: 5000 }
+            );
 
-            // 원래 요청 헤더에 새 토큰 적용
-            if (originalRequest.headers) {
-              originalRequest.headers.Authorization = `Bearer ${newTokens.access_token}`;
+            if (response.data.tokens) {
+              // 백엔드는 항상 새 refresh_token을 보내야 함 (token rotation)
+              if (!response.data.tokens.access_token || !response.data.tokens.refresh_token) {
+                throw new Error("Invalid token response: missing access_token or refresh_token");
+              }
+
+              const newTokens = {
+                access_token: response.data.tokens.access_token,
+                refresh_token: response.data.tokens.refresh_token,
+              };
+
+              console.log("[Token Refresh] 토큰 갱신 성공");
+
+              // 새 토큰 저장
+              updateTokens(newTokens);
+
+              // 원래 요청 헤더에 새 토큰 적용
+              if (originalRequest.headers) {
+                originalRequest.headers.Authorization = `Bearer ${newTokens.access_token}`;
+              }
+
+              processQueue(null);
+
+              // 원래 요청 재시도
+              return apiClient(originalRequest);
+            } else {
+              throw new Error("Token refresh failed: no tokens in response");
             }
+          } catch (refreshError) {
+            console.error("[Token Refresh] 갱신 실패:", refreshError);
+            processQueue(refreshError);
 
-            processQueue(null);
-            isRefreshing = false;
+            // 갱신 실패 시 로그아웃
+            const { useAuthStore } = await import("@/stores/useAuthStore");
+            const { clearAuth } = useAuthStore.getState();
 
-            // 원래 요청 재시도
-            return apiClient(originalRequest);
-          } else {
-            throw new Error("Token refresh failed");
-          }
-        } catch (refreshError) {
-          processQueue(refreshError);
-          isRefreshing = false;
+            console.log("[Token Refresh] 로그아웃 처리 및 리다이렉트");
+            clearAuth();
 
-          // 갱신 실패 시 로그아웃
-          const { useAuthStore } = await import("@/stores/useAuthStore");
-          const { clearAuth } = useAuthStore.getState();
-          clearAuth();
+            const { toast } = await import("sonner");
 
-          const { toast } = await import("sonner");
+            // 백엔드에서 보낸 세분화된 에러를 활용하여 구체적인 메시지 제공
+            let errorMessage = "로그인이 만료되었습니다. 다시 로그인해주세요.";
+            if (axios.isAxiosError(refreshError)) {
+              if (refreshError.code === 'ECONNABORTED' || refreshError.message?.includes('timeout')) {
+                errorMessage = "네트워크 연결이 불안정합니다. 다시 로그인해주세요.";
+              } else if (!refreshError.response) {
+                errorMessage = "서버에 연결할 수 없습니다. 네트워크를 확인 후 다시 로그인해주세요.";
+              } else if (refreshError.response.status === 401) {
+                const backendError = refreshError.response.data?.error;
+                const backendMessage = refreshError.response.data?.message;
 
-          // 백엔드에서 보낸 세분화된 에러를 활용하여 구체적인 메시지 제공
-          let errorMessage = "로그인이 만료되었습니다. 다시 로그인해주세요.";
-          if (axios.isAxiosError(refreshError)) {
-            if (refreshError.code === 'ECONNABORTED' || refreshError.message?.includes('timeout')) {
-              errorMessage = "네트워크 연결이 불안정합니다. 다시 로그인해주세요.";
-            } else if (!refreshError.response) {
-              errorMessage = "서버에 연결할 수 없습니다. 네트워크를 확인 후 다시 로그인해주세요.";
-            } else if (refreshError.response.status === 401) {
-              const backendError = refreshError.response.data?.error;
-              const backendMessage = refreshError.response.data?.message;
-
-              // 백엔드에서 보낸 세분화된 에러 처리
-              if (backendError === "refresh_token_revoked") {
-                errorMessage = "토큰이 이미 사용되었습니다. 보안을 위해 다시 로그인해주세요.";
-              } else if (backendError === "refresh_token_expired") {
-                errorMessage = "로그인 세션이 만료되었습니다 (7일). 다시 로그인해주세요.";
-              } else if (backendError === "invalid_refresh_token") {
-                errorMessage = "유효하지 않은 토큰입니다. 다시 로그인해주세요.";
-              } else if (backendMessage) {
-                // 백엔드에서 보낸 메시지가 있으면 사용
-                errorMessage = backendMessage;
-              } else {
-                errorMessage = "로그인 세션이 만료되었습니다. 다시 로그인해주세요.";
+                // 백엔드에서 보낸 세분화된 에러 처리
+                if (backendError === "refresh_token_revoked") {
+                  errorMessage = "토큰이 이미 사용되었습니다. 보안을 위해 다시 로그인해주세요.";
+                } else if (backendError === "refresh_token_expired") {
+                  errorMessage = "로그인 세션이 만료되었습니다 (7일). 다시 로그인해주세요.";
+                } else if (backendError === "invalid_refresh_token") {
+                  errorMessage = "유효하지 않은 토큰입니다. 다시 로그인해주세요.";
+                } else if (backendMessage) {
+                  // 백엔드에서 보낸 메시지가 있으면 사용
+                  errorMessage = backendMessage;
+                } else {
+                  errorMessage = "로그인 세션이 만료되었습니다. 다시 로그인해주세요.";
+                }
               }
             }
+
+            toast.error(errorMessage);
+
+            // 확실한 리다이렉트
+            setTimeout(() => {
+              window.location.href = "/login";
+            }, 1500);
+
+            return Promise.reject(refreshError);
+          } finally {
+            // 타임아웃 타이머 클리어
+            if (refreshTimeoutId) {
+              clearTimeout(refreshTimeoutId);
+              refreshTimeoutId = null;
+            }
+
+            // 반드시 플래그와 Promise 리셋
+            isRefreshing = false;
+            refreshPromise = null;
+            console.log("[Token Refresh] 갱신 프로세스 종료");
           }
+        })();
 
-          toast.error(errorMessage);
-
-          setTimeout(() => {
-            window.location.href = "/login";
-          }, 1500);
-
-          return Promise.reject(refreshError);
-        }
+        return refreshPromise;
       }
     }
 
