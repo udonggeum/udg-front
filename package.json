@@ -6,9 +6,26 @@
     "dev": "next dev -p 5173",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "build:mobile": "next build && npx cap sync",
+    "ios": "npx cap open ios",
+    "android": "npx cap open android",
+    "cap:sync": "npx cap sync",
+    "cap:update": "npx cap update"
   },
   "dependencies": {
+    "@capacitor/android": "^8.0.2",
+    "@capacitor/app": "^8.0.0",
+    "@capacitor/camera": "^8.0.0",
+    "@capacitor/geolocation": "^8.0.0",
+    "@capacitor/haptics": "^8.0.0",
+    "@capacitor/ios": "^8.0.2",
+    "@capacitor/keyboard": "^8.0.0",
+    "@capacitor/network": "^8.0.0",
+    "@capacitor/push-notifications": "^8.0.0",
+    "@capacitor/share": "^8.0.0",
+    "@capacitor/splash-screen": "^8.0.0",
+    "@capacitor/status-bar": "^8.0.0",
     "@hookform/resolvers": "^5.2.2",
     "@radix-ui/react-accordion": "^1.2.12",
     "@radix-ui/react-alert-dialog": "^1.1.15",
@@ -51,6 +68,9 @@
     "zustand": "^5.0.9"
   },
   "devDependencies": {
+    "@capacitor/assets": "^3.0.5",
+    "@capacitor/cli": "^7.4.5",
+    "@capacitor/core": "^8.0.2",
     "@next/bundle-analyzer": "^16.1.1",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",

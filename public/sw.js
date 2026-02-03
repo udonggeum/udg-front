@@ -97,3 +97,73 @@ self.addEventListener('fetch', (event) => {
       })
   );
 });
+
+// 푸시 알림 수신
+self.addEventListener('push', (event) => {
+  console.log('[Service Worker] Push notification received');
+
+  let data = {
+    title: '우리동네금은방',
+    body: '새로운 알림이 있습니다',
+    icon: '/icon-192x192.png',
+    badge: '/icon-96x96.png',
+  };
+
+  if (event.data) {
+    try {
+      data = event.data.json();
+    } catch (e) {
+      data.body = event.data.text();
+    }
+  }
+
+  const options = {
+    body: data.body,
+    icon: data.icon || '/icon-192x192.png',
+    badge: data.badge || '/icon-96x96.png',
+    vibrate: [200, 100, 200],
+    tag: data.tag || 'udg-notification',
+    requireInteraction: false,
+    data: data.url || '/',
+  };
+
+  event.waitUntil(
+    self.registration.showNotification(data.title || '우리동네금은방', options)
+  );
+});
+
+// 푸시 알림 클릭 처리
+self.addEventListener('notificationclick', (event) => {
+  console.log('[Service Worker] Notification clicked');
+  event.notification.close();
+
+  const urlToOpen = event.notification.data || '/';
+
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      // 이미 열린 창이 있으면 해당 URL로 이동 후 포커스
+      for (const client of clientList) {
+        if ('focus' in client) {
+          client.navigate(urlToOpen);
+          return client.focus();
+        }
+      }
+      // 없으면 새 창 열기
+      if (clients.openWindow) {
+        return clients.openWindow(urlToOpen);
+      }
+    })
+  );
+});
+
+// 백그라운드 동기화
+self.addEventListener('sync', (event) => {
+  console.log('[Service Worker] Background sync:', event.tag);
+
+  if (event.tag === 'sync-offline-messages') {
+    event.waitUntil(
+      // 오프라인 메시지 동기화 로직 (향후 구현)
+      Promise.resolve()
+    );
+  }
+});
