@@ -13,7 +13,7 @@ import { getMyStoreAction } from "@/actions/stores";
 import { getNotificationsAction } from "@/actions/notifications";
 import { useWebSocket } from "@/hooks/useWebSocket";
 import { toast } from "sonner";
-import { User, Settings, LogOut, ChevronDown, MapPin, Menu, X, Store, MessageSquare, TrendingUp, MapPinned, Sparkles, ShieldCheck } from "lucide-react";
+import { User, Settings, LogOut, ChevronDown, MapPin, Menu, X, Store, MessageSquare, TrendingUp, MapPinned, Sparkles, ShieldCheck, Database } from "lucide-react";
 import { isWebView } from "@/lib/webview";
 import LocationSettingModal from "@/components/LocationSettingModal";
 import { NotificationDropdown } from "@/components/notification-dropdown";
@@ -362,14 +362,24 @@ export function Header() {
 
                     {/* Master 전용: 인증 관리 */}
                     {user?.role === "master" && (
-                      <Link
-                        href="/admin/verifications"
-                        onClick={() => setIsDropdownOpen(false)}
-                        className="flex items-center gap-2 px-4 py-2.5 text-caption text-purple-700 hover:bg-purple-50 smooth-transition"
-                      >
-                        <ShieldCheck className="w-4 h-4" />
-                        인증 관리
-                      </Link>
+                      <>
+                        <Link
+                          href="/admin/verifications"
+                          onClick={() => setIsDropdownOpen(false)}
+                          className="flex items-center gap-2 px-4 py-2.5 text-caption text-purple-700 hover:bg-purple-50 smooth-transition"
+                        >
+                          <ShieldCheck className="w-4 h-4" />
+                          인증 관리
+                        </Link>
+                        <Link
+                          href="/admin/gold-price-import"
+                          onClick={() => setIsDropdownOpen(false)}
+                          className="flex items-center gap-2 px-4 py-2.5 text-caption text-purple-700 hover:bg-purple-50 smooth-transition"
+                        >
+                          <Database className="w-4 h-4" />
+                          금시세 관리
+                        </Link>
+                      </>
                     )}
 
                     {/* 앱/모바일 전용: 추가 메뉴 (상단 네비게이션이 숨겨질 때) */}
