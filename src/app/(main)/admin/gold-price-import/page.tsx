@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import axios from "@/lib/axios";
+import { apiClient } from "@/lib/axios";
 import { Loader2 } from "lucide-react";
 
 export default function GoldPriceImportPage() {
@@ -62,7 +62,7 @@ export default function GoldPriceImportPage() {
     setIsLoading(true);
 
     try {
-      const response = await axios.post("/api/v1/gold-prices/import", {
+      const response = await apiClient.post("/gold-prices/import", {
         start_date: formattedStartDate,
         end_date: formattedEndDate,
       });
