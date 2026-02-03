@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, Suspense } from "react";
+import { useEffect, Suspense, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { toast } from "sonner";
@@ -9,13 +9,20 @@ function KakaoCallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { setAuth } = useAuthStore();
+  const hasProcessedRef = useRef(false);
 
   useEffect(() => {
+    // 이미 처리했으면 무시 (중복 호출 방지)
+    if (hasProcessedRef.current) {
+      return;
+    }
+
     const code = searchParams?.get("code");
     const error = searchParams?.get("error");
     const errorDescription = searchParams?.get("error_description");
 
     if (error) {
+      hasProcessedRef.current = true;
       console.error("Kakao OAuth error:", error, errorDescription);
       toast.error(errorDescription || "카카오 로그인이 취소되었습니다.");
       router.push("/login");
@@ -23,13 +30,15 @@ function KakaoCallbackContent() {
     }
 
     if (!code) {
+      hasProcessedRef.current = true;
       toast.error("인증 코드가 없습니다.");
       router.push("/login");
       return;
     }
 
+    hasProcessedRef.current = true;
     handleKakaoCallback(code);
-  }, [searchParams]);
+  }, [searchParams, router]);
 
   const handleKakaoCallback = async (code: string) => {
     try {

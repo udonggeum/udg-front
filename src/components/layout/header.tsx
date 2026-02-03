@@ -26,9 +26,8 @@ import {
 
 export function Header() {
   const router = useRouter();
-  const { isAuthenticated, user, tokens, clearAuth } = useAuthStore();
+  const { isAuthenticated, user, tokens, clearAuth, isLoggingOut, setIsLoggingOut } = useAuthStore();
   const { currentLocation, initializeFromUserAddress } = useLocationStore();
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -167,33 +166,29 @@ export function Header() {
   });
 
   const handleLogout = async () => {
+    if (isLoggingOut) return; // 이미 로그아웃 중이면 무시
+
     setIsLoggingOut(true);
     setIsDropdownOpen(false);
 
-    // 먼저 홈으로 이동 (페이지 전환 후 인증 상태 정리)
-    router.push("/");
-
-    // 약간의 지연 후 인증 정리 (라우팅 완료를 기다림)
-    setTimeout(async () => {
-      try {
-        // 서버에 로그아웃 요청 (refresh token 무효화)
-        if (tokens?.refresh_token) {
-          const result = await logoutUserAction(tokens.refresh_token);
-
-          if (!result.success) {
-            console.warn("로그아웃 API 호출 실패:", result.error);
-            // API 실패해도 클라이언트 측 정리는 진행
-          }
+    try {
+      // 서버에 로그아웃 요청 (refresh token 무효화)
+      if (tokens?.refresh_token) {
+        const result = await logoutUserAction(tokens.refresh_token);
+        if (!result.success) {
+          console.warn("로그아웃 API 호출 실패:", result.error);
         }
-      } catch (error) {
-        console.error("Logout error:", error);
-      } finally {
-        // 클라이언트 측 인증 상태 정리
-        clearAuth();
-        toast.success("로그아웃되었습니다.");
-        setIsLoggingOut(false);
       }
-    }, 100);
+    } catch (error) {
+      console.error("Logout error:", error);
+    } finally {
+      // 클라이언트 측 인증 상태 정리
+      clearAuth(); // isLoggingOut도 false로 초기화됨
+      toast.success("로그아웃되었습니다.");
+
+      // 홈으로 이동
+      router.push("/");
+    }
   };
 
   return (

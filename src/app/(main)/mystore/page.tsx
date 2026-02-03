@@ -40,7 +40,7 @@ interface FormErrors {
 
 export default function MyStoreEditPage() {
   const router = useRouter();
-  const { user, isAuthenticated, tokens } = useAuthStore();
+  const { user, isAuthenticated, tokens, isLoggingOut } = useAuthStore();
   const [isPending, setIsPending] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -91,13 +91,13 @@ export default function MyStoreEditPage() {
 
   // 로그인되지 않았거나 admin이 아니면 마이페이지로 이동
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (!isAuthenticated && !isLoggingOut) {
       router.push("/login");
-    } else if (user?.role !== "admin") {
+    } else if (isAuthenticated && user?.role !== "admin") {
       toast.error("관리자만 접근할 수 있습니다.");
       router.push("/mypage");
     }
-  }, [isAuthenticated, user, router]);
+  }, [isAuthenticated, user?.role, isLoggingOut]);
 
   // 매장 정보 및 지역 데이터 로드
   useEffect(() => {

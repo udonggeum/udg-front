@@ -66,7 +66,14 @@ export function useWebSocket({
   }, [token]);
 
   // 토큰 갱신 함수 (ref로 저장하여 dependency 문제 방지)
+  const refreshPromiseRef = useRef<Promise<string | null> | null>(null);
   const refreshTokenRef = useRef(async (): Promise<string | null> => {
+    // 이미 갱신 중이면 기존 Promise 재사용 (중복 갱신 방지)
+    if (isRefreshingRef.current && refreshPromiseRef.current) {
+      console.log("[WebSocket] 이미 토큰 갱신 중... 기존 Promise 재사용");
+      return refreshPromiseRef.current;
+    }
+
     if (isRefreshingRef.current) {
       console.log("[WebSocket] 이미 토큰 갱신 중...");
       return null;
@@ -85,9 +92,11 @@ export function useWebSocket({
       return null;
     }
 
-    try {
-      isRefreshingRef.current = true;
-      console.log("[WebSocket] 토큰 갱신 시도...");
+    // Promise 생성 및 저장
+    const promise = (async () => {
+      try {
+        isRefreshingRef.current = true;
+        console.log("[WebSocket] 토큰 갱신 시도...");
 
       const { tokens, updateTokens, clearAuth } = useAuthStore.getState();
 
@@ -139,9 +148,14 @@ export function useWebSocket({
       }
 
       return null;
-    } finally {
-      isRefreshingRef.current = false;
-    }
+      } finally {
+        isRefreshingRef.current = false;
+        refreshPromiseRef.current = null;
+      }
+    })();
+
+    refreshPromiseRef.current = promise;
+    return promise;
   });
 
   // ⭐ 토큰 만료 전 자동 갱신 (Option C 핵심 로직)

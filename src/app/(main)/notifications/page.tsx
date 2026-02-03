@@ -22,7 +22,7 @@ import { isWebView } from "@/lib/webview";
 
 export default function NotificationsPage() {
   const router = useRouter();
-  const { user, tokens } = useAuthStore();
+  const { user, tokens, isLoggingOut } = useAuthStore();
   const { setUnreadCount, markAsRead } = useNotificationStore();
 
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -42,10 +42,10 @@ export default function NotificationsPage() {
 
   // 로그인 확인
   useEffect(() => {
-    if (!user || !tokens?.access_token) {
+    if ((!user || !tokens?.access_token) && !isLoggingOut) {
       router.push("/login");
     }
-  }, [user, tokens, router]);
+  }, [user, tokens?.access_token, isLoggingOut]);
 
   // 알림 목록 조회
   const fetchNotifications = useCallback(

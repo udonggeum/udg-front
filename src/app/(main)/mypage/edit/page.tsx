@@ -29,7 +29,7 @@ interface FormErrors {
 
 export default function ProfileEditPage() {
   const router = useRouter();
-  const { user, isAuthenticated, tokens, updateUser } = useAuthStore();
+  const { user, isAuthenticated, tokens, updateUser, isLoggingOut } = useAuthStore();
   const { withTokenRefresh } = useAuthenticatedAction();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isPending, setIsPending] = useState(false);
@@ -67,10 +67,10 @@ export default function ProfileEditPage() {
 
   // 로그인되지 않았으면 로그인 페이지로 이동
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (!isAuthenticated && !isLoggingOut) {
       router.push("/login");
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, isLoggingOut]);
 
   // admin 사용자의 매장 정보 가져오기
   useEffect(() => {

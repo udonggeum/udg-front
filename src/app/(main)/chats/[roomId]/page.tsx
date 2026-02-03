@@ -51,23 +51,104 @@ export default function ChatRoomPage() {
   const [editingMessageId, setEditingMessageId] = useState<number | null>(null);
   const [editingContent, setEditingContent] = useState("");
   const [inWebView, setInWebView] = useState(false);
+
+  // 새로운 상태들
+  const [isOnline, setIsOnline] = useState(true);
+  const [isAtBottom, setIsAtBottom] = useState(true);
+  const [newMessagesCount, setNewMessagesCount] = useState(0);
+  const [uploadProgress, setUploadProgress] = useState(0);
+
   const virtuosoRef = useRef<VirtuosoHandle>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messageInputRef = useRef<HTMLInputElement>(null);
   const searchDebounceRef = useRef<NodeJS.Timeout | null>(null);
+  const sendingQueueRef = useRef<Set<string>>(new Set());
+  const uploadControllerRef = useRef<AbortController | null>(null);
+  const offlineQueueRef = useRef<Message[]>([]);
+  const markAsReadDebounceRef = useRef<NodeJS.Timeout | null>(null);
+  const broadcastChannelRef = useRef<BroadcastChannel | null>(null);
+  const retryingMessagesRef = useRef<Set<string>>(new Set());
+  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Virtuoso를 맨 아래로 스크롤
+  // 메시지 병합 헬퍼 함수 (중복 방지)
+  const mergeMessages = useCallback((existingMessages: Message[], newMessage: Message): Message[] => {
+    const updatedMessages = existingMessages.map(msg => {
+      // tempId가 매칭되면 실제 메시지로 교체
+      if (msg.tempId && newMessage.tempId && msg.tempId === newMessage.tempId) {
+        return { ...newMessage, status: "sent" as const };
+      }
+      return msg;
+    });
+
+    // ID 기반 중복 체크
+    const messageExists = updatedMessages.some(msg => msg.id === newMessage.id && newMessage.id > 0);
+    if (!messageExists && newMessage.id > 0) {
+      updatedMessages.push(newMessage);
+    }
+
+    // 안정적인 정렬 (created_at + id)
+    return updatedMessages.sort((a, b) => {
+      const timeA = new Date(a.created_at).getTime();
+      const timeB = new Date(b.created_at).getTime();
+
+      if (timeA !== timeB) {
+        return timeA - timeB;
+      }
+
+      // 임시 메시지 (id = 0)는 맨 뒤로
+      if (a.id === 0 && b.id !== 0) return 1;
+      if (a.id !== 0 && b.id === 0) return -1;
+
+      return a.id - b.id;
+    });
+  }, []);
+
+  // Virtuoso를 맨 아래로 스크롤 (딜레이 있는 버전)
+  const scrollToBottomDelayed = useCallback(() => {
+    if (scrollTimeoutRef.current) {
+      clearTimeout(scrollTimeoutRef.current);
+    }
+    scrollTimeoutRef.current = setTimeout(() => {
+      virtuosoRef.current?.scrollToIndex({
+        index: "LAST",
+        behavior: "smooth",
+      });
+      setNewMessagesCount(0);
+    }, 100);
+  }, []);
+
+  // Virtuoso를 맨 아래로 스크롤 (즉시)
   const scrollToBottom = useCallback(() => {
     virtuosoRef.current?.scrollToIndex({
       index: "LAST",
       behavior: "smooth",
     });
+    setNewMessagesCount(0);
+  }, []);
+
+  // 스크롤 위치 변경 핸들러
+  const handleAtBottomStateChange = useCallback((atBottom: boolean) => {
+    setIsAtBottom(atBottom);
+    if (atBottom) {
+      setNewMessagesCount(0);
+    }
   }, []);
 
   // 웹뷰 감지
   useEffect(() => {
     setInWebView(isWebView());
+  }, []);
+
+  // 컴포넌트 언마운트 시 모든 타이머 정리
+  useEffect(() => {
+    return () => {
+      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+      if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+      if (markAsReadDebounceRef.current) clearTimeout(markAsReadDebounceRef.current);
+      if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
+      if (uploadControllerRef.current) uploadControllerRef.current.abort();
+    };
   }, []);
 
   // 검색어 디바운싱 (300ms)
@@ -95,26 +176,36 @@ export default function ChatRoomPage() {
     onMessage: (data) => {
       if (data.type === "new_message" && data.message) {
         if (data.message.chat_room_id === roomId) {
-          // 중복 메시지 방지: 이미 존재하는 메시지는 추가하지 않음
-          setMessages((prev) => {
-            const messageExists = prev.some((msg) => msg.id === data.message!.id);
-            if (messageExists) return prev;
+          // mergeMessages로 중복 방지
+          setMessages((prev) => mergeMessages(prev, data.message!));
 
-            // 새 메시지를 추가하고 created_at 기준으로 정렬
-            const newMessages = [...prev, data.message!];
-            return newMessages.sort(
-              (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-            );
-          });
-          // 새 메시지가 도착하면 자동 스크롤 (다른 사용자의 메시지도 포함)
-          setTimeout(() => scrollToBottom(), 100);
-
-          // Mark as read if not my message
-          if (data.message.sender_id !== user?.id && tokens?.access_token) {
-            markAsReadAction(roomId, tokens.access_token).catch((error) => {
-              console.error("Failed to mark message as read:", error);
-            });
+          // 사용자가 맨 아래에 있지 않으면 새 메시지 카운트 증가
+          if (!isAtBottom && data.message.sender_id !== user?.id) {
+            setNewMessagesCount(count => count + 1);
           }
+
+          // 내가 보낸 메시지이거나 맨 아래에 있을 때만 자동 스크롤
+          if (data.message.sender_id === user?.id || isAtBottom) {
+            scrollToBottomDelayed();
+          }
+
+          // 읽음 처리 디바운싱 (500ms)
+          if (data.message.sender_id !== user?.id && tokens?.access_token) {
+            if (markAsReadDebounceRef.current) {
+              clearTimeout(markAsReadDebounceRef.current);
+            }
+            markAsReadDebounceRef.current = setTimeout(() => {
+              markAsReadAction(roomId, tokens.access_token!).catch((error) => {
+                console.error("Failed to mark message as read:", error);
+              });
+            }, 500);
+          }
+
+          // 다른 탭에 알림
+          broadcastChannelRef.current?.postMessage({
+            type: 'MESSAGE_RECEIVED',
+            data: { message: data.message }
+          });
         }
       } else if (data.type === "read" && data.chat_room_id === roomId) {
         // 상대방이 메시지를 읽음
@@ -228,9 +319,170 @@ export default function ChatRoomPage() {
   // 메시지가 로드되거나 업데이트될 때 맨 아래로 스크롤 (초기 로드 시에만)
   useEffect(() => {
     if (messages.length > 0 && !debouncedSearchKeyword) {
-      setTimeout(() => scrollToBottom(), 100);
+      scrollToBottomDelayed();
     }
-  }, [messages.length]); // messages 대신 messages.length로 변경하여 불필요한 재렌더링 방지
+  }, [messages.length, debouncedSearchKeyword, scrollToBottomDelayed]);
+
+  // 오프라인 큐를 localStorage에 저장하는 헬퍼 함수
+  const saveOfflineQueue = useCallback(() => {
+    if (offlineQueueRef.current.length > 0) {
+      // 최대 100개까지만 저장 (localStorage quota 보호)
+      const queueToSave = offlineQueueRef.current.slice(-100);
+      localStorage.setItem(`offline_queue_${roomId}`, JSON.stringify(queueToSave));
+      if (offlineQueueRef.current.length > 100) {
+        offlineQueueRef.current = queueToSave;
+      }
+    } else {
+      localStorage.removeItem(`offline_queue_${roomId}`);
+    }
+  }, [roomId]);
+
+  // 오프라인/온라인 상태 감지
+  useEffect(() => {
+    const handleOnline = async () => {
+      setIsOnline(true);
+      toast.success("네트워크에 다시 연결되었습니다.");
+
+      // 오프라인 큐의 메시지 순차 전송
+      const queue = [...offlineQueueRef.current];
+      offlineQueueRef.current = [];
+      const failedMessages: Message[] = [];
+
+      for (const message of queue) {
+        if (message.tempId && tokens?.access_token) {
+          try {
+            const result = await sendMessageAction(
+              roomId,
+              { content: message.content, message_type: message.message_type },
+              tokens.access_token
+            );
+
+            if (result.success && result.data?.message) {
+              setMessages(prev => mergeMessages(prev, result.data!.message));
+            } else {
+              // 실패 시 실패 목록에 추가
+              failedMessages.push(message);
+            }
+          } catch (error) {
+            // 에러 시 실패 목록에 추가
+            failedMessages.push(message);
+          }
+        }
+      }
+
+      // 실패한 메시지들을 큐에 다시 추가
+      if (failedMessages.length > 0) {
+        offlineQueueRef.current = failedMessages;
+        saveOfflineQueue();
+        toast.error(`${failedMessages.length}개의 메시지 전송에 실패했습니다.`);
+      } else {
+        saveOfflineQueue();
+      }
+    };
+
+    const handleOffline = () => {
+      setIsOnline(false);
+      toast.warning("오프라인 상태입니다. 메시지는 연결 시 전송됩니다.");
+    };
+
+    // 초기 상태 설정
+    setIsOnline(navigator.onLine);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, [roomId, tokens?.access_token, saveOfflineQueue]);
+
+  // BroadcastChannel 초기화 (탭 간 동기화)
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+      broadcastChannelRef.current = new BroadcastChannel(`chat_${roomId}`);
+
+      broadcastChannelRef.current.onmessage = (event) => {
+        const { type, data } = event.data;
+
+        switch (type) {
+          case 'MESSAGE_SENT':
+            // 다른 탭에서 전송한 메시지를 현재 탭에 반영
+            setMessages(prev => mergeMessages(prev, data.message));
+            break;
+          case 'MESSAGE_RECEIVED':
+            // 다른 탭에서 받은 메시지 반영
+            setMessages(prev => mergeMessages(prev, data.message));
+            break;
+          case 'MARK_AS_READ':
+            // 다른 탭에서 읽음 처리 시 반영
+            setMessages(prev => prev.map(msg =>
+              msg.sender_id === user?.id ? { ...msg, is_read: true } : msg
+            ));
+            break;
+        }
+      };
+    }
+
+    return () => {
+      broadcastChannelRef.current?.close();
+    };
+  }, [roomId, user?.id]);
+
+  // 오프라인 큐 localStorage 복원
+  useEffect(() => {
+    const savedQueue = localStorage.getItem(`offline_queue_${roomId}`);
+    if (savedQueue) {
+      try {
+        offlineQueueRef.current = JSON.parse(savedQueue);
+        if (navigator.onLine && offlineQueueRef.current.length > 0) {
+          toast.info(`${offlineQueueRef.current.length}개의 미전송 메시지가 있습니다.`);
+        }
+      } catch (error) {
+        console.error("Failed to parse offline queue:", error);
+      }
+    }
+  }, [roomId]);
+
+  // WebSocket 재연결 시 메시지 동기화
+  const lastConnectionStateRef = useRef(isConnected);
+  useEffect(() => {
+    const wasDisconnected = !lastConnectionStateRef.current;
+    const isNowConnected = isConnected;
+
+    if (wasDisconnected && isNowConnected && tokens?.access_token) {
+      // 재연결되었을 때 새 메시지 가져오기
+      const syncMessages = async () => {
+        try {
+          const messagesResult = await getMessagesAction(roomId, tokens.access_token!);
+          if (messagesResult.success && messagesResult.data) {
+            const newMessages = messagesResult.data.messages;
+
+            // 기존 메시지와 병합 (중복 제거)
+            setMessages((prev) => {
+              const merged = [...prev];
+              newMessages.forEach((newMsg) => {
+                const existingIndex = merged.findIndex(m => m.id === newMsg.id && m.id > 0);
+                if (existingIndex === -1) {
+                  merged.push(newMsg);
+                }
+              });
+              return merged.sort(
+                (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+              );
+            });
+          }
+        } catch (error) {
+          console.error("Failed to sync messages after reconnection:", error);
+        }
+      };
+
+      syncMessages();
+      toast.success("WebSocket 연결이 복구되었습니다.");
+    }
+
+    lastConnectionStateRef.current = isConnected;
+  }, [isConnected, roomId, tokens?.access_token]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -280,10 +532,16 @@ export default function ChatRoomPage() {
       clearTimeout(typingTimeoutRef.current);
     }
 
-    setIsSending(true);
-
     const messageContent = newMessage.trim();
     const tempId = `temp_${Date.now()}_${Math.random()}`;
+
+    // 중복 전송 방지
+    if (sendingQueueRef.current.has(tempId)) {
+      return;
+    }
+    sendingQueueRef.current.add(tempId);
+
+    setIsSending(true);
 
     // 낙관적 UI 업데이트: 임시 메시지를 즉시 표시
     const tempMessage: Message = {
@@ -306,23 +564,40 @@ export default function ChatRoomPage() {
     // 입력창에 다시 포커스
     setTimeout(() => messageInputRef.current?.focus(), 0);
 
+    // 오프라인이면 큐에 추가하고 종료
+    if (!isOnline) {
+      offlineQueueRef.current.push(tempMessage);
+      saveOfflineQueue();
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.tempId === tempId
+            ? { ...msg, status: "pending", error: "오프라인 - 연결 시 전송됩니다" }
+            : msg
+        )
+      );
+      sendingQueueRef.current.delete(tempId);
+      setIsSending(false);
+      toast.info("오프라인 상태입니다. 연결 시 전송됩니다.");
+      return;
+    }
+
     const result = await sendMessageAction(
       roomId,
       { content: messageContent, message_type: "TEXT" },
       tokens.access_token
     );
 
+    sendingQueueRef.current.delete(tempId);
+
     if (result.success && result.data?.message) {
       // 전송 성공: 임시 메시지를 실제 메시지로 교체
-      setMessages((prev) =>
-        prev.map((msg) =>
-          msg.tempId === tempId
-            ? { ...result.data!.message, status: "sent" }
-            : msg
-        ).sort(
-          (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-        )
-      );
+      setMessages((prev) => mergeMessages(prev, { ...result.data!.message, status: "sent" }));
+
+      // 다른 탭에 알림
+      broadcastChannelRef.current?.postMessage({
+        type: 'MESSAGE_SENT',
+        data: { message: result.data.message }
+      });
     } else {
       // 전송 실패: 메시지 상태를 failed로 변경
       setMessages((prev) =>
@@ -342,6 +617,12 @@ export default function ChatRoomPage() {
   const handleRetryMessage = async (message: Message) => {
     if (!tokens?.access_token || !message.tempId) return;
 
+    // 이미 재전송 중이면 중복 방지
+    if (retryingMessagesRef.current.has(message.tempId)) {
+      return;
+    }
+    retryingMessagesRef.current.add(message.tempId);
+
     // 메시지 상태를 pending으로 변경
     setMessages((prev) =>
       prev.map((msg) =>
@@ -357,17 +638,11 @@ export default function ChatRoomPage() {
       tokens.access_token
     );
 
+    retryingMessagesRef.current.delete(message.tempId);
+
     if (result.success && result.data?.message) {
       // 재전송 성공: 임시 메시지를 실제 메시지로 교체
-      setMessages((prev) =>
-        prev.map((msg) =>
-          msg.tempId === message.tempId
-            ? { ...result.data!.message, status: "sent" }
-            : msg
-        ).sort(
-          (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-        )
-      );
+      setMessages((prev) => mergeMessages(prev, { ...result.data!.message, status: "sent" }));
       toast.success("메시지가 전송되었습니다.");
     } else {
       // 재전송 실패
@@ -421,6 +696,17 @@ export default function ChatRoomPage() {
     }
   };
 
+  // 파일 업로드 취소
+  const handleCancelUpload = () => {
+    if (uploadControllerRef.current) {
+      uploadControllerRef.current.abort();
+      uploadControllerRef.current = null;
+      setUploadProgress(0);
+      setIsUploading(false);
+      toast.info("파일 업로드가 취소되었습니다.");
+    }
+  };
+
   // 파일과 함께 메시지 전송
   const handleSendWithFile = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -428,8 +714,17 @@ export default function ChatRoomPage() {
     if (!tokens?.access_token || isSending || isUploading) return;
     if (!selectedFile && !newMessage.trim()) return;
 
+    const tempId = `temp_${Date.now()}_${Math.random()}`;
+
+    // 중복 전송 방지
+    if (sendingQueueRef.current.has(tempId)) {
+      return;
+    }
+    sendingQueueRef.current.add(tempId);
+
     setIsSending(true);
     setIsUploading(true);
+    setUploadProgress(0);
 
     try {
       let fileURL = "";
@@ -448,18 +743,54 @@ export default function ChatRoomPage() {
 
         if (!presignedResult.success || !presignedResult.data) {
           toast.error(presignedResult.error || "파일 업로드 URL 생성에 실패했습니다.");
+          sendingQueueRef.current.delete(tempId);
           return;
         }
 
-        // S3에 파일 업로드
-        const uploadResult = await uploadToS3(
-          presignedResult.data.upload_url,
-          selectedFile
-        );
+        // XMLHttpRequest로 진행률 추적 가능한 업로드
+        const controller = new AbortController();
+        uploadControllerRef.current = controller;
 
-        if (!uploadResult.success) {
-          toast.error(uploadResult.error || "파일 업로드에 실패했습니다.");
+        try {
+          await new Promise<void>((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+
+            // 진행률 추적
+            xhr.upload.addEventListener('progress', (e) => {
+              if (e.lengthComputable) {
+                const percentComplete = Math.round((e.loaded / e.total) * 100);
+                setUploadProgress(percentComplete);
+              }
+            });
+
+            xhr.addEventListener('load', () => {
+              if (xhr.status >= 200 && xhr.status < 300) {
+                resolve();
+              } else {
+                reject(new Error(`Upload failed with status ${xhr.status}`));
+              }
+            });
+
+            xhr.addEventListener('error', () => reject(new Error('Upload failed')));
+            xhr.addEventListener('abort', () => reject(new Error('Upload cancelled')));
+
+            // AbortController와 연결
+            controller.signal.addEventListener('abort', () => xhr.abort());
+
+            xhr.open('PUT', presignedResult.data!.upload_url);
+            xhr.setRequestHeader('Content-Type', selectedFile.type);
+            xhr.send(selectedFile);
+          });
+        } catch (uploadError) {
+          if (uploadError instanceof Error && uploadError.message === 'Upload cancelled') {
+            sendingQueueRef.current.delete(tempId);
+            return;
+          }
+          toast.error("파일 업로드에 실패했습니다.");
+          sendingQueueRef.current.delete(tempId);
           return;
+        } finally {
+          uploadControllerRef.current = null;
         }
 
         fileURL = presignedResult.data.file_url;
@@ -477,7 +808,6 @@ export default function ChatRoomPage() {
       }
 
       const messageContent = newMessage.trim() || (messageType === "IMAGE" ? "이미지" : fileName);
-      const tempId = `temp_${Date.now()}_${Math.random()}`;
 
       // 낙관적 UI 업데이트: 임시 메시지를 즉시 표시
       const tempMessage: Message = {
@@ -502,6 +832,25 @@ export default function ChatRoomPage() {
       // 입력창에 다시 포커스
       setTimeout(() => messageInputRef.current?.focus(), 0);
 
+      // 오프라인이면 큐에 추가하고 종료
+      if (!isOnline) {
+        offlineQueueRef.current.push(tempMessage);
+        saveOfflineQueue();
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.tempId === tempId
+              ? { ...msg, status: "pending", error: "오프라인 - 연결 시 전송됩니다" }
+              : msg
+          )
+        );
+        sendingQueueRef.current.delete(tempId);
+        setIsSending(false);
+        setIsUploading(false);
+        setUploadProgress(0);
+        toast.info("오프라인 상태입니다. 연결 시 전송됩니다.");
+        return;
+      }
+
       const result = await sendMessageAction(
         roomId,
         {
@@ -513,17 +862,17 @@ export default function ChatRoomPage() {
         tokens.access_token
       );
 
+      sendingQueueRef.current.delete(tempId);
+
       if (result.success && result.data?.message) {
         // 전송 성공: 임시 메시지를 실제 메시지로 교체
-        setMessages((prev) =>
-          prev.map((msg) =>
-            msg.tempId === tempId
-              ? { ...result.data!.message, status: "sent" }
-              : msg
-          ).sort(
-            (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-          )
-        );
+        setMessages((prev) => mergeMessages(prev, { ...result.data!.message, status: "sent" }));
+
+        // 다른 탭에 알림
+        broadcastChannelRef.current?.postMessage({
+          type: 'MESSAGE_SENT',
+          data: { message: result.data.message }
+        });
       } else {
         // 전송 실패: 메시지 상태를 failed로 변경
         setMessages((prev) =>
@@ -536,10 +885,12 @@ export default function ChatRoomPage() {
         toast.error(result.error || "메시지 전송에 실패했습니다.");
       }
     } catch (error) {
+      sendingQueueRef.current.delete(tempId);
       toast.error("메시지 전송 중 오류가 발생했습니다.");
     } finally {
       setIsSending(false);
       setIsUploading(false);
+      setUploadProgress(0);
     }
   };
 
@@ -827,7 +1178,7 @@ export default function ChatRoomPage() {
                         </span>
                       )}
                       {room.product.price && (
-                        <span className={`bg-amber-500 text-white px-1.5 py-0.5 rounded font-bold ${inWebView ? "text-[9px]" : "text-[10px]"}`}>
+                        <span className={`bg-[#C9A227] text-white px-1.5 py-0.5 rounded font-bold ${inWebView ? "text-[9px]" : "text-[10px]"}`}>
                           {room.product.price.toLocaleString()}원
                         </span>
                       )}
@@ -842,7 +1193,7 @@ export default function ChatRoomPage() {
                       /* 판매중 */
                       <button
                         onClick={handleReserve}
-                        className={`flex-1 bg-[#C9A227] hover:bg-[#8A6A00] text-gray-900 font-bold rounded transition-colors ${
+                        className={`flex-1 bg-[#C9A227] hover:bg-[#8A6A00] text-white font-bold rounded transition-colors ${
                           inWebView ? "px-2.5 py-1 text-[11px]" : "px-3 py-1.5 text-xs"
                         }`}
                       >
@@ -900,10 +1251,20 @@ export default function ChatRoomPage() {
             <Search className={inWebView ? "w-4 h-4" : "w-5 h-5"} />
           </Button>
 
-          {isConnected && (
+          {!isOnline ? (
+            <div className={`flex items-center gap-1 text-red-600 ${inWebView ? "text-[10px]" : "text-xs"}`}>
+              <div className={`bg-red-500 rounded-full ${inWebView ? "w-1.5 h-1.5" : "w-2 h-2"}`} />
+              {!inWebView && "오프라인"}
+            </div>
+          ) : isConnected ? (
             <div className={`flex items-center gap-1 text-green-600 ${inWebView ? "text-[10px]" : "text-xs"}`}>
               <div className={`bg-green-500 rounded-full animate-pulse ${inWebView ? "w-1.5 h-1.5" : "w-2 h-2"}`} />
               {!inWebView && "연결됨"}
+            </div>
+          ) : (
+            <div className={`flex items-center gap-1 text-yellow-600 ${inWebView ? "text-[10px]" : "text-xs"}`}>
+              <div className={`bg-yellow-500 rounded-full ${inWebView ? "w-1.5 h-1.5" : "w-2 h-2"}`} />
+              {!inWebView && "연결 중..."}
             </div>
           )}
         </div>
@@ -944,6 +1305,7 @@ export default function ChatRoomPage() {
           className="flex-1"
           followOutput="smooth"
           initialTopMostItemIndex={filteredMessages.length > 0 ? filteredMessages.length - 1 : undefined}
+          atBottomStateChange={handleAtBottomStateChange}
           itemContent={(index, message) => {
             const isMine = message.sender_id === user?.id;
             const isFailed = message.status === "failed";
@@ -1098,7 +1460,7 @@ export default function ChatRoomPage() {
 
                   <div
                     className={`flex items-center gap-1 mt-1 ${
-                      isMine ? "text-[#8A6A00]" : "text-gray-500"
+                      isMine ? "text-gray-600" : "text-gray-500"
                     } ${inWebView ? "text-[10px]" : "text-xs"}`}
                   >
                     {isPending ? (
@@ -1140,6 +1502,21 @@ export default function ChatRoomPage() {
         />
       )}
 
+      {/* 새 메시지 알림 버튼 */}
+      {!isAtBottom && newMessagesCount > 0 && (
+        <div className="absolute bottom-24 left-1/2 transform -translate-x-1/2 z-10">
+          <button
+            onClick={scrollToBottom}
+            className="bg-[#C9A227] hover:bg-[#8A6A00] text-white font-semibold rounded-full shadow-lg transition-all flex items-center gap-2 px-4 py-2"
+          >
+            <span className="text-sm">새 메시지 {newMessagesCount}개</span>
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+        </div>
+      )}
+
       {/* Input */}
       <div className={`border-t border-gray-200 flex-shrink-0 ${inWebView ? "pt-2.5" : "pt-4"}`}>
         {/* File Preview */}
@@ -1164,11 +1541,25 @@ export default function ChatRoomPage() {
                 <p className={`text-[#8A6A00] ${inWebView ? "text-[10px]" : "text-xs"}`}>
                   {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
                 </p>
+                {isUploading && uploadProgress > 0 && (
+                  <div className="mt-1">
+                    <div className="w-full bg-gray-200 rounded-full h-1.5">
+                      <div
+                        className="bg-[#C9A227] h-1.5 rounded-full transition-all duration-300"
+                        style={{ width: `${uploadProgress}%` }}
+                      />
+                    </div>
+                    <p className={`text-[#C9A227] font-semibold mt-0.5 ${inWebView ? "text-[10px]" : "text-xs"}`}>
+                      {uploadProgress}%
+                    </p>
+                  </div>
+                )}
               </div>
               <button
                 type="button"
-                onClick={handleCancelFile}
+                onClick={isUploading ? handleCancelUpload : handleCancelFile}
                 className={`hover:bg-white rounded transition-colors ${inWebView ? "p-0.5" : "p-1"}`}
+                title={isUploading ? "업로드 취소" : "파일 제거"}
               >
                 <X className={`text-gray-600 hover:text-red-600 transition-colors ${inWebView ? "w-3.5 h-3.5" : "w-4 h-4"}`} />
               </button>

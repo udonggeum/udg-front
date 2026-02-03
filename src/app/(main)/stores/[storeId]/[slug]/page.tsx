@@ -184,6 +184,7 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
   const [selectedNewsType, setSelectedNewsType] = useState<PostType | "all">("all");
   const [imageError, setImageError] = useState(false);
   const [isWishlisted, setIsWishlisted] = useState(false);
+  const [isTogglingWishlist, setIsTogglingWishlist] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [editSections, setEditSections] = useState({
     name: false,
@@ -530,6 +531,9 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
       return;
     }
 
+    if (isTogglingWishlist) return; // 중복 클릭 방지
+
+    setIsTogglingWishlist(true);
     try {
       const result = await toggleStoreLikeAction(Number(storeId), accessToken);
 
@@ -548,6 +552,8 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
     } catch (error) {
       console.error("Toggle store like error:", error);
       toast.error("좋아요 처리 중 오류가 발생했습니다");
+    } finally {
+      setIsTogglingWishlist(false);
     }
   };
 

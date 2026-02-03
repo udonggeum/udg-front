@@ -49,7 +49,7 @@ import { isWebView } from "@/lib/webview";
 
 export default function MyPage() {
   const router = useRouter();
-  const { isAuthenticated, user, tokens, clearAuth, updateUser } = useAuthStore();
+  const { isAuthenticated, user, tokens, clearAuth, updateUser, isLoggingOut, setIsLoggingOut } = useAuthStore();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // 작성한 글 상태
@@ -90,10 +90,10 @@ export default function MyPage() {
   }, []);
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (!isAuthenticated && !isLoggingOut) {
       router.push("/login");
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, isLoggingOut]);
 
   // 🚀 병렬 API 호출 최적화: 페이지 로드 시 모든 데이터를 동시에 가져옴
   useEffect(() => {
@@ -261,16 +261,18 @@ export default function MyPage() {
   };
 
   const handleLogout = async () => {
+    if (isLoggingOut) return; // 이미 로그아웃 중이면 무시
+
+    setIsLoggingOut(true);
+
     try {
       if (tokens?.refresh_token) {
         await logoutUserAction(tokens.refresh_token);
       }
-      clearAuth();
-      toast.success("로그아웃되었습니다.");
-      router.push("/");
     } catch (error) {
       console.error("Logout error:", error);
-      clearAuth();
+    } finally {
+      clearAuth(); // isLoggingOut도 false로 초기화됨
       toast.success("로그아웃되었습니다.");
       router.push("/");
     }

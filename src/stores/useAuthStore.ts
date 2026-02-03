@@ -9,6 +9,7 @@ interface AuthState {
   user: User | null;
   tokens: Tokens | null;
   isAuthenticated: boolean;
+  isLoggingOut: boolean;
 }
 
 /**
@@ -19,6 +20,7 @@ interface AuthActions {
   updateUser: (user: User) => void;
   updateTokens: (tokens: Tokens) => void;
   clearAuth: () => void;
+  setIsLoggingOut: (isLoggingOut: boolean) => void;
 }
 
 /**
@@ -49,6 +51,7 @@ export const useAuthStore = create<AuthStore>()(
       user: null,
       tokens: null,
       isAuthenticated: false,
+      isLoggingOut: false,
 
       // 액션: 로그인 시 사용자 정보와 토큰 저장
       setAuth: (user, tokens) =>
@@ -79,7 +82,12 @@ export const useAuthStore = create<AuthStore>()(
           user: null,
           tokens: null,
           isAuthenticated: false,
+          isLoggingOut: false,
         }),
+
+      // 액션: 로그아웃 플래그 설정
+      setIsLoggingOut: (isLoggingOut) =>
+        set({ isLoggingOut }),
     }),
     {
       name: 'auth-storage', // localStorage 키 이름

@@ -250,6 +250,8 @@ export default function CommunityWritePage() {
       return;
     }
 
+    if (isSubmitting) return; // 중복 제출 방지
+
     setIsSubmitting(true);
 
     const requestData: CreatePostRequest = {
@@ -312,6 +314,7 @@ export default function CommunityWritePage() {
       const postId = result.data.id;
       const postSlug = result.data.slug || postId.toString();
       toast.success("게시글이 작성되었습니다!");
+      setIsSubmitting(false); // 라우터 푸시 전 상태 해제
       router.push(`/community/posts/${postId}/${postSlug}`);
     } else {
       // 401은 withTokenRefresh에서 자동 처리됨, 다른 에러만 표시

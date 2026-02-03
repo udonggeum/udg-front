@@ -159,6 +159,8 @@ export default function StoreRegisterPage() {
       return;
     }
 
+    if (isSubmitting) return; // 중복 제출 방지
+
     setIsSubmitting(true);
 
     try {

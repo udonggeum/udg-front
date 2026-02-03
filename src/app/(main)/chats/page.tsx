@@ -28,7 +28,7 @@ type ChatFilter = "all" | "STORE" | "received" | "sent";
 
 export default function ChatsPage() {
   const router = useRouter();
-  const { user, tokens, isAuthenticated } = useAuthStore();
+  const { user, tokens, isAuthenticated, isLoggingOut } = useAuthStore();
   const [rooms, setRooms] = useState<ChatRoomWithUnread[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [deleteRoomId, setDeleteRoomId] = useState<number | null>(null);
@@ -55,14 +55,16 @@ export default function ChatsPage() {
   };
 
   useEffect(() => {
-    if (!isAuthenticated || !tokens?.access_token) {
+    if ((!isAuthenticated || !tokens?.access_token) && !isLoggingOut) {
       router.push("/login");
       return;
     }
 
-    fetchRooms();
+    if (isAuthenticated && tokens?.access_token) {
+      fetchRooms();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAuthenticated, tokens?.access_token]);
+  }, [isAuthenticated, tokens?.access_token, isLoggingOut]);
 
   const getOtherUser = (room: ChatRoomWithUnread) => {
     if (!user) return null;
@@ -201,7 +203,7 @@ export default function ChatsPage() {
         >
           전체
           {roomCounts.all > 0 && (
-            <span className={`ml-2 ${selectedFilter === "all" ? "text-gray-300" : "text-gray-400"}`}>
+            <span className={`ml-2 ${selectedFilter === "all" ? "text-white/80" : "text-gray-400"}`}>
               {roomCounts.all}
             </span>
           )}
@@ -219,7 +221,7 @@ export default function ChatsPage() {
           <Store className={inWebView ? "w-3.5 h-3.5" : "w-4 h-4"} />
           매장 문의
           {roomCounts.STORE > 0 && (
-            <span className={`ml-1 ${selectedFilter === "STORE" ? "text-gray-300" : "text-gray-400"}`}>
+            <span className={`ml-1 ${selectedFilter === "STORE" ? "text-white/80" : "text-gray-400"}`}>
               {roomCounts.STORE}
             </span>
           )}
@@ -237,7 +239,7 @@ export default function ChatsPage() {
           <MessageCircle className={inWebView ? "w-3.5 h-3.5" : "w-4 h-4"} />
           받은 문의
           {roomCounts.received > 0 && (
-            <span className={`ml-1 ${selectedFilter === "received" ? "text-gray-300" : "text-gray-400"}`}>
+            <span className={`ml-1 ${selectedFilter === "received" ? "text-white/80" : "text-gray-400"}`}>
               {roomCounts.received}
             </span>
           )}
@@ -255,7 +257,7 @@ export default function ChatsPage() {
           <MessageCircle className={inWebView ? "w-3.5 h-3.5" : "w-4 h-4"} />
           보낸 문의
           {roomCounts.sent > 0 && (
-            <span className={`ml-1 ${selectedFilter === "sent" ? "text-gray-300" : "text-gray-400"}`}>
+            <span className={`ml-1 ${selectedFilter === "sent" ? "text-white/80" : "text-gray-400"}`}>
               {roomCounts.sent}
             </span>
           )}
@@ -376,7 +378,7 @@ export default function ChatsPage() {
                               </span>
                             )}
                             {room.product.price && (
-                              <span className="inline-flex items-center text-xs bg-amber-500 text-white px-2 py-1 rounded font-bold">
+                              <span className="inline-flex items-center text-xs bg-[#C9A227] text-white px-2 py-1 rounded font-bold">
                                 {room.product.price.toLocaleString()}원
                               </span>
                             )}

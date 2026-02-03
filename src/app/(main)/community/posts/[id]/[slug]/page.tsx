@@ -55,6 +55,8 @@ export default function CommunityDetailPage() {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const [inWebView, setInWebView] = useState(false);
+  const [isLiking, setIsLiking] = useState(false);
+  const [likingCommentId, setLikingCommentId] = useState<number | null>(null);
 
   const postId = Number(params?.id);
 
@@ -93,21 +95,26 @@ export default function CommunityDetailPage() {
   }, [postId, tokens?.access_token]);
 
   const handleLike = async () => {
-    if (!tokens?.access_token) return;
+    if (!tokens?.access_token || isLiking) return;
 
-    const result = await togglePostLikeAction(postId, tokens.access_token);
-    if (result.success && post) {
-      const updatedPost = {
-        ...post,
-        is_liked: result.data?.is_liked || false,
-        data: {
-          ...post.data,
-          like_count: result.data?.is_liked
-            ? post.data.like_count + 1
-            : post.data.like_count - 1,
-        },
-      };
-      setPost(updatedPost);
+    setIsLiking(true);
+    try {
+      const result = await togglePostLikeAction(postId, tokens.access_token);
+      if (result.success && post) {
+        const updatedPost = {
+          ...post,
+          is_liked: result.data?.is_liked || false,
+          data: {
+            ...post.data,
+            like_count: result.data?.is_liked
+              ? post.data.like_count + 1
+              : post.data.like_count - 1,
+          },
+        };
+        setPost(updatedPost);
+      }
+    } finally {
+      setIsLiking(false);
     }
   };
 
@@ -157,12 +164,17 @@ export default function CommunityDetailPage() {
   };
 
   const handleCommentLike = async (commentId: number) => {
-    if (!tokens?.access_token) return;
+    if (!tokens?.access_token || likingCommentId !== null) return;
 
-    await toggleCommentLikeAction(commentId, tokens.access_token);
-    const updatedPost = await getPostDetailAction(postId, tokens.access_token);
-    if (updatedPost.success && updatedPost.data) {
-      setPost(updatedPost.data);
+    setLikingCommentId(commentId);
+    try {
+      await toggleCommentLikeAction(commentId, tokens.access_token);
+      const updatedPost = await getPostDetailAction(postId, tokens.access_token);
+      if (updatedPost.success && updatedPost.data) {
+        setPost(updatedPost.data);
+      }
+    } finally {
+      setLikingCommentId(null);
     }
   };
 
