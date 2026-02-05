@@ -449,92 +449,19 @@ function StoresPageContent() {
       toast.error("검색어를 입력해주세요");
       return;
     }
-    if (!window.kakao || !window.kakao.maps || !window.kakao.maps.services) {
-      setAppliedSearchQuery(searchQuery);
-      setCurrentPage(1);
-      setSearchCenter(null);
-      toast.info("매장명으로 검색합니다");
-      return;
+
+    // 1단계: 먼저 매장명으로 직접 검색 시도
+    setAppliedSearchQuery(searchQuery);
+    setCurrentPage(1);
+    setSearchCenter(null);
+    setSearchPending(true);
+    setLastSearchQuery(`"${searchQuery}"`);
+
+    if (window.innerWidth < 768) {
+      setIsMobileMapOpen(false);
     }
 
-    const geocoder = new window.kakao.maps.services.Geocoder();
-    const places = new window.kakao.maps.services.Places();
-
-    const getZoomLevelForAddress = (addressName: string) => {
-      if (/^(서울|부산|대구|인천|광주|대전|울산|세종|경기도|강원도|충청북도|충청남도|전라북도|전라남도|경상북도|경상남도|제주)/.test(addressName)) {
-        return 9;
-      }
-      if (/[시군구]/.test(addressName)) {
-        return 6;
-      }
-      if (/[동읍면]/.test(addressName)) {
-        return 5;
-      }
-      return 6;
-    };
-    geocoder.addressSearch(searchQuery, (addressResult: any, addressStatus: any) => {
-      if (addressStatus === window.kakao.maps.services.Status.OK && addressResult.length > 0) {
-        const location = {
-          lat: parseFloat(addressResult[0].y),
-          lng: parseFloat(addressResult[0].x),
-        };
-
-        const addressName = addressResult[0].address_name;
-        const zoomLevel = getZoomLevelForAddress(addressName);
-        setMapCenter(location);
-        setMapLevel(zoomLevel);
-
-        // 해당 위치 기준으로 매장 검색
-        setSearchCenter(location);
-        setCurrentPage(1);
-        setAppliedSearchQuery("");
-        setSearchPending(true);
-        setLastSearchQuery(`${addressName} 지역`);
-
-        if (window.innerWidth < 768) {
-          setIsMobileMapOpen(true);
-        }
-
-        toast.loading(`${addressName} 지역 매장을 검색하는 중...`);
-        return;
-      }
-      places.keywordSearch(searchQuery, (placeResult: any, placeStatus: any) => {
-        if (placeStatus === window.kakao.maps.services.Status.OK && placeResult.length > 0) {
-          const firstPlace = placeResult[0];
-          const location = {
-            lat: parseFloat(firstPlace.y),
-            lng: parseFloat(firstPlace.x),
-          };
-          setMapCenter(location);
-          setMapLevel(4);
-
-          // 해당 위치 기준으로 매장 검색
-          setSearchCenter(location);
-          setCurrentPage(1);
-          setAppliedSearchQuery("");
-          setSearchPending(true);
-          setLastSearchQuery(`${firstPlace.place_name} 근처`);
-
-          if (window.innerWidth < 768) {
-            setIsMobileMapOpen(true);
-          }
-
-          toast.loading(`${firstPlace.place_name} 근처 매장을 검색하는 중...`);
-          return;
-        }
-        setAppliedSearchQuery(searchQuery);
-        setCurrentPage(1);
-        setSearchCenter(null);
-        setSearchPending(true);
-        setLastSearchQuery(`"${searchQuery}"`);
-
-        if (window.innerWidth < 768) {
-          setIsMobileMapOpen(false);
-        }
-
-        toast.loading(`"${searchQuery}" 매장명으로 검색하는 중...`);
-      });
-    });
+    toast.loading(`"${searchQuery}" 매장명으로 검색하는 중...`);
   }, [searchQuery]);
 
   useEffect(() => {
@@ -736,8 +663,10 @@ function StoresPageContent() {
       </div>
 
       {/* Main Content - 모바일에서는 일반 스크롤, 데스크톱에서는 고정 레이아웃 */}
-      <div className={`md:fixed md:inset-0 md:top-[60px] flex flex-col md:flex-row ${
-        isMobileMapOpen ? "h-[calc(100vh-120px)]" : ""
+      <div className={`flex flex-col md:flex-row ${
+        isMobileMapOpen
+          ? `fixed inset-0 md:top-[60px] md:relative ${inWebView ? "top-[108px]" : "top-[116px]"}`
+          : "md:fixed md:inset-0 md:top-[60px]"
       }`}>
         {/* 좌측 패널 - 검색 및 리스트 */}
         <div className={`w-full md:w-[420px] lg:w-[480px] flex-shrink-0 md:border-r border-gray-100 bg-white ${
@@ -966,6 +895,33 @@ function StoresPageContent() {
                       >
                         전체 매장 보기
                       </Button>
+                    </div>
+                  </>
+                ) : appliedSearchQuery ? (
+                  <>
+                    <p className="text-caption text-gray-500 mb-4">
+                      &quot;{appliedSearchQuery}&quot; 매장명으로 검색한 결과가 없습니다
+                    </p>
+                    <div className="flex flex-col gap-2 w-full max-w-xs">
+                      <p className="text-small text-gray-600 mb-2">
+                        💡 다음 방법을 시도해보세요
+                      </p>
+                      <Button
+                        onClick={() => {
+                          setAppliedSearchQuery("");
+                          setSearchQuery("");
+                          setCurrentPage(1);
+                          toast.info("검색이 초기화되었습니다");
+                        }}
+                        variant="outline"
+                        className="min-h-[44px]"
+                      >
+                        전체 매장 보기
+                      </Button>
+                      <p className="text-xs text-gray-500 mt-2">
+                        또는 &apos;현재 위치로 검색&apos; 버튼을 눌러<br />
+                        근처 매장을 찾아보세요
+                      </p>
                     </div>
                   </>
                 ) : (

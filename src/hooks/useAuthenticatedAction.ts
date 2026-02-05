@@ -58,9 +58,17 @@ export function useAuthenticatedAction() {
    * Handles logout - clears auth and redirects to login
    */
   const handleLogout = useCallback(() => {
+    // 1. 즉시 인증 상태 클리어
     clearAuth();
-    toast.error("로그인이 만료되었습니다. 다시 로그인해주세요.");
-    router.push("/login");
+
+    // 2. localStorage가 업데이트될 시간을 주기 위해 약간의 지연
+    setTimeout(() => {
+      // 3. 에러 메시지 표시
+      toast.error("로그인이 만료되었습니다. 다시 로그인해주세요.");
+
+      // 4. 로그인 페이지로 리다이렉트 (replace로 뒤로가기 방지)
+      router.replace("/login");
+    }, 100);
   }, [clearAuth, router]);
 
   /**

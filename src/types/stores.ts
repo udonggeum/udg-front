@@ -132,11 +132,14 @@ export interface StoresRequest {
   region?: string;
   district?: string;
   category?: string;
-  search?: string; // 검색어
+  search?: string; // 검색어 (매장명, 주소 등)
   page?: number;
   page_size?: number;
   user_lat?: number; // 사용자 위도 (거리순 정렬용)
   user_lng?: number; // 사용자 경도 (거리순 정렬용)
+  center_lat?: number; // 검색 중심점 위도 (지도 기반 검색)
+  center_lng?: number; // 검색 중심점 경도 (지도 기반 검색)
+  radius?: number; // 검색 반경 (미터 단위)
   is_verified?: boolean; // 인증 매장 필터
   is_managed?: boolean; // 관리 매장 필터
 }

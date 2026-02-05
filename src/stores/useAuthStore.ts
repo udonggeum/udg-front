@@ -77,13 +77,21 @@ export const useAuthStore = create<AuthStore>()(
         })),
 
       // 액션: 로그아웃 시 모든 상태 초기화
-      clearAuth: () =>
+      clearAuth: () => {
         set({
           user: null,
           tokens: null,
           isAuthenticated: false,
           isLoggingOut: false,
-        }),
+        });
+
+        // localStorage에서도 즉시 제거 (persist 미들웨어 외에도 명시적으로)
+        try {
+          localStorage.removeItem('auth-storage');
+        } catch (error) {
+          console.error('Failed to clear auth from localStorage:', error);
+        }
+      },
 
       // 액션: 로그아웃 플래그 설정
       setIsLoggingOut: (isLoggingOut) =>
