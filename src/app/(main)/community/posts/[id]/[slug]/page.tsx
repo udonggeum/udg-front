@@ -680,9 +680,11 @@ export default function CommunityDetailPage() {
 
         {/* 내용 */}
         <div className={`bg-white rounded-2xl shadow-sm border border-gray-200 ${inWebView ? "p-4 mb-4" : "p-6 mb-6"}`}>
-          <p className={`whitespace-pre-wrap text-gray-700 leading-relaxed ${inWebView ? "text-sm" : "text-[16px]"}`}>
-            {postData.content}
-          </p>
+          <div className="max-w-3xl mx-auto">
+            <p className={`whitespace-pre-wrap text-gray-800 ${inWebView ? "text-[15px] leading-[1.8]" : "text-[17px] leading-[1.9]"}`}>
+              {postData.content}
+            </p>
+          </div>
         </div>
 
         {/* 매장 정보 카드 */}

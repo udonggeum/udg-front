@@ -13,7 +13,7 @@ import type {
   PostType,
   PostListResponse,
 } from "@/types/community";
-import { Search, SlidersHorizontal, MapPin, X, ChevronDown, Heart, MessageCircle, Store as StoreIcon } from "lucide-react";
+import { Search, SlidersHorizontal, MapPin, X, ChevronDown, Heart, MessageCircle, Store as StoreIcon, ChevronLeft, ChevronRight } from "lucide-react";
 import { getUserDisplayName, getUserImageUrl } from "@/lib/utils";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { PullToRefreshIndicator } from "@/components/PullToRefreshIndicator";
@@ -53,6 +53,117 @@ const SkeletonCard = memo(function SkeletonCard({ viewMode }: { viewMode: "grid"
           </div>
         </div>
       </div>
+    </div>
+  );
+});
+
+// 이미지 캐러셀 컴포넌트
+const ImageCarousel = memo(function ImageCarousel({
+  images,
+  title
+}: {
+  images: string[];
+  title: string;
+}) {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [touchStart, setTouchStart] = useState(0);
+  const [touchEnd, setTouchEnd] = useState(0);
+
+  const handlePrevious = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setCurrentIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
+  };
+
+  const handleNext = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setCurrentIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (!touchStart || !touchEnd) return;
+
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > 50;
+    const isRightSwipe = distance < -50;
+
+    if (isLeftSwipe) {
+      setCurrentIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
+    }
+    if (isRightSwipe) {
+      setCurrentIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
+    }
+
+    setTouchStart(0);
+    setTouchEnd(0);
+  };
+
+  if (images.length === 0) return null;
+
+  return (
+    <div
+      className="relative w-full aspect-[4/3] bg-gray-50"
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+    >
+      <Image
+        src={images[currentIndex]}
+        alt={`${title} ${currentIndex + 1}`}
+        fill
+        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+        className="object-cover"
+        loading="lazy"
+        unoptimized
+      />
+
+      {/* 이미지 개수 표시 */}
+      {images.length > 1 && (
+        <>
+          <div className="absolute top-3 right-3 bg-black/60 backdrop-blur-sm text-white text-xs font-medium px-2 py-1 rounded-full">
+            {currentIndex + 1} / {images.length}
+          </div>
+
+          {/* 좌우 화살표 버튼 */}
+          <button
+            onClick={handlePrevious}
+            className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full p-1.5 transition-colors"
+            aria-label="이전 이미지"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+          <button
+            onClick={handleNext}
+            className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full p-1.5 transition-colors"
+            aria-label="다음 이미지"
+          >
+            <ChevronRight className="w-5 h-5" />
+          </button>
+
+          {/* 인디케이터 점 */}
+          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
+            {images.map((_, idx) => (
+              <div
+                key={idx}
+                className={`w-1.5 h-1.5 rounded-full transition-all ${
+                  idx === currentIndex
+                    ? "bg-white w-4"
+                    : "bg-white/50"
+                }`}
+              />
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 });
@@ -269,13 +380,13 @@ function CommunityPageContent() {
       <div className="min-h-screen bg-white">
       {/* 회색 배경 - 메인 카테고리만 (Sticky) */}
       <div className="sticky top-[60px] z-40 bg-gray-50">
-        <div className={`max-w-[1200px] mx-auto px-page ${inWebView ? "py-2" : "py-4"}`}>
-          <div className={`flex items-center justify-between ${inWebView ? "gap-2" : "gap-3"}`}>
-            <div className="flex gap-1">
+        <div className={`max-w-[1200px] mx-auto ${inWebView ? "px-3 py-2" : "px-4 sm:px-page py-3 sm:py-4"}`}>
+          <div className={`flex items-center justify-between ${inWebView ? "gap-2" : "gap-2 sm:gap-3"}`}>
+            <div className={`flex ${inWebView ? "gap-1" : "gap-1.5"}`}>
               <button
                 onClick={() => handleMainCategoryChange("market")}
                 className={`font-bold rounded-lg transition-all ${
-                  inWebView ? "px-3 py-1.5 text-xs" : "px-5 py-2 text-[15px]"
+                  inWebView ? "px-3 py-1.5 text-xs" : "px-4 py-2 text-sm sm:px-5 sm:text-[15px]"
                 } ${
                   mainCategory === "market"
                     ? "bg-[#C9A227] text-white"
@@ -287,7 +398,7 @@ function CommunityPageContent() {
               <button
                 onClick={() => handleMainCategoryChange("community")}
                 className={`font-bold rounded-lg transition-all ${
-                  inWebView ? "px-3 py-1.5 text-xs" : "px-5 py-2 text-[15px]"
+                  inWebView ? "px-3 py-1.5 text-xs" : "px-4 py-2 text-sm sm:px-5 sm:text-[15px]"
                 } ${
                   mainCategory === "community"
                     ? "bg-[#C9A227] text-white"
@@ -301,11 +412,15 @@ function CommunityPageContent() {
             {/* 글작성 버튼 */}
             {user && (
               <Link href="/community/write">
-                <Button variant="brand-primary" size={inWebView ? "xs" : "sm"} className={inWebView ? "gap-1" : "gap-1.5"}>
-                  <svg className={inWebView ? "w-3 h-3" : "w-4 h-4"} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <Button
+                  variant="brand-primary"
+                  size={inWebView ? "xs" : "sm"}
+                  className={inWebView ? "gap-1 px-3 py-1.5" : "gap-1 sm:gap-1.5 px-3 sm:px-4"}
+                >
+                  <svg className={inWebView ? "w-3 h-3" : "w-3.5 h-3.5 sm:w-4 sm:h-4"} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                   </svg>
-                  <span className={inWebView ? "text-xs" : ""}>글작성</span>
+                  <span className={inWebView ? "text-xs" : "text-xs sm:text-sm"}>글작성</span>
                 </Button>
               </Link>
             )}
@@ -315,16 +430,18 @@ function CommunityPageContent() {
 
       {/* 흰색 배경 - 서브 카테고리 + 필터 (Sticky) */}
       <div className={`sticky z-30 bg-white ${inWebView ? "top-[92px]" : "top-[108px]"}`}>
-        <div className={`max-w-[1200px] mx-auto px-page border-b border-gray-200 ${inWebView ? "py-2" : "py-3"}`}>
-          <div className="flex items-center justify-between gap-3">
+        <div className={`max-w-[1200px] mx-auto border-b border-gray-200 ${
+          inWebView ? "px-3 py-2" : "px-4 sm:px-page py-2.5 sm:py-3"
+        }`}>
+          <div className={`flex items-center justify-between ${inWebView ? "gap-2" : "gap-2 sm:gap-3"}`}>
             {/* 서브 카테고리 */}
-            <div className="flex gap-1 overflow-x-auto scrollbar-hide">
+            <div className={`flex overflow-x-auto scrollbar-hide ${inWebView ? "gap-1" : "gap-1.5"}`}>
               {mainCategory === "market" ? (
                 <>
                   <button
                     onClick={() => setSelectedType("buy_gold")}
                     className={`font-semibold rounded-lg transition-all whitespace-nowrap ${
-                      inWebView ? "px-3 py-1.5 text-xs" : "px-4 py-2 text-[14px]"
+                      inWebView ? "px-2.5 py-1.5 text-xs" : "px-3 py-1.5 text-xs sm:px-4 sm:py-2 sm:text-[14px]"
                     } ${
                       selectedType === "buy_gold" ? "bg-gray-100 text-gray-900" : "text-gray-600 hover:bg-gray-50"
                     }`}
@@ -334,7 +451,7 @@ function CommunityPageContent() {
                   <button
                     onClick={() => setSelectedType("sell_gold")}
                     className={`font-semibold rounded-lg transition-all whitespace-nowrap ${
-                      inWebView ? "px-3 py-1.5 text-xs" : "px-4 py-2 text-[14px]"
+                      inWebView ? "px-2.5 py-1.5 text-xs" : "px-3 py-1.5 text-xs sm:px-4 sm:py-2 sm:text-[14px]"
                     } ${
                       selectedType === "sell_gold" ? "bg-gray-100 text-gray-900" : "text-gray-600 hover:bg-gray-50"
                     }`}
@@ -347,7 +464,7 @@ function CommunityPageContent() {
                   <button
                     onClick={() => { setSelectedCategory("gold_news"); setSelectedType("product_news"); }}
                     className={`font-semibold rounded-lg transition-all whitespace-nowrap ${
-                      inWebView ? "px-3 py-1.5 text-xs" : "px-4 py-2 text-[14px]"
+                      inWebView ? "px-2.5 py-1.5 text-xs" : "px-3 py-1.5 text-xs sm:px-4 sm:py-2 sm:text-[14px]"
                     } ${
                       selectedType === "product_news" ? "bg-gray-100 text-gray-900" : "text-gray-600 hover:bg-gray-50"
                     }`}
@@ -357,7 +474,7 @@ function CommunityPageContent() {
                   <button
                     onClick={() => { setSelectedCategory("gold_news"); setSelectedType("store_news"); }}
                     className={`font-semibold rounded-lg transition-all whitespace-nowrap ${
-                      inWebView ? "px-3 py-1.5 text-xs" : "px-4 py-2 text-[14px]"
+                      inWebView ? "px-2.5 py-1.5 text-xs" : "px-3 py-1.5 text-xs sm:px-4 sm:py-2 sm:text-[14px]"
                     } ${
                       selectedType === "store_news" ? "bg-gray-100 text-gray-900" : "text-gray-600 hover:bg-gray-50"
                     }`}
@@ -367,7 +484,7 @@ function CommunityPageContent() {
                   <button
                     onClick={() => { setSelectedCategory("qna"); setSelectedType("question"); }}
                     className={`font-semibold rounded-lg transition-all whitespace-nowrap ${
-                      inWebView ? "px-3 py-1.5 text-xs" : "px-4 py-2 text-[14px]"
+                      inWebView ? "px-2.5 py-1.5 text-xs" : "px-3 py-1.5 text-xs sm:px-4 sm:py-2 sm:text-[14px]"
                     } ${
                       selectedCategory === "qna" ? "bg-gray-100 text-gray-900" : "text-gray-600 hover:bg-gray-50"
                     }`}
@@ -379,18 +496,18 @@ function CommunityPageContent() {
             </div>
 
             {/* 액션 버튼들 */}
-            <div className="flex items-center gap-2 flex-shrink-0">
+            <div className={`flex items-center flex-shrink-0 ${inWebView ? "gap-1.5" : "gap-1.5 sm:gap-2"}`}>
               {!isSearchOpen ? (
                 <>
                   {/* 검색 버튼 */}
                   <button
                     onClick={() => setIsSearchOpen(true)}
                     className={`text-gray-600 hover:bg-gray-50 rounded-lg transition-colors ${
-                      inWebView ? "p-1.5" : "p-2"
+                      inWebView ? "p-1.5" : "p-1.5 sm:p-2"
                     }`}
                     aria-label="검색"
                   >
-                    <Search className={inWebView ? "w-4 h-4" : "w-5 h-5"} />
+                    <Search className={inWebView ? "w-4 h-4" : "w-4 h-4 sm:w-5 sm:h-5"} />
                   </button>
 
                   {/* 필터 버튼 (지역만) */}
@@ -400,13 +517,15 @@ function CommunityPageContent() {
                       setIsFilterOpen(true);
                     }}
                     className={`flex items-center text-gray-700 hover:bg-gray-50 rounded-lg transition-colors relative ${
-                      inWebView ? "gap-1 px-2 py-1.5" : "gap-1.5 px-3 py-2"
+                      inWebView ? "gap-1 px-2 py-1.5" : "gap-1 px-2 py-1.5 sm:gap-1.5 sm:px-3 sm:py-2"
                     }`}
                   >
-                    <SlidersHorizontal className={inWebView ? "w-4 h-4" : "w-5 h-5"} />
+                    <SlidersHorizontal className={inWebView ? "w-4 h-4" : "w-4 h-4 sm:w-5 sm:h-5"} />
                     <span className={`font-medium hidden sm:inline ${inWebView ? "text-xs" : "text-sm"}`}>지역</span>
                     {activeFilterCount > 0 && (
-                      <span className="absolute -top-1 -right-1 w-4 h-4 bg-[#C9A227] text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                      <span className={`absolute bg-[#C9A227] text-white font-bold rounded-full flex items-center justify-center ${
+                        inWebView ? "-top-1 -right-1 w-4 h-4 text-[10px]" : "-top-1 -right-1 w-4 h-4 text-[10px] sm:w-5 sm:h-5 sm:text-xs"
+                      }`}>
                         {activeFilterCount}
                       </span>
                     )}
@@ -417,26 +536,34 @@ function CommunityPageContent() {
                     <select
                       value={currentSort}
                       onChange={(e) => setCurrentSort(e.target.value as "latest" | "popular")}
-                      className="appearance-none pl-3 pr-8 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-lg transition-colors cursor-pointer bg-transparent border-0 focus:outline-none"
+                      className={`appearance-none font-medium text-gray-700 hover:bg-gray-50 rounded-lg transition-colors cursor-pointer bg-transparent border-0 focus:outline-none ${
+                        inWebView ? "pl-2 pr-6 py-1.5 text-xs" : "pl-2 pr-6 py-1.5 text-xs sm:pl-3 sm:pr-8 sm:py-2 sm:text-sm"
+                      }`}
                     >
                       <option value="latest">최신순</option>
                       <option value="popular">인기순</option>
                     </select>
-                    <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                    <ChevronDown className={`absolute top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none ${
+                      inWebView ? "right-1 w-3 h-3" : "right-1 w-3 h-3 sm:right-2 sm:w-4 sm:h-4"
+                    }`} />
                   </div>
                 </>
               ) : (
                 /* 검색 입력창 확장 */
-                <div className="flex items-center gap-2 animate-in fade-in slide-in-from-right-5 duration-200">
-                  <div className={`relative ${inWebView ? "flex-1 max-w-sm" : "w-64 sm:w-80"}`}>
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <div className="flex items-center gap-1.5 sm:gap-2 animate-in fade-in slide-in-from-right-5 duration-200">
+                  <div className={`relative ${inWebView ? "flex-1 max-w-sm" : "flex-1 max-w-xs sm:max-w-sm"}`}>
+                    <Search className={`absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 ${
+                      inWebView ? "w-3.5 h-3.5" : "w-3.5 h-3.5 sm:w-4 sm:h-4"
+                    }`} />
                     <input
                       type="text"
-                      placeholder="게시글 검색..."
+                      placeholder={inWebView ? "검색..." : "게시글 검색..."}
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       autoFocus
-                      className="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#C9A227] focus:bg-white transition-all"
+                      className={`w-full bg-gray-50 border border-gray-200 rounded-lg placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#C9A227] focus:bg-white transition-all ${
+                        inWebView ? "pl-8 pr-3 py-1.5 text-xs" : "pl-8 pr-3 py-1.5 text-xs sm:pl-9 sm:pr-4 sm:py-2 sm:text-sm"
+                      }`}
                       onKeyDown={(e) => {
                         if (e.key === 'Escape') {
                           setIsSearchOpen(false);
@@ -450,10 +577,12 @@ function CommunityPageContent() {
                       setIsSearchOpen(false);
                       setSearchQuery("");
                     }}
-                    className="p-2 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
+                    className={`text-gray-600 hover:bg-gray-50 rounded-lg transition-colors ${
+                      inWebView ? "p-1.5" : "p-1.5 sm:p-2"
+                    }`}
                     aria-label="검색 닫기"
                   >
-                    <X className="w-5 h-5" />
+                    <X className={inWebView ? "w-4 h-4" : "w-4 h-4 sm:w-5 sm:h-5"} />
                   </button>
                 </div>
               )}
@@ -703,21 +832,30 @@ function CommunityPageContent() {
       )}
 
       {/* Posts Grid */}
-      <div className={`max-w-[1200px] mx-auto px-page ${inWebView ? "py-3" : "py-6"}`}>
+      <div className={`max-w-[1200px] mx-auto ${
+        inWebView ? "px-3 py-3" : "px-4 sm:px-page py-4 sm:py-6"
+      }`}>
         {/* 활성 필터 표시 (지역) */}
         {selectedLocations.length > 0 && (
-          <div className="flex items-center gap-2 mb-4 flex-wrap">
+          <div className={`flex items-center flex-wrap ${inWebView ? "gap-1.5 mb-3" : "gap-1.5 sm:gap-2 mb-3 sm:mb-4"}`}>
             {selectedLocations.map((location, index) => (
-              <span key={index} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#FEF9E7] border border-[#C9A227]/30 text-[#8A6A00] text-sm font-medium rounded-full">
-                <MapPin className="w-3.5 h-3.5" />
-                {location.district ? `${location.region} ${location.district}` : location.region}
+              <span
+                key={index}
+                className={`inline-flex items-center bg-[#FEF9E7] border border-[#C9A227]/30 text-[#8A6A00] font-medium rounded-full ${
+                  inWebView ? "gap-1 px-2 py-1 text-xs" : "gap-1 px-2 py-1 text-xs sm:gap-1.5 sm:px-3 sm:py-1.5 sm:text-sm"
+                }`}
+              >
+                <MapPin className={inWebView ? "w-3 h-3" : "w-3 h-3 sm:w-3.5 sm:h-3.5"} />
+                <span className="truncate max-w-[120px]">
+                  {location.district ? `${location.region} ${location.district}` : location.region}
+                </span>
                 <button
                   onClick={() => {
                     setSelectedLocations(selectedLocations.filter((_, i) => i !== index));
                   }}
-                  className="hover:bg-[#C9A227]/20 rounded-full p-0.5"
+                  className="hover:bg-[#C9A227]/20 rounded-full p-0.5 flex-shrink-0"
                 >
-                  <X className="w-3.5 h-3.5" />
+                  <X className={inWebView ? "w-3 h-3" : "w-3 h-3 sm:w-3.5 sm:h-3.5"} />
                 </button>
               </span>
             ))}
@@ -726,7 +864,11 @@ function CommunityPageContent() {
 
         {/* Loading Skeleton */}
         {isLoading && (
-          <div className={viewMode === "grid" ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" : "space-y-4"}>
+          <div className={
+            viewMode === "grid"
+              ? `grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 ${inWebView ? "gap-3" : "gap-4 sm:gap-6"}`
+              : `${inWebView ? "space-y-2" : "space-y-3 sm:space-y-4"}`
+          }>
             {Array.from({ length: 6 }).map((_, i) => (
               <SkeletonCard key={i} viewMode={viewMode} />
             ))}
@@ -769,29 +911,23 @@ function CommunityPageContent() {
           <>
             {viewMode === "grid" ? (
               /* Grid View - 당근마켓 스타일 */
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 ${
+                inWebView ? "gap-3" : "gap-4 sm:gap-6"
+              }`}>
                 {data.data.map((post) => {
                   const userWithStore = { ...post.user, store: post.user.store || post.store };
                   return (
                   <Link
                     key={post.id}
                     href={`/community/posts/${post.id}/${post.slug}`}
-                    className="group bg-white rounded-2xl overflow-hidden border border-gray-100 hover:border-gray-200 hover:shadow-lg transition-all duration-300 flex flex-col h-full"
+                    className={`group bg-white overflow-hidden border border-gray-100 hover:border-gray-200 hover:shadow-lg transition-all duration-300 flex flex-col h-full ${
+                      inWebView ? "rounded-xl" : "rounded-xl sm:rounded-2xl"
+                    }`}
                   >
                     {/* Thumbnail */}
                     <div className="relative overflow-hidden bg-gray-50 flex-shrink-0">
                       {post.image_urls && post.image_urls.length > 0 ? (
-                        <div className="relative w-full aspect-[4/3]">
-                          <Image
-                            src={post.image_urls[0]}
-                            alt={post.title}
-                            fill
-                            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                            className="object-cover group-hover:scale-105 transition-transform duration-300"
-                            loading="lazy"
-                            unoptimized
-                          />
-                        </div>
+                        <ImageCarousel images={post.image_urls} title={post.title} />
                       ) : (
                         <div className="w-full aspect-[4/3] bg-gradient-to-br from-[#C9A227] to-[#8A6A00] flex items-center justify-center">
                           <svg className="w-16 h-16 text-white/50" fill="currentColor" viewBox="0 0 24 24">
@@ -826,11 +962,13 @@ function CommunityPageContent() {
                     </div>
 
                     {/* Content */}
-                    <div className="p-5 flex flex-col flex-1">
+                    <div className={`flex flex-col flex-1 ${inWebView ? "p-3" : "p-4 sm:p-5"}`}>
                       {/* Profile + Stats */}
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center gap-2">
-                          <div className={`w-6 h-6 rounded-full flex items-center justify-center overflow-hidden relative ${
+                      <div className={`flex items-center justify-between ${inWebView ? "mb-2" : "mb-2 sm:mb-3"}`}>
+                        <div className={`flex items-center min-w-0 flex-1 ${inWebView ? "gap-1.5" : "gap-1.5 sm:gap-2"}`}>
+                          <div className={`rounded-full flex items-center justify-center overflow-hidden relative flex-shrink-0 ${
+                            inWebView ? "w-5 h-5" : "w-5 h-5 sm:w-6 sm:h-6"
+                          } ${
                             getUserImageUrl(userWithStore)
                               ? "bg-white border border-gray-200"
                               : post.user.role === "admin"
@@ -848,48 +986,58 @@ function CommunityPageContent() {
                                 unoptimized
                               />
                             ) : post.user.role === "admin" ? (
-                              <StoreIcon className="w-3.5 h-3.5 text-[#C9A227]" />
+                              <StoreIcon className={inWebView ? "w-3 h-3" : "w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#C9A227]"} />
                             ) : (
-                              <span className="text-[10px] font-bold text-white">
+                              <span className={`font-bold text-white ${inWebView ? "text-[9px]" : "text-[9px] sm:text-[10px]"}`}>
                                 {getUserDisplayName(userWithStore).charAt(0)}
                               </span>
                             )}
                           </div>
-                          <span className="text-xs font-medium text-gray-600">
+                          <span className={`font-medium text-gray-600 truncate ${inWebView ? "text-xs" : "text-xs"}`}>
                             {getUserDisplayName(userWithStore)}
                           </span>
                         </div>
 
                         {/* Stats */}
-                        <div className="flex items-center gap-2">
-                          <div className="flex items-center gap-1 px-2 py-1 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                            <Heart className="w-3.5 h-3.5 text-red-500" />
-                            <span className="text-xs font-medium text-gray-700">{post.like_count}</span>
+                        <div className={`flex items-center flex-shrink-0 ${inWebView ? "gap-1" : "gap-1 sm:gap-2"}`}>
+                          <div className={`flex items-center bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors ${
+                            inWebView ? "gap-0.5 px-1.5 py-1" : "gap-0.5 px-1.5 py-1 sm:gap-1 sm:px-2"
+                          }`}>
+                            <Heart className={inWebView ? "w-3 h-3" : "w-3 h-3 sm:w-3.5 sm:h-3.5 text-red-500"} />
+                            <span className={`font-medium text-gray-700 ${inWebView ? "text-[10px]" : "text-[10px] sm:text-xs"}`}>{post.like_count}</span>
                           </div>
-                          <div className="flex items-center gap-1 px-2 py-1 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                            <MessageCircle className="w-3.5 h-3.5 text-blue-500" />
-                            <span className="text-xs font-medium text-gray-700">{post.comment_count}</span>
+                          <div className={`flex items-center bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors ${
+                            inWebView ? "gap-0.5 px-1.5 py-1" : "gap-0.5 px-1.5 py-1 sm:gap-1 sm:px-2"
+                          }`}>
+                            <MessageCircle className={inWebView ? "w-3 h-3" : "w-3 h-3 sm:w-3.5 sm:h-3.5 text-blue-500"} />
+                            <span className={`font-medium text-gray-700 ${inWebView ? "text-[10px]" : "text-[10px] sm:text-xs"}`}>{post.comment_count}</span>
                           </div>
                         </div>
                       </div>
 
                       {/* Title */}
-                      <h3 className="text-[17px] font-bold text-gray-900 mb-2 line-clamp-2 group-hover:text-[#C9A227] transition-colors">
+                      <h3 className={`font-bold text-gray-900 line-clamp-2 group-hover:text-[#C9A227] transition-colors ${
+                        inWebView ? "text-sm mb-1.5" : "text-[15px] sm:text-[17px] mb-1.5 sm:mb-2"
+                      }`}>
                         {post.title}
                       </h3>
 
                       {/* Location */}
                       {post.location && (
-                        <div className="mb-3">
-                          <div className="inline-flex items-center gap-1 text-xs text-gray-600 bg-gray-50 px-2 py-1 rounded-md">
-                            <MapPin className="w-3.5 h-3.5 text-[#C9A227]" />
-                            <span className="font-medium">{post.location}</span>
+                        <div className={inWebView ? "mb-2" : "mb-2 sm:mb-3"}>
+                          <div className={`inline-flex items-center text-gray-600 bg-gray-50 rounded-md ${
+                            inWebView ? "gap-0.5 px-1.5 py-0.5 text-[10px]" : "gap-0.5 px-1.5 py-0.5 text-[10px] sm:gap-1 sm:px-2 sm:py-1 sm:text-xs"
+                          }`}>
+                            <MapPin className={`text-[#C9A227] ${inWebView ? "w-2.5 h-2.5" : "w-2.5 h-2.5 sm:w-3.5 sm:h-3.5"}`} />
+                            <span className="font-medium truncate max-w-[100px]">{post.location}</span>
                           </div>
                         </div>
                       )}
 
                       {/* Content Preview */}
-                      <p className="text-caption text-gray-600 line-clamp-2 break-words leading-relaxed">
+                      <p className={`text-gray-600 line-clamp-2 break-words leading-relaxed ${
+                        inWebView ? "text-xs" : "text-xs sm:text-caption"
+                      }`}>
                         {post.content}
                       </p>
                     </div>
@@ -899,20 +1047,24 @@ function CommunityPageContent() {
               </div>
             ) : (
               /* List View - 매장 프로필 + 콘텐츠 중심 */
-              <div className="space-y-4">
+              <div className={inWebView ? "space-y-2" : "space-y-3 sm:space-y-4"}>
                 {data.data.map((post) => {
                   const userWithStore = { ...post.user, store: post.user.store || post.store };
                   return (
                   <Link
                     key={post.id}
                     href={`/community/posts/${post.id}/${post.slug}`}
-                    className="block bg-white rounded-xl border border-gray-100 hover:border-gray-200 hover:shadow-lg transition-all duration-200 p-5"
+                    className={`block bg-white rounded-xl border border-gray-100 hover:border-gray-200 hover:shadow-lg transition-all duration-200 ${
+                      inWebView ? "p-3" : "p-4 sm:p-5"
+                    }`}
                   >
-                    <div className="flex gap-3 sm:gap-5">
+                    <div className={`flex ${inWebView ? "gap-2" : "gap-3 sm:gap-5"}`}>
                       {/* Left: Store Profile + Thumbnails */}
-                      <div className="flex flex-col gap-3 flex-shrink-0">
+                      <div className="flex flex-col gap-2 flex-shrink-0">
                         {/* Store/User Profile */}
-                        <div className={`w-36 h-36 rounded-2xl flex items-center justify-center overflow-hidden relative ${
+                        <div className={`rounded-xl sm:rounded-2xl flex items-center justify-center overflow-hidden relative ${
+                          inWebView ? "w-16 h-16" : "w-20 h-20 sm:w-36 sm:h-36"
+                        } ${
                           getUserImageUrl(userWithStore)
                             ? "bg-white border-2 border-gray-200"
                             : post.user.role === "admin"
@@ -924,23 +1076,23 @@ function CommunityPageContent() {
                               src={getUserImageUrl(userWithStore) || "/default-avatar.png"}
                               alt={getUserDisplayName(userWithStore)}
                               fill
-                              sizes="144px"
+                              sizes="(max-width: 640px) 80px, 144px"
                               className="object-cover"
                               loading="lazy"
                               unoptimized
                             />
                           ) : post.user.role === "admin" ? (
-                            <StoreIcon className="w-16 h-16 text-[#C9A227]" />
+                            <StoreIcon className={inWebView ? "w-8 h-8" : "w-10 h-10 sm:w-16 sm:h-16 text-[#C9A227]"} />
                           ) : (
-                            <span className="text-4xl font-bold text-white">
+                            <span className={`font-bold text-white ${inWebView ? "text-xl" : "text-2xl sm:text-4xl"}`}>
                               {getUserDisplayName(userWithStore).charAt(0)}
                             </span>
                           )}
                         </div>
 
-                        {/* Image Thumbnails (if exists) */}
+                        {/* Image Thumbnails (if exists) - 모바일에서 숨김 */}
                         {post.image_urls && post.image_urls.length > 0 && (
-                          <div className="flex gap-1.5 w-36">
+                          <div className="hidden sm:flex gap-1.5 w-36">
                             {post.image_urls.slice(0, 3).map((url, idx) => (
                               <div key={idx} className="relative w-[42px] h-[42px] rounded-md overflow-hidden bg-gray-50">
                                 <Image
@@ -961,47 +1113,57 @@ function CommunityPageContent() {
                       {/* Content */}
                       <div className="flex-1 min-w-0">
                         {/* Meta */}
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-semibold text-gray-900">
+                        <div className={`flex flex-col sm:flex-row sm:items-center sm:justify-between ${inWebView ? "gap-1 mb-2" : "gap-2 mb-3"}`}>
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <span className={`font-semibold text-gray-900 truncate ${inWebView ? "text-xs" : "text-sm"}`}>
                               {getUserDisplayName(userWithStore)}
                             </span>
-                            <span className="text-sm text-gray-400">·</span>
-                            <span className="text-sm text-gray-400">
-                              {new Date(post.created_at).toLocaleDateString()}
+                            <span className={`text-gray-400 flex-shrink-0 ${inWebView ? "text-xs" : "text-sm"}`}>·</span>
+                            <span className={`text-gray-400 flex-shrink-0 ${inWebView ? "text-xs" : "text-sm"}`}>
+                              {new Date(post.created_at).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })}
                             </span>
                           </div>
 
                           {/* Stats */}
-                          <div className="flex items-center gap-2">
-                            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                              <Heart className="w-4 h-4 text-red-500" />
-                              <span className="text-sm font-medium text-gray-700">{post.like_count}</span>
+                          <div className={`flex items-center ${inWebView ? "gap-1" : "gap-1.5 sm:gap-2"}`}>
+                            <div className={`flex items-center bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors ${
+                              inWebView ? "gap-0.5 px-1.5 py-1" : "gap-1 px-2 py-1 sm:gap-1.5 sm:px-3 sm:py-1.5"
+                            }`}>
+                              <Heart className={`text-red-500 ${inWebView ? "w-3 h-3" : "w-3.5 h-3.5 sm:w-4 sm:h-4"}`} />
+                              <span className={`font-medium text-gray-700 ${inWebView ? "text-xs" : "text-xs sm:text-sm"}`}>{post.like_count}</span>
                             </div>
-                            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                              <MessageCircle className="w-4 h-4 text-blue-500" />
-                              <span className="text-sm font-medium text-gray-700">{post.comment_count}</span>
+                            <div className={`flex items-center bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors ${
+                              inWebView ? "gap-0.5 px-1.5 py-1" : "gap-1 px-2 py-1 sm:gap-1.5 sm:px-3 sm:py-1.5"
+                            }`}>
+                              <MessageCircle className={`text-blue-500 ${inWebView ? "w-3 h-3" : "w-3.5 h-3.5 sm:w-4 sm:h-4"}`} />
+                              <span className={`font-medium text-gray-700 ${inWebView ? "text-xs" : "text-xs sm:text-sm"}`}>{post.comment_count}</span>
                             </div>
                           </div>
                         </div>
 
                         {/* Location Badge */}
                         {post.location && (
-                          <div className="mb-3">
-                            <div className="inline-flex items-center gap-1 text-xs text-gray-600 bg-gray-50 px-2 py-1 rounded-md">
-                              <MapPin className="w-3.5 h-3.5 text-[#C9A227]" />
-                              <span className="font-medium">{post.location}</span>
+                          <div className={inWebView ? "mb-1" : "mb-2 sm:mb-3"}>
+                            <div className={`inline-flex items-center gap-1 text-gray-600 bg-gray-50 rounded-md ${
+                              inWebView ? "text-[10px] px-1.5 py-0.5" : "text-xs px-2 py-1"
+                            }`}>
+                              <MapPin className={`text-[#C9A227] ${inWebView ? "w-2.5 h-2.5" : "w-3 h-3 sm:w-3.5 sm:h-3.5"}`} />
+                              <span className="font-medium truncate max-w-[120px]">{post.location}</span>
                             </div>
                           </div>
                         )}
 
                         {/* Title */}
-                        <h3 className="text-[19px] font-bold text-gray-900 mb-2 line-clamp-1">
+                        <h3 className={`font-bold text-gray-900 line-clamp-1 ${
+                          inWebView ? "text-sm mb-1" : "text-base sm:text-[19px] mb-1 sm:mb-2"
+                        }`}>
                           {post.title}
                         </h3>
 
                         {/* Content Preview */}
-                        <p className="text-[15px] text-gray-600 line-clamp-2 leading-relaxed">
+                        <p className={`text-gray-600 line-clamp-2 leading-relaxed ${
+                          inWebView ? "text-xs" : "text-sm sm:text-[15px]"
+                        }`}>
                           {post.content}
                         </p>
                       </div>
