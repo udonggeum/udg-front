@@ -80,6 +80,21 @@ function StoreMap({
   const [initialCenter, setInitialCenter] = useState(propCenter || { lat: 37.5665, lng: 126.978 });
   const [showSearchButton, setShowSearchButton] = useState(false);
   const [isGettingLocation, setIsGettingLocation] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // 모바일 여부 체크 (768px 미만)
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    // 초기 체크
+    checkMobile();
+
+    // 리사이즈 이벤트 리스너
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // prop center/level이 변경되면 지도 중심 및 줌 레벨 업데이트 (선택된 매장이 변경될 때만)
   // 사용자가 지도를 움직인 후에는 강제로 중심을 변경하지 않음
@@ -401,8 +416,8 @@ function StoreMap({
               </div>
             </CustomOverlayMap>
 
-            {/* 인포윈도우 - 선택 시 매장 정보 표시 */}
-            {isSelected && (
+            {/* 인포윈도우 - 모바일에서만 선택 시 매장 정보 표시 */}
+            {isSelected && isMobile && (
               <CustomOverlayMap
                 key={`info-${store.id}`}
                 position={{ lat: store.lat, lng: store.lng }}

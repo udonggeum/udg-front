@@ -363,17 +363,17 @@ function StoresPageContent() {
     }
   }, [searchParams]);
 
-  // 검색 결과 로드 후 첫 번째 매장으로 이동
+  // 검색 결과 로드 후 첫 번째 매장 위치로 지도 이동 (선택은 하지 않음)
   useEffect(() => {
     const searchParam = searchParams.get("search");
     if (searchParam && stores.length > 0 && !selectedStore) {
       const firstStore = stores[0];
       if (firstStore.lat && firstStore.lng) {
         setMapCenter({ lat: firstStore.lat, lng: firstStore.lng });
-        handleStoreClick(firstStore);
+        // 매장 자동 선택 제거 - 사용자가 직접 클릭하도록 함
       }
     }
-  }, [stores, searchParams, selectedStore, handleStoreClick]); // selectedStore 제외
+  }, [stores, searchParams, selectedStore, handleStoreClick]);
 
   // 좋아요 토글 핸들러
   const handleStoreLike = useCallback(async (storeId: number, e: React.MouseEvent) => {
