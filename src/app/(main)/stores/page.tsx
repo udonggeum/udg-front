@@ -363,17 +363,14 @@ function StoresPageContent() {
     }
   }, [searchParams]);
 
-  // 검색 결과 로드 후 첫 번째 매장 위치로 지도 이동 (선택은 하지 않음)
+  // 검색 결과 로드 시 지도가 자동으로 모든 매장을 포함하도록 mapCenter를 null로 설정
   useEffect(() => {
     const searchParam = searchParams.get("search");
-    if (searchParam && stores.length > 0 && !selectedStore) {
-      const firstStore = stores[0];
-      if (firstStore.lat && firstStore.lng) {
-        setMapCenter({ lat: firstStore.lat, lng: firstStore.lng });
-        // 매장 자동 선택 제거 - 사용자가 직접 클릭하도록 함
-      }
+    if (searchParam && stores.length > 0) {
+      // mapCenter를 null로 설정하면 StoreMap이 자동으로 모든 매장을 포함하는 bounds로 조정함
+      setMapCenter(null);
     }
-  }, [stores, searchParams, selectedStore, handleStoreClick]);
+  }, [stores, searchParams]);
 
   // 좋아요 토글 핸들러
   const handleStoreLike = useCallback(async (storeId: number, e: React.MouseEvent) => {

@@ -195,17 +195,10 @@ export function Header() {
     <header className="w-full bg-white sticky top-0 z-50 border-b border-gray-100">
       <div className="max-w-[1200px] mx-auto px-page h-[60px] flex justify-between items-center">
         {/* 로고 */}
-        <Link href="/" className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-gradient-to-br from-[#C9A227] to-[#C9A227] rounded-lg flex items-center justify-center">
-            <svg
-              className="w-5 h-5 text-white"
-              fill="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
-            </svg>
-          </div>
-          <span className="text-lg font-bold text-gray-900">우리동네금은방</span>
+        <Link href="/">
+          <span className="text-lg text-gray-900 font-[family-name:var(--font-logo)]">
+            우리동네<span className="text-[#C9A227] font-[family-name:var(--font-logo)]">금</span>은방
+          </span>
         </Link>
 
         {/* 네비게이션 (웹에서만 표시) */}

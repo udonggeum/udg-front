@@ -3,6 +3,15 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { Providers } from "./providers";
 import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
+import { Black_Han_Sans } from "next/font/google";
+
+// 로고 전용 폰트
+const blackHanSans = Black_Han_Sans({
+  weight: "400",
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-logo",
+});
 
 export const metadata: Metadata = {
   title: "우리동네금은방 - 투명한 금 거래, 쉽고 빠르게",
@@ -62,7 +71,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ko">
+    <html lang="ko" className={blackHanSans.variable}>
       <body className="bg-white text-gray-900 font-sans antialiased">
         <ServiceWorkerRegister />
         <Providers>
