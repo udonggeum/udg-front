@@ -170,7 +170,7 @@ function StoresPageContent() {
   const [isDetailPanelOpen, setIsDetailPanelOpen] = useState(false);
   const [isMobileMapOpen, setIsMobileMapOpen] = useState(false);
   const [sortBy, setSortBy] = useState<"distance">("distance");
-  const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number }>({
+  const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number } | null>({
     lat: 37.5665,
     lng: 126.978,
   }); // 서울시청 기본 좌표
