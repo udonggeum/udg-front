@@ -2,6 +2,7 @@
 
 import { useState, useEffect, type FormEvent, type ChangeEvent } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -546,13 +547,18 @@ export default function SignupPage() {
       {/* 헤더 */}
       <header className="w-full bg-white border-b border-gray-100 sticky top-0 z-50">
         <div className="max-w-[520px] mx-auto px-page h-[60px] flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-[#C9A227] to-[#8A6A00] rounded-lg flex items-center justify-center">
-              <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
-              </svg>
+          <Link href="/" className="flex items-center -ml-4">
+            <div className="relative h-10 w-auto flex items-center">
+              <Image
+                src="/logo.png"
+                alt="우동금"
+                width={140}
+                height={36}
+                className="object-contain"
+                priority
+                style={{ mixBlendMode: 'multiply' }}
+              />
             </div>
-            <span className="text-lg font-bold text-gray-900">우리동네금은방</span>
           </Link>
           <Link href="/login" className="text-caption text-gray-500 hover:text-gray-900 smooth-transition">
             로그인

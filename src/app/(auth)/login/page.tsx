@@ -2,6 +2,7 @@
 
 import { useState, useEffect, type FormEvent, type ChangeEvent, Suspense } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -222,13 +223,17 @@ function LoginForm() {
         {/* 컨텐츠 */}
         <div className="relative z-10 flex flex-col justify-between p-12 w-full">
           {/* 로고 */}
-          <Link href="/" className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center">
-              <svg className="w-6 h-6 text-[#C9A227]" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
-              </svg>
+          <Link href="/" className="flex items-center">
+            <div className="relative h-12 w-auto flex items-center bg-white/10 backdrop-blur-sm rounded-xl px-4 py-2">
+              <Image
+                src="/logo.png"
+                alt="우동금"
+                width={160}
+                height={40}
+                className="object-contain brightness-0 invert"
+                priority
+              />
             </div>
-            <span className="text-xl font-bold text-white">우리동네금은방</span>
           </Link>
 
           {/* 메인 카피 */}
@@ -284,13 +289,18 @@ function LoginForm() {
         {/* 모바일 헤더 */}
         <header className="lg:hidden w-full bg-white border-b border-gray-100">
           <div className="px-page h-[60px] flex items-center justify-between">
-            <Link href="/" className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-gradient-to-br from-[#C9A227] to-[#8A6A00] rounded-lg flex items-center justify-center">
-                <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
-                </svg>
+            <Link href="/" className="flex items-center -ml-4">
+              <div className="relative h-10 w-auto flex items-center">
+                <Image
+                  src="/logo.png"
+                  alt="우동금"
+                  width={140}
+                  height={36}
+                  className="object-contain"
+                  priority
+                  style={{ mixBlendMode: 'multiply' }}
+                />
               </div>
-              <span className="text-lg font-bold text-gray-900">우리동네금은방</span>
             </Link>
             <Link href="/" className="text-caption text-gray-500 hover:text-gray-900 smooth-transition">
               홈으로

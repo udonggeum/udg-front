@@ -194,6 +194,19 @@ function StoresPageContent() {
     setInWebView(isWebView());
   }, []);
 
+  // 모바일 지도 열렸을 때 body 스크롤 방지
+  useEffect(() => {
+    if (isMobileMapOpen && window.innerWidth < 768) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isMobileMapOpen]);
+
   // 매장 클릭 핸들러 (useCallback으로 메모이제이션)
   const handleStoreClick = useCallback((store: StoreWithExtras) => {
     // 매장 선택 상태로 변경
@@ -658,10 +671,10 @@ function StoresPageContent() {
       </div>
 
       {/* Main Content - 모바일에서는 일반 스크롤, 데스크톱에서는 고정 레이아웃 */}
-      <div className={`flex flex-col md:flex-row ${
+      <div className={`${
         isMobileMapOpen
-          ? `fixed inset-0 md:top-[60px] md:relative ${inWebView ? "top-[108px]" : "top-[116px]"}`
-          : "md:fixed md:inset-0 md:top-[60px]"
+          ? `fixed ${inWebView ? "top-[108px]" : "top-[116px]"} left-0 right-0 bottom-0 z-40 bg-white md:relative md:flex md:flex-row`
+          : "flex flex-col md:flex-row md:fixed md:inset-0 md:top-[60px]"
       }`}>
         {/* 좌측 패널 - 검색 및 리스트 */}
         <div className={`w-full md:w-[420px] lg:w-[480px] flex-shrink-0 md:border-r border-gray-100 bg-white ${
@@ -1217,7 +1230,7 @@ function StoresPageContent() {
 
         {/* 지도 영역 (중앙) - Kakao Map - 모바일에서 지도 탭일 때 표시 */}
         <div className={`${
-          isMobileMapOpen ? "flex flex-1 w-full" : "hidden md:flex md:flex-1"
+          isMobileMapOpen ? "w-full h-full md:flex md:flex-1" : "hidden md:flex md:flex-1"
         }`}>
           <StoreMap
             stores={filteredStores.map((store) => ({
