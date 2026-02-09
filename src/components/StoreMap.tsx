@@ -33,9 +33,9 @@ interface StoreMapProps {
   selectedStoreId?: number | null;
   onStoreClick?: (store: StoreLocation) => void;
   onStoreClose?: () => void;
-  center?: { lat: number; lng: number };
+  center?: { lat: number; lng: number } | null;
   level?: number;
-  onCenterChange?: (center: { lat: number; lng: number }) => void;
+  onCenterChange?: (center: { lat: number; lng: number } | null) => void;
   onSearchThisArea?: (center: { lat: number; lng: number }, level: number) => void;
   userLocation?: { lat: number; lng: number } | null;
   isDetailPanelOpen?: boolean;
