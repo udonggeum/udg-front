@@ -36,6 +36,7 @@ import { Button } from "@/components/ui/button";
 import { PostDetailSkeleton } from "@/components/skeletons/PostDetailSkeleton";
 import Image from "next/image";
 import { isWebView } from "@/lib/webview";
+import { useSmartBack } from "@/hooks/useSmartBack";
 
 export default function CommunityDetailPage() {
   const params = useParams();
@@ -59,6 +60,7 @@ export default function CommunityDetailPage() {
   const [likingCommentId, setLikingCommentId] = useState<number | null>(null);
 
   const postId = Number(params?.id);
+  const handleBack = useSmartBack('/community');
 
   useEffect(() => {
     setInWebView(isWebView());
@@ -334,7 +336,7 @@ export default function CommunityDetailPage() {
           inWebView ? "py-3" : "py-4"
         }`}>
           <button
-            onClick={() => router.back()}
+            onClick={handleBack}
             className="flex items-center gap-2 text-gray-700 hover:text-gray-900 font-medium transition-colors"
           >
             <ChevronLeft className="w-5 h-5" />
@@ -602,15 +604,15 @@ export default function CommunityDetailPage() {
                   )}
 
                   {/* 인디케이터 */}
-                  <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5">
+                  <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1">
                     {postData.image_urls.map((_, index) => (
                       <button
                         key={index}
                         onClick={() => setCurrentImageIndex(index)}
-                        className={`w-2 h-2 rounded-full transition-all ${
+                        className={`rounded-full transition-all ${
                           index === currentImageIndex
-                            ? "bg-[#C9A227] w-6"
-                            : "bg-gray-400 hover:bg-gray-500"
+                            ? "bg-[#C9A227] w-4 h-1.5"
+                            : "bg-white/60 hover:bg-white/80 w-1.5 h-1.5"
                         }`}
                       />
                     ))}

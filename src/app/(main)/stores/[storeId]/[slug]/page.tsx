@@ -51,6 +51,7 @@ import { toast } from "sonner";
 import { useAuthenticatedAction } from "@/hooks/useAuthenticatedAction";
 import { apiClient } from "@/lib/axios";
 import { isWebView, postMessageToNative } from "@/lib/webview";
+import { useSmartBack } from "@/hooks/useSmartBack";
 
 type TabType = "home" | "news" | "gallery";
 
@@ -168,6 +169,7 @@ function KakaoMap({ address, storeName }: { address: string; storeName: string }
 
 function StoreDetailContent({ storeId }: { storeId: number | null }) {
   const router = useRouter();
+  const handleBack = useSmartBack('/stores');
   const isMountedRef = useRef(true);
   const { user, tokens } = useAuthStore();
   const accessToken = tokens?.access_token;
@@ -476,7 +478,7 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
           </h2>
           <p className="text-caption text-gray-500 mb-6">{storeError}</p>
           <button
-            onClick={() => router.back()}
+            onClick={handleBack}
             className="px-6 py-3 bg-gray-900 hover:bg-gray-800 text-white text-caption font-semibold rounded-lg transition-colors"
           >
             돌아가기

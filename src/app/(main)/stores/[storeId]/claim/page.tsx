@@ -13,11 +13,13 @@ import { Card } from "@/components/ui/card";
 import { Store, Building2, MapPin, Phone, CheckCircle2, AlertCircle, ArrowLeft, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import type { StoreDetail, ClaimStoreRequest } from "@/types/stores";
+import { useSmartBack } from "@/hooks/useSmartBack";
 
 export default function StoreClaimPage() {
   const router = useRouter();
   const params = useParams();
   const storeId = params.storeId as string;
+  const handleBack = useSmartBack(`/stores/${storeId}`);
   const { user, tokens, isAuthenticated, updateUser } = useAuthStore();
 
   const [store, setStore] = useState<StoreDetail | null>(null);
@@ -244,7 +246,7 @@ export default function StoreClaimPage() {
       {/* 헤더 */}
       <div className={inWebView ? "mb-4" : "mb-8"}>
         <button
-          onClick={() => router.back()}
+          onClick={() => handleBack()}
           className={`flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors ${inWebView ? "mb-3" : "mb-4"}`}
         >
           <ArrowLeft className={inWebView ? "w-3.5 h-3.5" : "w-4 h-4"} />
@@ -385,7 +387,7 @@ export default function StoreClaimPage() {
           <Button
             type="button"
             variant="outline"
-            onClick={() => router.back()}
+            onClick={() => handleBack()}
             disabled={isSubmitting}
             className={inWebView ? "px-3 py-2 text-xs" : "px-4 py-3 text-sm"}
           >

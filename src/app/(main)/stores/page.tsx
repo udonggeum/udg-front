@@ -522,15 +522,15 @@ function StoresPageContent() {
   // 현재 위치 가져오기 (Geolocation API 사용, 실패 시 설정된 위치 폴백)
   const getCurrentLocation = () => {
     if (!navigator.geolocation) {
-      // Geolocation을 지원하지 않는 경우, 앱뷰라면 설정된 위치 사용
-      if (inWebView && currentLocation) {
+      // Geolocation을 지원하지 않는 경우, 설정된 위치 사용
+      if (currentLocation) {
         setSearchQuery(currentLocation);
         setAppliedSearchQuery(currentLocation);
         setCurrentPage(1);
         setSearchCenter(null); // 지도 기반 검색 비활성화
         toast.success(`${currentLocation} 지역 매장을 검색합니다`);
       } else {
-        alert("이 브라우저에서는 위치 정보를 지원하지 않습니다.");
+        toast.error("이 브라우저에서는 위치 정보를 지원하지 않습니다. 상단에서 위치를 설정해주세요.");
       }
       return;
     }
@@ -551,8 +551,8 @@ function StoresPageContent() {
         console.error("위치 정보를 가져올 수 없습니다:", error);
         setIsGettingLocation(false);
 
-        // 앱뷰이고 위치 권한 실패 시, 설정된 위치를 폴백으로 사용
-        if (inWebView && currentLocation) {
+        // 위치 권한 실패 시, 설정된 위치를 폴백으로 사용
+        if (currentLocation) {
           setSearchQuery(currentLocation);
           setAppliedSearchQuery(currentLocation);
           setCurrentPage(1);
@@ -564,9 +564,7 @@ function StoresPageContent() {
         // 폴백 위치가 없는 경우 에러 메시지 표시
         let errorMessage = "위치 정보를 가져올 수 없습니다.";
         if (error.code === error.PERMISSION_DENIED) {
-          errorMessage = inWebView
-            ? "위치 권한이 거부되었습니다. 상단의 위치 아이콘을 눌러 위치를 설정해주세요."
-            : "위치 권한을 허용해주세요.";
+          errorMessage = "위치 권한이 거부되었습니다. 상단의 위치 아이콘을 눌러 위치를 설정해주세요.";
         } else if (error.code === error.POSITION_UNAVAILABLE) {
           errorMessage = "위치 정보를 사용할 수 없습니다.";
         } else if (error.code === error.TIMEOUT) {
@@ -1219,7 +1217,7 @@ function StoresPageContent() {
 
         {/* 지도 영역 (중앙) - Kakao Map - 모바일에서 지도 탭일 때 표시 */}
         <div className={`${
-          isMobileMapOpen ? "block w-full h-full" : "hidden md:flex md:flex-1"
+          isMobileMapOpen ? "flex flex-1 w-full" : "hidden md:flex md:flex-1"
         }`}>
           <StoreMap
             stores={filteredStores.map((store) => ({

@@ -15,9 +15,11 @@ import KakaoAddressSearch from "@/components/kakao-address-search";
 import { Store, Building2, Phone, Clock, FileText, CheckCircle2, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import type { StoreRegisterRequest } from "@/types/stores";
+import { useSmartBack } from "@/hooks/useSmartBack";
 
 export default function StoreRegisterPage() {
   const router = useRouter();
+  const handleBack = useSmartBack('/stores');
   const { user, tokens, isAuthenticated, updateUser } = useAuthStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [inWebView, setInWebView] = useState(false);
@@ -485,7 +487,7 @@ export default function StoreRegisterPage() {
           <Button
             type="button"
             variant="outline"
-            onClick={() => router.back()}
+            onClick={handleBack}
             disabled={isSubmitting}
             className={inWebView ? "px-3 py-2 text-xs" : ""}
           >
