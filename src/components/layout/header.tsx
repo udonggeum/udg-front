@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
@@ -195,10 +196,18 @@ export function Header() {
     <header className="w-full bg-white sticky top-0 z-50 border-b border-gray-100">
       <div className="max-w-[1200px] mx-auto px-page h-[60px] flex justify-between items-center">
         {/* 로고 */}
-        <Link href="/">
-          <span className="text-lg text-gray-900 font-[family-name:var(--font-logo)]">
-            우리동네<span className="text-[#C9A227] font-[family-name:var(--font-logo)]">금</span>은방
-          </span>
+        <Link href="/" className="flex items-center -ml-10">
+          <div className="relative h-12 w-auto flex items-center">
+            <Image
+              src="/logo.png"
+              alt="우동금"
+              width={190}
+              height={48}
+              className="object-contain"
+              priority
+              style={{ mixBlendMode: 'multiply' }}
+            />
+          </div>
         </Link>
 
         {/* 네비게이션 (웹에서만 표시) */}
