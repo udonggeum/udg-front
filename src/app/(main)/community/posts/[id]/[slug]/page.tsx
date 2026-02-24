@@ -451,7 +451,6 @@ export default function CommunityDetailPage() {
                       className="object-cover"
                       sizes={inWebView ? "40px" : "48px"}
                       quality={80}
-                      unoptimized
                     />
                   </div>
                 ) : postData.user.role === "admin" ? (
@@ -577,7 +576,6 @@ export default function CommunityDetailPage() {
                 quality={85}
                 priority={currentImageIndex === 0}
                 onClick={() => setIsImageModalOpen(true)}
-                unoptimized
               />
 
               {/* 이미지 개수 표시 */}
@@ -647,7 +645,6 @@ export default function CommunityDetailPage() {
                         className="object-cover"
                         sizes="80px"
                         quality={70}
-                        unoptimized
                       />
                     </div>
                   </button>
@@ -674,7 +671,6 @@ export default function CommunityDetailPage() {
                 className="object-contain"
                 sizes="100vw"
                 quality={90}
-                unoptimized
               />
             </div>
           </div>
@@ -778,7 +774,6 @@ export default function CommunityDetailPage() {
                                 className="object-cover"
                                 sizes={inWebView ? "32px" : "40px"}
                                 quality={80}
-                                unoptimized
                               />
                             </div>
                           ) : comment.user.role === "admin" ? (

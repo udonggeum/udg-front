@@ -1019,7 +1019,6 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
                     className="object-cover"
                     sizes="(max-width: 640px) 96px, (max-width: 768px) 112px, 128px"
                     quality={85}
-                    unoptimized
                     onError={(e) => {
                       if (isMountedRef.current) {
                         setImageError(true);
@@ -1528,7 +1527,6 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
                                   className="object-cover"
                                   sizes="(max-width: 768px) 100vw, 400px"
                                   quality={80}
-                                  unoptimized
                                 />
                               </div>
                             )}
@@ -1631,7 +1629,6 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
                                   className="object-cover"
                                   sizes="(max-width: 768px) 100vw, 400px"
                                   quality={80}
-                                  unoptimized
                                 />
                               </div>
                             )}
@@ -1944,7 +1941,6 @@ function StoreDetailContent({ storeId }: { storeId: number | null }) {
                               className="object-cover transition-transform duration-300 md:group-hover:scale-110"
                               sizes="(max-width: 768px) 50vw, 33vw"
                               quality={80}
-                              unoptimized
                             />
 
                             {/* 호버 오버레이 */}

@@ -313,7 +313,6 @@ export default function ChatsPage() {
                           sizes={inWebView ? "40px" : "48px"}
                           className="object-cover"
                           loading="lazy"
-                          unoptimized
                         />
                       ) : room.type === "STORE" ? (
                         <Store className={`text-white ${inWebView ? "w-5 h-5" : "w-6 h-6"}`} />

@@ -42,7 +42,7 @@ function KakaoCallbackContent() {
 
   const handleKakaoCallback = async (code: string) => {
     try {
-      const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://43.200.249.22:8080';
+      const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
       // 백엔드에 authorization code 전달 (GET 방식)
       const response = await fetch(

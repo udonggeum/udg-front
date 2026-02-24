@@ -2,8 +2,29 @@
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactNode, useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { setupWebViewClass } from "@/lib/webview";
 import { useInputFocusScroll } from "@/hooks/useKeyboardAdjust";
+import { useAuthStore } from "@/stores/useAuthStore";
+
+/**
+ * 전역 인증 상태 옵저버
+ * clearAuth()가 호출되어 isAuthenticated가 false로 바뀌면 즉시 로그인 페이지로 이동
+ */
+function AuthObserver() {
+  const router = useRouter();
+
+  useEffect(() => {
+    const unsubscribe = useAuthStore.subscribe((state, prevState) => {
+      if (prevState.isAuthenticated && !state.isAuthenticated) {
+        router.replace("/login");
+      }
+    });
+    return unsubscribe;
+  }, [router]);
+
+  return null;
+}
 
 export function Providers({ children }: { children: ReactNode }) {
   // useState를 사용하여 QueryClient를 한 번만 생성
@@ -37,6 +58,7 @@ export function Providers({ children }: { children: ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
+      <AuthObserver />
       {children}
     </QueryClientProvider>
   );

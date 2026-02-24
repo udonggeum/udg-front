@@ -5,6 +5,21 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
+const S3_DOMAIN = "udonggeum-images.s3.ap-northeast-2.amazonaws.com";
+const CDN_URL = process.env.NEXT_PUBLIC_CDN_URL;
+
+/**
+ * S3 이미지 URL을 CDN URL로 변환합니다.
+ * NEXT_PUBLIC_CDN_URL이 설정되지 않은 경우 원본 URL을 그대로 반환합니다.
+ */
+export function getImageUrl(url: string | undefined | null): string | undefined {
+  if (!url) return undefined;
+  if (CDN_URL && url.includes(S3_DOMAIN)) {
+    return url.replace(`https://${S3_DOMAIN}`, CDN_URL);
+  }
+  return url;
+}
+
 /**
  * 사용자 이미지 URL을 가져옵니다.
  * Admin 사용자의 경우 매장 이미지를 우선 사용하고, 없으면 프로필 이미지를 사용합니다.

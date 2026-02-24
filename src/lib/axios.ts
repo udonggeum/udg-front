@@ -1,5 +1,6 @@
 import axios, { AxiosError, InternalAxiosRequestConfig, AxiosResponse } from "axios";
 import { translateErrorMessage } from "./error-messages";
+import { getApiBaseUrl } from "./api";
 
 /**
  * URL에서 민감한 파라미터 제거 (안전한 로깅용)
@@ -24,7 +25,7 @@ function sanitizeErrorData(data: any): any {
  * Includes automatic token injection and 401 error detection with token refresh
  */
 export const apiClient = axios.create({
-  baseURL: `${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://43.200.249.22:8080'}/api/v1`,
+  baseURL: `${getApiBaseUrl()}/api/v1`,
   timeout: 15000, // 15초로 증가
   headers: {
     "Content-Type": "application/json",

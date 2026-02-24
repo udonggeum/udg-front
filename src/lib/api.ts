@@ -3,7 +3,13 @@
  */
 
 export const getApiBaseUrl = (): string => {
-  return process.env.NEXT_PUBLIC_API_BASE_URL || 'http://43.200.249.22:8080';
+  const url = process.env.NEXT_PUBLIC_API_BASE_URL;
+  if (!url) {
+    throw new Error(
+      'NEXT_PUBLIC_API_BASE_URL 환경변수가 설정되지 않았습니다. .env.local 파일을 확인하세요.'
+    );
+  }
+  return url;
 };
 
 export const API_BASE_URL = getApiBaseUrl();

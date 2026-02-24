@@ -1141,7 +1141,6 @@ export default function ChatRoomPage() {
                     fill
                     sizes={inWebView ? "36px" : "40px"}
                     className="object-cover"
-                    unoptimized
                   />
                 ) : (
                   <User className={inWebView ? "w-4 h-4 text-white" : "w-5 h-5 text-white"} />

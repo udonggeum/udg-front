@@ -127,8 +127,8 @@ export default function MyPage() {
         );
       }
 
-      // 3. 알림 설정 불러오기 (admin만)
-      if (isAdmin && tokens?.access_token) {
+      // 3. 알림 설정 불러오기 (모든 인증 사용자)
+      if (tokens?.access_token) {
         setIsLoadingSettings(true);
         promises.push(
           getNotificationSettingsAction(tokens.access_token).then(result => ({ type: "settings", result }))
@@ -249,6 +249,8 @@ export default function MyPage() {
         };
         setNotificationSettings(settings);
         toast.success("알림 설정이 저장되었습니다.");
+      } else if (result.isUnauthorized) {
+        clearAuth();
       } else {
         toast.error(result.error || "알림 설정 저장에 실패했습니다.");
       }
@@ -555,39 +557,39 @@ export default function MyPage() {
               </CardContent>
             </Card>
 
-            {/* 알림 설정 (Admin 전용) */}
-            {isAdmin && (
-              <Card className="border-0 shadow-sm">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-2">
-                      <Bell className="w-5 h-5 text-gray-700" />
-                      <h3 className="text-lg font-bold text-gray-900">알림 설정</h3>
-                    </div>
-                    {notificationSettings && (
-                      <Button
-                        onClick={handleSaveNotificationSettings}
-                        disabled={isSavingSettings}
-                        size="sm"
-                        className="bg-gray-900 hover:bg-gray-800 text-white"
-                      >
-                        {isSavingSettings ? "저장 중..." : "저장"}
-                      </Button>
-                    )}
+            {/* 알림 설정 */}
+            <Card className="border-0 shadow-sm">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <Bell className="w-5 h-5 text-gray-700" />
+                    <h3 className="text-lg font-bold text-gray-900">알림 설정</h3>
                   </div>
+                  {notificationSettings && (
+                    <Button
+                      onClick={handleSaveNotificationSettings}
+                      disabled={isSavingSettings}
+                      size="sm"
+                      className="bg-gray-900 hover:bg-gray-800 text-white"
+                    >
+                      {isSavingSettings ? "저장 중..." : "저장"}
+                    </Button>
+                  )}
+                </div>
 
-                  {isLoadingSettings ? (
-                    <div className="text-center py-8">
-                      <div className="w-6 h-6 border-2 border-gray-200 border-t-gray-900 rounded-full animate-spin mx-auto mb-2"></div>
-                      <p className="text-sm text-gray-600">설정 불러오는 중...</p>
-                    </div>
-                  ) : !notificationSettings ? (
-                    <div className="text-center py-8">
-                      <p className="text-sm text-gray-600">알림 설정을 불러올 수 없습니다.</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {/* 금 판매글 알림 */}
+                {isLoadingSettings ? (
+                  <div className="text-center py-8">
+                    <div className="w-6 h-6 border-2 border-gray-200 border-t-gray-900 rounded-full animate-spin mx-auto mb-2"></div>
+                    <p className="text-sm text-gray-600">설정 불러오는 중...</p>
+                  </div>
+                ) : !notificationSettings ? (
+                  <div className="text-center py-8">
+                    <p className="text-sm text-gray-600">알림 설정을 불러올 수 없습니다.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {/* 금 판매글 알림 (admin 전용) */}
+                    {isAdmin && (
                       <div className="p-4 bg-gray-50 rounded-lg">
                         <div className="flex items-start justify-between mb-3">
                           <div className="flex-1">
@@ -697,36 +699,38 @@ export default function MyPage() {
                           </div>
                         )}
                       </div>
+                    )}
 
-                      {/* 댓글 알림 */}
-                      <div className="p-4 bg-gray-50 rounded-lg">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <h4 className="font-semibold text-gray-900 mb-1">
-                              💭 댓글 알림
-                            </h4>
-                            <p className="text-sm text-gray-600">
-                              내 게시글에 댓글이 달리면 알림을 받습니다
-                            </p>
-                          </div>
-                          <label className="relative inline-flex items-center cursor-pointer ml-4">
-                            <input
-                              type="checkbox"
-                              checked={notificationSettings.comment_notification}
-                              onChange={(e) =>
-                                setNotificationSettings({
-                                  ...notificationSettings,
-                                  comment_notification: e.target.checked,
-                                })
-                              }
-                              className="sr-only peer"
-                            />
-                            <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gray-700"></div>
-                          </label>
+                    {/* 댓글 알림 (모든 사용자) */}
+                    <div className="p-4 bg-gray-50 rounded-lg">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-gray-900 mb-1">
+                            💭 댓글 알림
+                          </h4>
+                          <p className="text-sm text-gray-600">
+                            내 게시글에 댓글이 달리면 알림을 받습니다
+                          </p>
                         </div>
+                        <label className="relative inline-flex items-center cursor-pointer ml-4">
+                          <input
+                            type="checkbox"
+                            checked={notificationSettings.comment_notification}
+                            onChange={(e) =>
+                              setNotificationSettings({
+                                ...notificationSettings,
+                                comment_notification: e.target.checked,
+                              })
+                            }
+                            className="sr-only peer"
+                          />
+                          <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gray-700"></div>
+                        </label>
                       </div>
+                    </div>
 
-                      {/* 매장 찜 알림 */}
+                    {/* 매장 찜 알림 (admin 전용) */}
+                    {isAdmin && (
                       <div className="p-4 bg-gray-50 rounded-lg">
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
@@ -753,11 +757,11 @@ export default function MyPage() {
                           </label>
                         </div>
                       </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            )}
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </TabsContent>
 
           {/* 매장 탭 (admin: 내 매장, 일반: 관심 매장) */}
@@ -801,7 +805,6 @@ export default function MyPage() {
                                     width={48}
                                     height={48}
                                     className="w-full h-full object-cover"
-                                    unoptimized
                                   />
                                 ) : (
                                   <Store className="w-6 h-6 text-gray-400" />

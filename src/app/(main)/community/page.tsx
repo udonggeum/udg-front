@@ -123,7 +123,6 @@ const ImageCarousel = memo(function ImageCarousel({
         sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
         className="object-cover"
         loading="lazy"
-        unoptimized
       />
 
       {/* 이미지 개수 표시 */}
@@ -983,7 +982,6 @@ function CommunityPageContent() {
                                 sizes="24px"
                                 className="object-cover"
                                 loading="lazy"
-                                unoptimized
                               />
                             ) : post.user.role === "admin" ? (
                               <StoreIcon className={inWebView ? "w-3 h-3" : "w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#C9A227]"} />
@@ -1079,7 +1077,6 @@ function CommunityPageContent() {
                               sizes="(max-width: 640px) 80px, 144px"
                               className="object-cover"
                               loading="lazy"
-                              unoptimized
                             />
                           ) : post.user.role === "admin" ? (
                             <StoreIcon className={inWebView ? "w-8 h-8" : "w-10 h-10 sm:w-16 sm:h-16 text-[#C9A227]"} />
@@ -1102,7 +1099,6 @@ function CommunityPageContent() {
                                   sizes="42px"
                                   className="object-cover"
                                   loading="lazy"
-                                  unoptimized
                                 />
                               </div>
                             ))}

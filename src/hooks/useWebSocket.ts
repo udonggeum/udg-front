@@ -111,9 +111,8 @@ export function useWebSocket({
         return null;
       }
 
-      const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://43.200.249.22:8080';
       const response = await axios.post(
-        `${apiBaseUrl}/api/v1/auth/refresh`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/auth/refresh`,
         { refresh_token: tokens.refresh_token },
         { timeout: 5000 }
       );
